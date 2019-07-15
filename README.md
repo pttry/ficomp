@@ -5,20 +5,39 @@
 
 The goal of ficomp is to ...
 
-## Installation
+## Data collection
 
-You can install the released version of ficomp from [CRAN](https://CRAN.R-project.org) with:
 
-``` r
-install.packages("ficomp")
-```
+### National account data 
 
-## Example
+- Eurostat
+  + Eu data
+  + Selected international quarterly/annual data. Whole economy.
+  
+- OECD
+  + OECD countries + some other
 
-This is a basic example which shows you how to solve a common problem:
 
-``` r
-library(ficomp)
-## basic example code
-```
+### Weights
+
+#### BIS
+
+#### Export
+
+* Good and services
+  + [Statistics Finland](http://tilastokeskus.fi/til/tpulk/). 
+    + 7 countries 2015-2019, Q
+    + Services: 260 countries 2015-2017, Y
+
+* Goods export
+  + [UN Comtrade Database](https://comtrade.un.org/) - [comtradr](https://cran.r-project.org/web/packages/comtradr/)
+  + Custums Finland
+
+ 
+
+## Report
+
+
+## Shiny app
+
 
