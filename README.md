@@ -37,6 +37,9 @@ The goal of ficomp is to ...
 
 ## Report
 
+### Terms of trade adjusted GDP
+
+see vignettes/ULC_tot.Rmd
 
 ## Shiny app
 

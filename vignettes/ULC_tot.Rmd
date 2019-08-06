@@ -1,0 +1,90 @@
+---
+title: "ULC_tot"
+output: rmarkdown::html_document
+vignette: >
+  %\VignetteIndexEntry{ULC_tot}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+
+# install.packages("ameco")
+
+devtools::load_all()
+library(dplyr)
+library(ameco)
+library(tidyr)
+library(ggplot2)
+
+
+
+```
+
+```{r data}
+
+# separate codes
+ameco2 <- ameco %>% 
+  tidyr::separate(code, into = c("country_code", NA, NA, NA, NA, "title_code"), sep = "\\.")
+
+
+```
+
+# Terms of trade adjusted GDP
+
+```{r}
+
+gdb_tot_series <- c("OVGDA", "OVGD", "UXGS", "PMGS", "OXGS")
+
+
+fi_dat <- 
+  ameco2 %>% 
+  filter(country_code == "FIN",
+         title_code %in% gdb_tot_series, 
+         !grepl("ECU", unit))              # only EURO-national currency series
+
+fi_dat %>% select(title_code, title, unit) %>% distinct() %>% knitr::kable()
+
+```
+```{r}
+
+fi_dat2 <- fi_dat %>% 
+  select(title_code, year, value) %>% 
+  spread(title_code, value) %>% 
+  mutate(OVGDA2 = ((OVGD + UXGS/(PMGS/100) - OXGS) / OVGD[year == 2010]) * 100,
+         OVGDA3 = (OVGD + UXGS/(PMGS/100) - OXGS),
+         ovgd_10 = (OVGD / OVGD[year == 2010] * 100))
+
+
+
+
+```
+
+```{r}
+
+fi_dat2 %>% 
+  gather(vars, value, - year) %>% 
+  filter(vars %in% c("OVGDA2", "OVGDA", "ovgd_10")) %>% 
+  ggplot(aes(year, value, colour = vars)) +
+  geom_line()
+  
+```
+
+```{r}
+
+fi_dat2 %>% 
+  gather(vars, value, - year) %>% 
+  filter(vars %in% c("OVGDA3", "OVGD")) %>% 
+  ggplot(aes(year, value, colour = vars)) +
+  geom_line()
+  
+```
+
+
