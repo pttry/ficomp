@@ -1,0 +1,35 @@
+---
+title: "Labour cost index"
+output: rmarkdown::html_document
+vignette: >
+  %\VignetteIndexEntry{Labour_cost}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+# library(ficomp)
+load_all()
+
+library(dplyr)
+library(ggplot2)
+
+data(naq_eurostat_dat)
+
+```
+
+# Nominal unit labour cost
+
+```{r ulc}
+
+
+
+```
+

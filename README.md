@@ -13,7 +13,7 @@ The goal of ficomp is to ...
 - Eurostat (data-raw/get_eurostat.R)
   + Eu data
   + Selected international quarterly/annual data. Whole economy.
-  + namq_10_gdp
+  + namq_10_gdp, namq_10_a10
     - unit
       + Current prices, million units of national currency
       + Chain linked volumes (2010), million units of national currency
