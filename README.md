@@ -10,9 +10,20 @@ The goal of ficomp is to ...
 
 ### National account data 
 
-- Eurostat
+- Eurostat (data-raw/get_eurostat.R)
   + Eu data
   + Selected international quarterly/annual data. Whole economy.
+  + namq_10_gdp
+    - unit
+      + Current prices, million units of national currency
+      + Chain linked volumes (2010), million units of national currency
+    -  Seasonally and calendar adjusted
+    - na_item
+      + Gross domestic product at market prices, 
+      + "Value added, gross", 
+      + "Compensation of employees"
+      + "Wages and salaries" 
+      + "Employers' social contributions" 
   
 - OECD
   + OECD countries + some other
