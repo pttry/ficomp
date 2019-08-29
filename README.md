@@ -31,7 +31,16 @@ The goal of ficomp is to ...
 
 ### Weights
 
-#### BIS
+#### BIS double trade weights
+
+Source: [BIS Effective exchange rate indices](https://www.bis.org/statistics/eer.htm)
+Data: 
+* Narrow: weights_bis_narrow
+* Broad: weights_bis_broad
+Update: data-raw(get_BIS.R)
+Vignette: Weights.Rmd
+
+TODO: document, test
 
 #### Export
 

@@ -13,11 +13,12 @@ Imports:
     tidyr,
     ggplot2,
     forcats,
-    ggplot2
+    ggplot2,
     ggptt
 Suggests: 
     knitr,
     rmarkdown,
     ameco,
-    eurostat
+    eurostat,
+    readxl
 VignetteBuilder: knitr
