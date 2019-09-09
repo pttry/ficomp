@@ -11,6 +11,7 @@ The goal of ficomp is to ...
 ### National account data 
 
 - Eurostat (data-raw/get_eurostat.R)
+  + Data: naq_eurostat_dat
   + Eu data
   + Selected international quarterly/annual data. Whole economy.
   + namq_10_gdp, namq_10_a10
@@ -24,6 +25,10 @@ The goal of ficomp is to ...
       + "Compensation of employees"
       + "Wages and salaries" 
       + "Employers' social contributions" 
+    - nace_r2
+      + Total
+      + Manufacturing
+      + TODO: Open / private sector
   
 - OECD
   + OECD countries + some other
@@ -34,10 +39,13 @@ The goal of ficomp is to ...
 #### BIS double trade weights
 
 Source: [BIS Effective exchange rate indices](https://www.bis.org/statistics/eer.htm)
+
 Data: 
 * Narrow: weights_bis_narrow
 * Broad: weights_bis_broad
+
 Update: data-raw(get_BIS.R)
+
 Vignette: Weights.Rmd
 
 TODO: document, test
