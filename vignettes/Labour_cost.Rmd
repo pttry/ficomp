@@ -21,16 +21,40 @@ devtools::load_all()
 
 library(dplyr)
 library(ggplot2)
+library(eurostat)
+library(tidyr)
 
 data(naq_eurostat_dat)
 
 ```
 
+# data
+
+```{r}
+
+tibble(code = levels(naq_eurostat_dat$na_item), name = label_eurostat(levels(naq_eurostat_dat$na_item), "na_item"))
+
+```
+
+
 # Nominal unit labour cost
 
 ```{r ulc}
 
+ulc <- 
+  naq_eurostat_dat %>% 
+  filter(nace_r2 == "TOTAL") %>% 
+  unite(vars, na_item, unit) %>% 
+  filter(vars %in% c("D1_CP_MNAC", "B1G_CLV10_MNAC")) %>% 
+  spread(vars, values) %>% 
+  group_by(geo) %>% 
+  mutate(ulc = ind_ulc(D1_CP_MNAC, B1G_CLV10_MNAC, time = time, baseyear = 2008)) %>% 
+  ungroup()
 
+ulc %>% 
+  filter(geo %in% c("FI", "SE")) %>% 
+  ggplot(aes(time, ulc, colour = geo)) +
+  geom_line()
 
 ```
 

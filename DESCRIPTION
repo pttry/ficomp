@@ -14,7 +14,8 @@ Imports:
     ggplot2,
     forcats,
     ggplot2,
-    ggptt
+    ggptt,
+    lubridate
 Suggests: 
     knitr,
     rmarkdown,
