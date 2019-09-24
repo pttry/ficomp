@@ -26,6 +26,10 @@ library(tidyr)
 
 data(naq_eurostat_dat)
 
+base_year <- 2008
+geos <- c("FI", "SE", "DE", "FR", "IT", "DK")
+start_time <- "1990-01-01"
+
 ```
 
 # data
@@ -41,20 +45,28 @@ tibble(code = levels(naq_eurostat_dat$na_item), name = label_eurostat(levels(naq
 
 ```{r ulc}
 
-ulc <- 
+lc_dat <- 
   naq_eurostat_dat %>% 
   filter(nace_r2 == "TOTAL") %>% 
   unite(vars, na_item, unit) %>% 
-  filter(vars %in% c("D1_CP_MNAC", "B1G_CLV10_MNAC")) %>% 
+  # filter(vars %in% c("D1_CP_MNAC", "B1G_CLV10_MNAC")) %>% 
   spread(vars, values) %>% 
   group_by(geo) %>% 
-  mutate(ulc = ind_ulc(D1_CP_MNAC, B1G_CLV10_MNAC, time = time, baseyear = 2008)) %>% 
+  mutate(
+    # nominal unit labour cost
+    ulc = ind_ulc(D1_CP_MNAC, B1G_CLV10_MNAC, time = time, baseyear = base_year),
+    # nominal unit labour cost, adjusted to take account emploees/emplyed share
+    ulc_adj = ind_ulc(D1_CP_MNAC / SAL_DC_THS_HW, B1G_CLV10_MNAC / EMP_DC_THS_HW, time = time, baseyear = base_year)) %>% 
   ungroup()
 
-ulc %>% 
-  filter(geo %in% c("FI", "SE")) %>% 
-  ggplot(aes(time, ulc, colour = geo)) +
-  geom_line()
+lc_dat %>% 
+  filter(geo %in% geos,
+         time >= start_time) %>% 
+  select(geo, time, ulc, ulc_adj) %>% 
+  gather(ind, values, -geo, -time) %>% 
+  ggplot(aes(time, values, colour = geo)) +
+  geom_line() +
+  facet_wrap(~ ind)
 
 ```
 

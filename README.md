@@ -18,7 +18,7 @@ The goal of ficomp is to ...
     - unit
       + Current prices, million units of national currency
       + Chain linked volumes (2010), million units of national currency
-    -  Seasonally and calendar adjusted
+    -  Seasonally and calendar adjusted, except some data seasonally adjusted (DE, FR compensation data)
     - na_item
       + Gross domestic product at market prices, 
       + "Value added, gross", 
@@ -61,9 +61,14 @@ TODO: document, test
   + [UN Comtrade Database](https://comtrade.un.org/) - [comtradr](https://cran.r-project.org/web/packages/comtradr/)
   + Custums Finland
 
-## Indicators
+## Indicator functions
 
  * ind_ulc() Nominal unit labour costs
+
+## Indicators
+ * lc_dat
+   + ulc nominal unit labour cost
+   + ulc_adj nominal unit labour cost, adjusted to take account emploees/emplyed share
 
 ## Report
 

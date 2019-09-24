@@ -1,0 +1,76 @@
+---
+title: "Data stats"
+author: "Janne Huovari"
+date: "21 9 2019"
+output: rmarkdown::html_document
+vignette: >
+  %\VignetteIndexEntry{Labour_cost}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+# library(ficomp)
+
+devtools::load_all()
+
+library(dplyr)
+library(ggplot2)
+library(eurostat)
+library(tidyr)
+
+data(naq_eurostat_dat)
+
+```
+
+```{r}
+
+naq_eurostat_dat %>% 
+  filter(unit == "CP_MNAC") %>% 
+  ggplot(aes(geo, ymin = min(time), ymax = max(time), colour = nace_r2)) +
+    facet_wrap(~ na_item) +
+    geom_linerange(position = position_dodge(width = 0.5)) +
+    coord_flip()
+
+```
+
+```{r}
+
+naq_eurostat_dat_raw %>% 
+  filter(unit == "CP_MNAC",
+         na_item == "D1") %>% 
+  drop_na(values) %>% 
+  group_by(geo, nace_r2, s_adj) %>% 
+  mutate(tmin = min(time), 
+         tmax = max(time)) %>% 
+  ungroup() %>% 
+  ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = nace_r2)) +
+    facet_wrap(~ s_adj) +
+    geom_linerange(position = position_dodge(width = 0.5)) +
+    coord_flip()
+
+```
+
+
+```{r}
+
+naq_eurostat_dat_raw %>% 
+  filter(nace_r2 == "TOTAL",
+         na_item == "EMP_DC") %>% 
+  group_by(geo, nace_r2, s_adj) %>% 
+  mutate(tmin = min(time), 
+         tmax = max(time)) %>% 
+  ungroup() %>% 
+  ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = unit)) +
+    facet_wrap(~ s_adj) +
+    geom_linerange(position = position_dodge(width = 0.5)) +
+    coord_flip()
+
+```
