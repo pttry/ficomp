@@ -21,14 +21,19 @@ names(wbis_broad_sheets) <- wbis_broad_sheets
 weights_bis_narrow <-
   map_dfr(wbis_narrow_sheets, ~readxl::read_xlsx(wbis_narrow_temp, sheet = ., range = "B6:AC33"), .id = "time") %>%
   rename(geo_base = ...1) %>%
-  gather(geo, weight, -geo_base, - time)
+  gather(geo, weight, -geo_base, - time) %>%
+  mutate(geo_base = countrycode(geo_base, "iso2c", "eurostat", custom_match = c(XM = "EA")),
+         geo = countrycode(geo, "iso2c", "eurostat", custom_match = c(XM = "EA")))
 
 weights_bis_broad <-
   map_dfr(wbis_broad_sheets, ~readxl::read_xlsx(wbis_broad_temp, sheet = ., range = "B6:BJ66"), .id = "time") %>%
   rename(geo_base = ...1) %>%
-  gather(geo, weight, -geo_base, - time)
+  gather(geo, weight, -geo_base, - time) %>%
+  mutate(geo_base = countrycode(geo_base, "iso2c", "eurostat", custom_match = c(XM = "EA")),
+         geo = countrycode(geo, "iso2c", "eurostat", custom_match = c(XM = "EA")))
 
 
 usethis::use_data(weights_bis_narrow, overwrite = TRUE)
 usethis::use_data(weights_bis_broad, overwrite = TRUE)
+
 

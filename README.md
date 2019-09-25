@@ -7,6 +7,7 @@ The goal of ficomp is to ...
 
 ## Data collection
 
+- Country codes: eurostat, euroarea EA
 
 ### National account data 
 

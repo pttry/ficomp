@@ -24,8 +24,8 @@ library(ggptt)
 
 set_ptt()
 
-data("weights_bis_narrow")
-data("weights_bis_broad")
+data("weights_bis_narrow", "weights_bis_broad", "fi_goods_trade_dat", "fi_service_trade_dat")
+
 
 ```
 
@@ -59,3 +59,60 @@ weights_bis_narrow %>%
 
 ```
 
+```{r bis_broad}
+
+weights_bis_broad %>% 
+  tidyr::separate(time, into = c("time1", "time2"), sep = "_", convert = TRUE) %>% 
+  filter(geo_base == "FI") %>% 
+  mutate(weight = tidyr::replace_na(weight, 0)) %>% 
+  mutate(geo_big = forcats::fct_lump_min(geo, 30, w = weight)) %>%
+  group_by(time1, geo_big) %>% 
+  summarise(weight = sum(weight)) %>% 
+  ungroup() %>% 
+  mutate(geo_big = forcats::fct_reorder2(geo_big, time1, weight)) %>% 
+  ggplot(aes(time1, weight, colour = geo_big)) +
+  geom_line()
+
+
+
+```
+
+# Share of BIS weight countries from trade
+
+## Goods
+
+```{r trade_share}
+
+fi_goods_trade_dat %>% 
+  mutate(inc_narrow = geo %in% weights_bis_narrow$geo,
+         inc_broad = geo %in% weights_bis_broad$geo) %>% 
+  group_by(flow, time) %>% 
+  summarise(share_narrow = 100 * sum(values * inc_narrow, na.rm = TRUE) / values[geo == "TOTAL"],
+            share_broad = 100 * sum(values * inc_broad, na.rm = TRUE) / values[geo == "TOTAL"]) %>% 
+  ungroup() %>% 
+  gather(share_ind, shares, share_narrow, share_broad) %>% 
+  ggplot(aes(time, shares, colour = share_ind)) +
+  facet_wrap(~flow) +
+  geom_line() +
+  geom_h0()
+
+```
+
+# Services
+
+```{r service_trade_share}
+
+fi_service_trade_dat %>% 
+  mutate(inc_narrow = geo %in% weights_bis_narrow$geo,
+         inc_broad = geo %in% weights_bis_broad$geo) %>% 
+  group_by(flow, time) %>% 
+  summarise(share_narrow = 100 * sum(values * inc_narrow, na.rm = TRUE) / values[geo == "TOTAL"],
+            share_broad = 100 * sum(values * inc_broad, na.rm = TRUE) / values[geo == "TOTAL"]) %>% 
+  ungroup() %>% 
+  gather(share_ind, shares, share_narrow, share_broad) %>% 
+  ggplot(aes(time, shares, colour = share_ind)) +
+  facet_wrap(~flow) +
+  geom_line() +
+  geom_h0()
+
+```
