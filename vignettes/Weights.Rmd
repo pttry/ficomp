@@ -24,7 +24,8 @@ library(ggptt)
 
 set_ptt()
 
-data("wbis_narrow_dat")
+data("weights_bis_narrow")
+data("weights_bis_broad")
 
 ```
 
@@ -32,11 +33,11 @@ data("wbis_narrow_dat")
 
 ```{r bis_nar}
 
-wbis_narrow_dat %>% 
+weights_bis_narrow %>% 
   tidyr::separate(time, into = c("time1", "time2"), sep = "_", convert = TRUE) %>% 
-  filter(geo == "FI") %>% 
+  filter(geo_base == "FI") %>% 
   mutate(weight = tidyr::replace_na(weight, 0)) %>% 
-  mutate(geo_big = forcats::fct_lump_min(geo2, 30, w = weight)) %>%
+  mutate(geo_big = forcats::fct_lump_min(geo, 30, w = weight)) %>%
   group_by(time1, geo_big) %>% 
   summarise(weight = sum(weight)) %>% 
   ungroup() %>% 
@@ -50,8 +51,8 @@ wbis_narrow_dat %>%
 
 ```{r}
 
-wbis_narrow_dat %>% 
-  group_by(time, geo) %>% 
+weights_bis_narrow %>% 
+  group_by(time, geo_base) %>% 
   summarise(w = sum(weight, na.rm = TRUE)) %>% 
   pull(w) %>% 
   all(. == 100)
