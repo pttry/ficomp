@@ -23,6 +23,9 @@ library(dplyr)
 library(ggplot2)
 library(eurostat)
 library(tidyr)
+library(ggptt)
+
+set_ptt()
 
 data(naq_eurostat_dat)
 
@@ -67,6 +70,31 @@ lc_dat %>%
   ggplot(aes(time, values, colour = geo)) +
   geom_line() +
   facet_wrap(~ ind)
+
+```
+
+# Relative nominal unit labour cost
+
+```{r rel_ulc}
+
+ea_weights <- weights_bis_broad %>% 
+  filter(time == max(time),
+         geo_base == "FI",
+         geo != geo_base,
+         geo %in% eurostat::ea_countries$code) %>% 
+  select(geo, weight) %>% 
+  mutate(weight = weight / sum(weight))
+
+lc_dat %>% 
+  filter(time >= "1995-01-01") %>% 
+  left_join(ea_weights, by = "geo") %>% 
+  group_by(time, nace_r2) %>% 
+  # summarise(tt = length(geo))
+  summarise(rel_ulc = 100 * ulc[geo == "FI"] / sum(ulc * weight, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+    ggplot(aes(time, rel_ulc, colour = nace_r2)) +
+  geom_line()
+  
 
 ```
 

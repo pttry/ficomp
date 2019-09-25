@@ -34,15 +34,14 @@ data("weights_bis_narrow", "weights_bis_broad", "fi_goods_trade_dat", "fi_servic
 ```{r bis_nar}
 
 weights_bis_narrow %>% 
-  tidyr::separate(time, into = c("time1", "time2"), sep = "_", convert = TRUE) %>% 
   filter(geo_base == "FI") %>% 
   mutate(weight = tidyr::replace_na(weight, 0)) %>% 
   mutate(geo_big = forcats::fct_lump_min(geo, 30, w = weight)) %>%
-  group_by(time1, geo_big) %>% 
+  group_by(time, geo_big) %>% 
   summarise(weight = sum(weight)) %>% 
   ungroup() %>% 
-  mutate(geo_big = forcats::fct_reorder2(geo_big, time1, weight)) %>% 
-  ggplot(aes(time1, weight, colour = geo_big)) +
+  mutate(geo_big = forcats::fct_reorder2(geo_big, time, weight)) %>% 
+  ggplot(aes(time, weight, colour = geo_big)) +
   geom_line()
 
 
@@ -62,15 +61,14 @@ weights_bis_narrow %>%
 ```{r bis_broad}
 
 weights_bis_broad %>% 
-  tidyr::separate(time, into = c("time1", "time2"), sep = "_", convert = TRUE) %>% 
   filter(geo_base == "FI") %>% 
   mutate(weight = tidyr::replace_na(weight, 0)) %>% 
   mutate(geo_big = forcats::fct_lump_min(geo, 30, w = weight)) %>%
-  group_by(time1, geo_big) %>% 
+  group_by(time, geo_big) %>% 
   summarise(weight = sum(weight)) %>% 
   ungroup() %>% 
-  mutate(geo_big = forcats::fct_reorder2(geo_big, time1, weight)) %>% 
-  ggplot(aes(time1, weight, colour = geo_big)) +
+  mutate(geo_big = forcats::fct_reorder2(geo_big, time, weight)) %>% 
+  ggplot(aes(time, weight, colour = geo_big)) +
   geom_line()
 
 
