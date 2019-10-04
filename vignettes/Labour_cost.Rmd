@@ -30,7 +30,8 @@ set_ptt()
 data(naq_eurostat_dat)
 
 base_year <- 2008
-geos <- c("FI", "SE", "DE", "FR", "IT", "DK")
+base_years <- 2000:2018
+geos <- c("FI", "SE", "DE", "FR")
 start_time <- "1990-01-01"
 
 ```
@@ -70,6 +71,76 @@ lc_dat %>%
   ggplot(aes(time, values, colour = geo)) +
   geom_line() +
   facet_wrap(~ ind)
+
+```
+
+# Nominal unit labour cost manufacturing
+
+```{r ulc_c}
+
+lc_dat_c <- 
+  naq_eurostat_dat %>% 
+  filter(nace_r2 == "C") %>% 
+  unite(vars, na_item, unit) %>% 
+  # filter(vars %in% c("D1_CP_MNAC", "B1G_CLV10_MNAC")) %>% 
+  spread(vars, values) %>% 
+  group_by(geo) %>% 
+  mutate(
+    # nominal unit labour cost
+    ulc = ind_ulc(D1_CP_MNAC, B1G_CLV10_MNAC, time = time, baseyear = base_years),
+    # nominal unit labour cost, adjusted to take account emploees/emplyed share
+    ulc_adj = ind_ulc(D1_CP_MNAC / SAL_DC_THS_HW, B1G_CLV10_MNAC / EMP_DC_THS_HW, time = time, baseyear = base_years)) %>% 
+  ungroup()
+
+lc_dat_c %>% 
+  filter(geo %in% geos,
+         time >= start_time) %>% 
+  select(geo, time, ulc, ulc_adj) %>% 
+  gather(ind, values, -geo, -time) %>% 
+  ggplot(aes(time, values, colour = geo)) +
+  geom_line() +
+  facet_wrap(~ ind)
+
+```
+
+# Hourly compensation
+
+```{r comp_h}
+
+
+naq_eurostat_dat %>% 
+  filter(nace_r2 %in% c("TOTAL", "C")) %>% 
+  unite(vars, na_item, unit) %>% 
+  # filter(vars %in% c("D1_CP_MNAC", "B1G_CLV10_MNAC")) %>% 
+  spread(vars, values) %>% 
+  group_by(geo, nace_r2) %>% 
+  mutate(comp_h = rebase(D1_CP_MNAC / SAL_DC_THS_HW, time = time, baseyear = base_year),
+         d_comp_h = 100 * (comp_h / lag(comp_h, 4) - 1)) %>% 
+  ungroup() %>% 
+  filter(geo %in% geos,
+         time >= start_time) %>% 
+  ggplot(aes(time, d_comp_h, colour = geo)) +
+  geom_line() +
+  facet_wrap(~ nace_r2)
+
+```
+```{r d_comp_h}
+
+
+naq_eurostat_dat %>% 
+  filter(nace_r2 %in% c("TOTAL", "C")) %>% 
+  unite(vars, na_item, unit) %>% 
+  # filter(vars %in% c("D1_CP_MNAC", "B1G_CLV10_MNAC")) %>% 
+  spread(vars, values) %>% 
+  group_by(geo, nace_r2) %>% 
+  mutate(comp_h = rebase(D1_CP_MNAC / SAL_DC_THS_HW, time = time, baseyear = base_year),
+         d_comp_h = 100 * (comp_h / lag(comp_h, 4) - 1)) %>% 
+  ungroup() %>% 
+  filter(geo %in% c("FI", "SE"),
+         time >= "2010-01-01") %>% 
+  ggplot(aes(time, d_comp_h, colour = geo)) +
+  geom_line() +
+  facet_wrap(~ nace_r2)
 
 ```
 
