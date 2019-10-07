@@ -26,7 +26,7 @@ library(ggplot2)
 library(eurostat)
 library(tidyr)
 
-data(naq_eurostat_dat)
+data(naq_eurostat_dat, ulc_oecd_dat, ulc_eurostat_dat)
 
 ```
 
@@ -65,6 +65,22 @@ naq_eurostat_dat_raw %>%
     coord_flip()
 
 ```
+# Eurostat ULC
+
+```{r}
+ 
+ulc_eurostat_dat %>% 
+  drop_na(values) %>% 
+  group_by(geo, na_item) %>% 
+  mutate(tmin = min(time), 
+         tmax = max(time)) %>% 
+  ungroup() %>% 
+  ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = na_item)) +
+    geom_linerange(position = position_dodge(width = 0.5)) +
+    coord_flip()
+
+```
+
 
 # OECD
 

@@ -10,7 +10,8 @@ naq_eurostat <- get_eurostat("namq_10_gdp", cache = FALSE)
 naq10_eurostat <- get_eurostat("namq_10_a10", cache = FALSE)
 # national accounts employment 10 industies
 naq10e_eurostat<- get_eurostat("namq_10_a10_e", cache = FALSE)
-
+# Unit labour cost
+namq_10_lp_ulc <- get_eurostat("namq_10_lp_ulc", cache = FALSE)
 
 
 # preprosessing
@@ -42,6 +43,9 @@ naq10e_eurostat_dat <- naq10e_eurostat %>%
          na_item %in% c("EMP_DC", "SAL_DC")
   )
 
+ulc_eurostat_dat <- namq_10_lp_ulc %>%
+  filter(unit == "I15") %>%
+  droplevels()
 
 
 # TODO: Open / private sector
@@ -68,5 +72,5 @@ naq_eurostat_dat <- naq_eurostat_dat_raw %>%
 
 # Save final data
 usethis::use_data(naq_eurostat_dat, overwrite = TRUE)
-
+usethis::use_data(ulc_eurostat_dat, overwrite = TRUE)
 
