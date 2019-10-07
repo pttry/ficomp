@@ -25,7 +25,7 @@ ulc_oecd_dat0 <-
 ulc_oecd_dat <- ulc_oecd_dat0 %>%
   transmute(
     time = yq(obsTime),
-    geo = countrycode(as_factor(LOCATION), "iso3c", "eurostat", nomatch = NULL),
+    geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat", nomatch = NULL)),
     na_item = factor(SUBJECT,
                      levels = c("ULQEUL01", "ULQECU01", "ULQELP01"),
                      labels = c("NULC_APER", "D1_EMP_APER", "GDP_EMP_PER")),
