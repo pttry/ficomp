@@ -30,16 +30,7 @@ data(naq_eurostat_dat)
 
 ```
 
-```{r}
-
-naq_eurostat_dat %>% 
-  filter(unit == "CP_MNAC") %>% 
-  ggplot(aes(geo, ymin = min(time), ymax = max(time), colour = nace_r2)) +
-    facet_wrap(~ na_item) +
-    geom_linerange(position = position_dodge(width = 0.5)) +
-    coord_flip()
-
-```
+# Eurostat
 
 ```{r}
 
@@ -70,6 +61,22 @@ naq_eurostat_dat_raw %>%
   ungroup() %>% 
   ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = unit)) +
     facet_wrap(~ s_adj) +
+    geom_linerange(position = position_dodge(width = 0.5)) +
+    coord_flip()
+
+```
+
+# OECD
+
+```{r}
+
+ulc_oecd_dat %>% 
+  drop_na(values) %>% 
+  group_by(geo, na_item) %>% 
+  mutate(tmin = min(time), 
+         tmax = max(time)) %>% 
+  ungroup() %>% 
+  ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = na_item)) +
     geom_linerange(position = position_dodge(width = 0.5)) +
     coord_flip()
 
