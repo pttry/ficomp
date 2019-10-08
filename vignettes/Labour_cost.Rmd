@@ -27,7 +27,7 @@ library(ggptt)
 
 set_ptt()
 
-data(naq_eurostat_dat)
+data(naq_eurostat_dat, ulc_oecd_dat, ulc_ecb_dat)
 
 base_year <- 2008
 base_years <- 2000:2018
@@ -47,7 +47,11 @@ tibble(code = levels(naq_eurostat_dat$na_item), name = label_eurostat(levels(naq
 
 # Nominal unit labour cost
 
-```{r ulc}
+Different definations for unit labour cost:
+* Output: GDP or value added
+* Relation to hours worked or persons (relevant if adjusted for self-employed or for decomposition)
+
+```{r nulc}
 
 lc_dat <- 
   naq_eurostat_dat %>% 
@@ -58,21 +62,109 @@ lc_dat <-
   group_by(geo) %>% 
   mutate(
     # nominal unit labour cost
-    ulc = ind_ulc(D1_CP_MNAC, B1G_CLV10_MNAC, time = time, baseyear = base_year),
+    nulc_va = ind_ulc(D1_CP_MNAC, B1G_CLV10_MNAC, time = time, baseyear = base_year),
+    nulc = ind_ulc(D1_CP_MNAC, B1GQ_CLV10_MNAC, time = time, baseyear = base_year),
     # nominal unit labour cost, adjusted to take account emploees/emplyed share
-    ulc_adj = ind_ulc(D1_CP_MNAC / SAL_DC_THS_HW, B1G_CLV10_MNAC / EMP_DC_THS_HW, time = time, baseyear = base_year)) %>% 
+    nulc_hw_va = ind_ulc(D1_CP_MNAC / SAL_DC_THS_HW, B1G_CLV10_MNAC / EMP_DC_THS_HW, time = time, baseyear = base_year),
+    nulc_hw = ind_ulc(D1_CP_MNAC / SAL_DC_THS_HW, B1GQ_CLV10_MNAC / EMP_DC_THS_HW, time = time, baseyear = base_year),
+    nulc_per_va = ind_ulc(D1_CP_MNAC / SAL_DC_THS_PER, B1G_CLV10_MNAC / EMP_DC_THS_PER, time = time, baseyear = base_year),
+    nulc_per = ind_ulc(D1_CP_MNAC / SAL_DC_THS_PER, B1GQ_CLV10_MNAC / EMP_DC_THS_PER, time = time, baseyear = base_year)) %>% 
   ungroup()
 
 lc_dat %>% 
   filter(geo %in% geos,
          time >= start_time) %>% 
-  select(geo, time, ulc, ulc_adj) %>% 
+  select(geo, time, nulc, nulc_va, nulc_hw, nulc_hw_va, nulc_per, nulc_per_va) %>% 
   gather(ind, values, -geo, -time) %>% 
   ggplot(aes(time, values, colour = geo)) +
   geom_line() +
   facet_wrap(~ ind)
 
 ```
+
+On short term a NULC indicator selection does not matter. On longer term
+differences acculumate. 
+
+```{r nulc_fi}
+
+lc_dat %>% 
+  filter(geo == "FI",
+         time >= start_time) %>% 
+  select(geo, time, nulc, nulc_va, nulc_hw, nulc_hw_va, nulc_per, nulc_per_va) %>% 
+  gather(ind, values, -geo, -time) %>% 
+  group_by(geo, ind) %>% 
+  mutate(change = values / lag(values, 4, order_by = time) - 1) %>% 
+  ungroup() %>% 
+  gather(vars, values, values, change) %>% 
+  ggplot(aes(time, values, colour = ind)) +
+  facet_wrap(~ vars, scales = "free_y") +
+  geom_line() 
+
+```
+
+
+# Nominal unit labour cost comparison from different sources
+
+NULC_APER_OECD = NULC_PER_ECB = nulc_per 
+  = (D1_CP_MNAC / SAL_DC_THS_PER) / (B1GQ_CLV10_MNAC / EMP_DC_THS_PER)
+  
+NULC_HW_ECB = nulc_hw 
+  = (D1_CP_MNAC / SAL_DC_THS_HW) / (B1GQ_CLV10_MNAC / EMP_DC_THS_HW)
+
+```{r nulc_comp}
+
+ulc_oecd_with <- ulc_oecd_dat %>% 
+  select(- unit) %>% 
+  filter(na_item == "NULC_APER") %>% 
+  mutate(na_item = paste0(na_item, "_OECD")) %>% 
+  group_by(geo, na_item) %>% 
+  mutate(values = rebase(values, time, base_year)) %>% 
+  ungroup() %>% 
+  spread(na_item, values)
+
+ulc_eurostat_with <- ulc_eurostat_dat %>% 
+  filter(na_item %in% c("NULC_HW", "NULC_PER")) %>% 
+  select(time, geo, na_item, values) %>% 
+  mutate(na_item = paste0(na_item, "_eurostat")) %>% 
+  group_by(geo, na_item) %>% 
+  mutate(values = rebase(values, time, base_year)) %>% 
+  ungroup() %>% 
+  spread(na_item, values)
+
+ulc_ecb_with <- ulc_ecb_dat %>% 
+  filter(na_item %in% c("NULC_HW", "NULC_PER")) %>% 
+  select(time, geo, na_item, values) %>% 
+  mutate(na_item = paste0(na_item, "_ECB")) %>% 
+  group_by(geo, na_item) %>% 
+  mutate(values = rebase(values, time, base_year)) %>% 
+  ungroup() %>% 
+  spread(na_item, values)
+
+lc_with <- lc_dat %>% 
+  select(time, geo, nulc, nulc_va, nulc_hw, nulc_hw_va, nulc_per, nulc_per_va) %>% 
+  left_join(ulc_oecd_with, by = c("time", "geo")) %>% 
+  # left_join(ulc_eurostat_with, by = c("time", "geo")) %>%
+  left_join(ulc_ecb_with, by = c("time", "geo")) # %>%   filter(geo == "FI") %>% View()
+
+lc_with %>% 
+  gather(vars, values, - time, - geo) %>% 
+  mutate(vars = fct_relevel(vars, "NULC_APER", after = Inf)) %>% 
+  filter(geo == "FI") %>% 
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line()
+
+
+```
+
+```{r nulc_comp_table}
+
+lc_with %>% 
+  filter(geo == "FI") %>% 
+  tail() %>% 
+  knitr::kable(digits = 2)
+
+```
+
 
 # Nominal unit labour cost manufacturing
 
@@ -143,6 +235,7 @@ naq_eurostat_dat %>%
   facet_wrap(~ nace_r2)
 
 ```
+
 
 # Relative nominal unit labour cost
 
