@@ -23,5 +23,6 @@ Suggests:
     eurostat,
     readxl,
     pxweb,
-    uljas
+    uljas,
+    ecb
 VignetteBuilder: knitr
