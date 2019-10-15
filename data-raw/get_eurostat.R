@@ -2,6 +2,7 @@
 
 library(dplyr)
 library(forcats)
+library(tidyr)
 library(eurostat)
 
 # Total national accounts
@@ -72,5 +73,6 @@ naq_eurostat_dat <- naq_eurostat_dat_raw %>%
 
 # Save final data
 usethis::use_data(naq_eurostat_dat, overwrite = TRUE)
+usethis::use_data(naq_eurostat_dat_raw, overwrite = TRUE)
 usethis::use_data(ulc_eurostat_dat, overwrite = TRUE)
 

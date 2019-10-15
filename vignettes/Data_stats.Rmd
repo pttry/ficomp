@@ -12,8 +12,12 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>", 
+  fig.height = 5.5,
+  fig.width = 6.5,
+  fig.path = "Fig_stat/"
 )
+
 ```
 
 ```{r setup}
@@ -25,6 +29,14 @@ library(dplyr)
 library(ggplot2)
 library(eurostat)
 library(tidyr)
+library(ggptt)
+
+set_ptt(14, "sans") 
+theme_update(
+  legend.text = element_text(size = 14),
+  plot.subtitle = element_text(colour = "grey40"),
+  plot.caption = element_text(size = 10, face = "plain", colour = "grey40"))
+
 
 data(naq_eurostat_dat, ulc_oecd_dat, ulc_eurostat_dat)
 
@@ -45,7 +57,8 @@ naq_eurostat_dat_raw %>%
   ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = nace_r2)) +
     facet_wrap(~ s_adj) +
     geom_linerange(position = position_dodge(width = 0.5)) +
-    coord_flip()
+    coord_flip() +
+    geom_hline(yintercept = as.numeric(as.Date("1995-01-01")))
 
 ```
 
@@ -65,6 +78,7 @@ naq_eurostat_dat_raw %>%
     coord_flip()
 
 ```
+
 # Eurostat ULC
 
 ```{r}
@@ -94,6 +108,25 @@ ulc_oecd_dat %>%
   ungroup() %>% 
   ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = na_item)) +
     geom_linerange(position = position_dodge(width = 0.5)) +
-    coord_flip()
+    coord_flip() +
+    geom_hline(yintercept = as.numeric(as.Date("1995-01-01")))
+
+```
+
+OECD not in eurostat
+
+```{r}
+
+ulc_oecd_dat %>% 
+  filter(!(geo %in% levels(naq_eurostat_dat$geo))) %>% 
+  drop_na(values) %>% 
+  group_by(geo, na_item) %>% 
+  mutate(tmin = min(time), 
+         tmax = max(time)) %>% 
+  ungroup() %>% 
+  ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = na_item)) +
+    geom_linerange(position = position_dodge(width = 0.5)) +
+    coord_flip() +
+    geom_hline(yintercept = as.numeric(as.Date("1995-01-01")))
 
 ```

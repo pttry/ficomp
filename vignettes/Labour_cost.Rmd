@@ -10,8 +10,12 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>", 
+  fig.height = 5.5,
+  fig.width = 6.5,
+  fig.path = "Fig_labour_cost/"
 )
+
 ```
 
 ```{r setup}
@@ -20,12 +24,13 @@ knitr::opts_chunk$set(
 devtools::load_all()
 
 library(dplyr)
+library(forcats)
 library(ggplot2)
 library(eurostat)
 library(tidyr)
 library(ggptt)
 
-set_ptt()
+set_proj_theme()
 
 data(naq_eurostat_dat, ulc_oecd_dat, ulc_ecb_dat)
 
@@ -53,13 +58,12 @@ Different definations for unit labour cost:
 
 ```{r nulc}
 
-lc_dat <- 
+lc_dat_nace <- 
   naq_eurostat_dat %>% 
-  filter(nace_r2 == "TOTAL") %>% 
   unite(vars, na_item, unit) %>% 
   # filter(vars %in% c("D1_CP_MNAC", "B1G_CLV10_MNAC")) %>% 
   spread(vars, values) %>% 
-  group_by(geo) %>% 
+  group_by(geo, nace_r2) %>% 
   mutate(
     # nominal unit labour cost
     nulc_va = ind_ulc(D1_CP_MNAC, B1G_CLV10_MNAC, time = time, baseyear = base_year),
@@ -70,6 +74,9 @@ lc_dat <-
     nulc_per_va = ind_ulc(D1_CP_MNAC / SAL_DC_THS_PER, B1G_CLV10_MNAC / EMP_DC_THS_PER, time = time, baseyear = base_year),
     nulc_per = ind_ulc(D1_CP_MNAC / SAL_DC_THS_PER, B1GQ_CLV10_MNAC / EMP_DC_THS_PER, time = time, baseyear = base_year)) %>% 
   ungroup()
+
+lc_dat <- lc_dat_nace %>% 
+  filter(nace_r2 == "TOTAL")
 
 lc_dat %>% 
   filter(geo %in% geos,
@@ -249,14 +256,14 @@ ea_weights <- weights_bis_broad %>%
   select(geo, weight) %>% 
   mutate(weight = weight / sum(weight))
 
-lc_dat %>% 
+lc_dat_nace %>% 
   filter(time >= "1995-01-01") %>% 
   left_join(ea_weights, by = "geo") %>% 
   group_by(time, nace_r2) %>% 
   # summarise(tt = length(geo))
-  summarise(rel_ulc = 100 * ulc[geo == "FI"] / sum(ulc * weight, na.rm = TRUE)) %>% 
+  summarise(rel_nulc_va = 100 * nulc_va[geo == "FI"] / sum(nulc_va * weight, na.rm = TRUE)) %>% 
   ungroup() %>% 
-    ggplot(aes(time, rel_ulc, colour = nace_r2)) +
+    ggplot(aes(time, rel_nulc_va, colour = nace_r2)) +
   geom_line()
   
 

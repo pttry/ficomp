@@ -38,14 +38,23 @@ ulc_ecb_dat <- ecb_ulc0 %>%
 usethis::use_data(ulc_ecb_dat, overwrite = TRUE)
 
 
+# Trade weights
 
+ecb_stats %>%
+  filter(grepl("weight", title, ignore.case = "TRUE"))
 
+wts0 <- httr::GET("https://sdw-wsrest.ecb.europa.eu/service/data/WTS", accept("text/csv"))
+wts_res <- httr::content(wts0, "parsed") %>%
+  mutate_if(is.character, as_factor)
 
+kk <- wts_res %>%
+  filter(REF_AREA == "FI",
+         COUNT_AREA == "SE",
+         TRADE_WEIGHT == "O") %>%
+  droplevels()
 
-
-
-# Check also unit labour cost based competiveness indicators (also inflation and gdp deflators)
-
+# # Check also unit labour cost based competiveness indicators (also inflation and gdp deflators)
+#
 # ecb_stats %>%
 #   filter(grepl("unit", title, ignore.case = "TRUE"))
 #
@@ -58,7 +67,8 @@ usethis::use_data(ulc_ecb_dat, overwrite = TRUE)
 # levels(res2$TITLE)
 #
 # res2 %>%
-#   filter(TITLE == "ULCT deflated HCI-19/Finnish markka") %>% distinct(TITLE_COMPL)
+#   filter(TITLE == "ULCT deflated HCI-19/Finnish markka",
+#          EXR_SUFFIX == "A") %>%
 #   select(KEY, TIME_PERIOD, OBS_VALUE) %>%
 #   droplevels() %>%
 #   mutate(time = lubridate::yq(TIME_PERIOD)) %>%

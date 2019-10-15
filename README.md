@@ -31,8 +31,14 @@ The goal of ficomp is to ...
       + Manufacturing
       + TODO: Open / private sector
   
-- OECD
+### ULC data  
+  
+- OECD (data-raw/get_OECD.R)
+  + Quartely data only per persons
   + OECD countries + some other
+  
+- ECB (data-raw/get_ECB.R)
+  + based on eurostat data
 
 
 ### Weights
