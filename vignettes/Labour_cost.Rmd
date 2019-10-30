@@ -36,7 +36,7 @@ data(naq_eurostat_dat, ulc_oecd_dat, ulc_ecb_dat)
 
 base_year <- 2008
 base_years <- 2000:2018
-geos <- c("FI", "SE", "DE", "FR")
+geos <- c(Finland = "FI", Sweden = "SE", Germany = "DE", France = "FR")
 start_time <- "1990-01-01"
 
 ```
@@ -88,6 +88,23 @@ lc_dat %>%
   facet_wrap(~ ind)
 
 ```
+
+```{r nulc_per}
+
+lc_dat %>% 
+  filter(geo %in% geos,
+         time >= start_time) %>% 
+  select(geo, time, nulc_per) %>% 
+  gather(ind, values, -geo, -time) %>% 
+  mutate(geo = fct_recode(geo, !!!geos)) %>% 
+  ggplot(aes(time, values, colour = geo)) +
+  geom_line() +
+  labs(title = "Unit labour cost, employment based",
+       y = "index, 2008 = 100") +
+  the_title_blank(c("x", "l"))
+
+```
+
 
 On short term a NULC indicator selection does not matter. On longer term
 differences acculumate. 
