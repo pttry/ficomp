@@ -188,6 +188,15 @@ lc_with %>%
   knitr::kable(digits = 2)
 
 ```
+```{r}
+lc_with %>% 
+  gather(vars, values, - time, - geo) %>% 
+  mutate(vars = fct_relevel(vars, "NULC_APER", after = Inf)) %>% 
+  filter(geo == "SE") %>% 
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line()
+```
+
 
 
 # Nominal unit labour cost manufacturing
