@@ -86,3 +86,17 @@ eur_usd_q<- get_eurostat("ert_bil_eur_q", filters = list(statinfo = "AVG", curre
   select(time, values)
 
 usethis::use_data(eur_usd_a, eur_usd_q, overwrite = TRUE)
+
+
+# Effective exchange rates
+
+ert_eff_ic_m0 <- get_eurostat("ert_eff_ic_m", cache = FALSE)
+ert_eff_ic_q0 <- get_eurostat("ert_eff_ic_q", cache = FALSE)
+
+ert_eff_ic_m <- ert_eff_ic_m0 %>%
+  mutate(exch_rt_label = label_eurostat(exch_rt, dic = "exch_rt"))
+
+ert_eff_ic_q <- ert_eff_ic_q0 %>%
+  mutate(exch_rt_label = label_eurostat(exch_rt, dic = "exch_rt"))
+
+usethis::use_data(ert_eff_ic_m, ert_eff_ic_q, overwrite = TRUE)

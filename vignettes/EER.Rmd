@@ -1,0 +1,163 @@
+---
+title: "Effective exchange rates"
+output: rmarkdown::html_document
+vignette: >
+  %\VignetteIndexEntry{Labour_cost}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", 
+  fig.height = 7,
+  fig.width = 10,
+  fig.path = "Fig_eer/", 
+  echo = FALSE, message = FALSE, warning = FALSE
+)
+
+```
+
+```{r setup}
+# library(ficomp)
+
+devtools::load_all()
+
+library(dplyr)
+library(forcats)
+library(ggplot2)
+library(eurostat)
+library(tidyr)
+library(ggptt)
+
+set_proj_theme()
+
+data("ert_eff_ic_m", "ert_eff_ic_q")
+
+base_year <- 2008
+base_years <- 2000:2018
+geos <- c(Finland = "FI", Sweden = "SE", Germany = "DE", France = "FR")
+start_time <- "1990-01-01"
+
+```
+
+# Eurostat - DG ECFIN
+
+Double export weights, moving weights (t, t-1) 
+
+
+* EA19= Euro-area Member States
+* EU28 = EU Member States
+* IC37 = EU28 + 9 other industrial countries (Australia, Canada, United States, Japan, Norway, New Zealand, Mexico, Switzerland and Turkey)
+* Broad group (42) = IC37 + 5 other industrial countries (Russia, China, Brazil, South Korea and Hong Kong). For the broad group only HICP/CPI deflated REER are available.
+
+
+### monthly data
+
+```{r variables_m}
+
+ert_eff_ic_m %>% 
+  select(exch_rt, exch_rt_label) %>% 
+  distinct() %>% 
+  knitr::kable()
+
+```
+
+### quarterly data
+
+```{r variables_q}
+
+ert_eff_ic_q %>% 
+  select(exch_rt, exch_rt_label) %>% 
+  distinct() %>% 
+  knitr::kable()
+
+```
+
+## Nominal effective exchange rates
+
+```{r nominal}
+
+ert_eff_ic_m %>% 
+  filter(geo %in% geos,
+         grepl("NEER", exch_rt)) %>% 
+  ggplot(aes(time, values, colour = exch_rt_label)) +
+  facet_wrap(~ geo) +
+  geom_line() +
+  the_legend_bot() +
+  the_title_blank(c("x", "l")) +
+  guides(colour = guide_legend(nrow = 4))
+
+
+```
+
+## Real effective exchange rates
+
+### CPI mountly
+
+```{r real_cpi_m}
+
+ert_eff_ic_m %>% 
+  filter(geo %in% geos,
+         grepl("REER", exch_rt)) %>% 
+  ggplot(aes(time, values, colour = exch_rt_label)) +
+  facet_wrap(~ geo) +
+  geom_line() +
+  the_legend_bot() +
+  the_title_blank(c("x", "l")) +
+  guides(colour = guide_legend(nrow = 4))
+
+
+```
+
+### ULC quarterly
+
+```{r real_ulc_q}
+
+ert_eff_ic_q %>% 
+  filter(geo %in% geos,
+         grepl("ULCT", exch_rt)) %>% 
+  ggplot(aes(time, values, colour = exch_rt_label)) +
+  facet_wrap(~ geo) +
+  geom_line() +
+  the_legend_bot() +
+  the_title_blank(c("x", "l")) +
+  guides(colour = guide_legend(nrow = 4))
+
+
+```
+
+## Compined for 37 partners
+
+
+```{r compined_37}
+
+ert_eff_ic_q %>% 
+  filter(grepl("ULCT", exch_rt)) %>% 
+  bind_rows(ert_eff_ic_m) %>% 
+  filter(geo %in% geos,
+         grepl("IC37", exch_rt)) %>% 
+  ggplot(aes(time, values, colour = exch_rt_label)) +
+  facet_wrap(~ geo) +
+  geom_line() +
+  the_legend_bot() +
+  the_title_blank(c("x", "l")) +
+  guides(colour = guide_legend(nrow = 4))
+
+```
+
+```{r compined_37_geo}
+
+ert_eff_ic_q %>% 
+  filter(grepl("ULCT", exch_rt)) %>% 
+  bind_rows(ert_eff_ic_m) %>% 
+  filter(geo %in% geos,
+         grepl("IC37", exch_rt)) %>% 
+  ggplot(aes(time, values, colour = geo)) +
+  facet_wrap(~ exch_rt) +
+  geom_line() +
+  the_legend_bot() +
+  the_title_blank(c("x", "l")) 
+
+```

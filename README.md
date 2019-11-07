@@ -40,6 +40,12 @@ The goal of ficomp is to ...
 - ECB (data-raw/get_ECB.R)
   + based on eurostat data
 
+### EER data 
+
+- Nominal and real effective exchange rates from Eurostat - DG ECFIN
+  + data-raw/get_eurostat.r
+  + vignettes/EER.Rmd
+
 
 ### Weights
 
