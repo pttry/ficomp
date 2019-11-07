@@ -20,7 +20,7 @@ naq0_eurostat_dat <- naq_eurostat %>%
   # 	Current prices, million units of national currency ,  Chain linked volumes (2010), million units of national currency
   #  	Seasonally and calendar adjusted data
   # "Gross domestic product at market prices"
-  filter(unit %in% c("CP_MNAC", "CLV10_MNAC"),
+  filter(unit %in% c("CP_MNAC", "CP_MEUR", "CLV10_MNAC", "CLV10_MEUR"),
          s_adj %in% c("NSA", "SA","SCA"),
          na_item %in% c("B1GQ")
   ) %>%
@@ -30,7 +30,7 @@ naq10_eurostat_dat <- naq10_eurostat %>%
   # 	Current prices, million units of national currency ,  Chain linked volumes (2010), million units of national currency
   #  	Non-seasonally adjusted, Seasonally adjusted, Seasonally and calendar adjusted data
   #   "Value added, gross", "Compensation of employees", "Wages and salaries", "Employers' social contributions"
-  filter(unit %in% c("CP_MNAC", "CLV10_MNAC"),
+  filter(unit %in% c("CP_MNAC", "CP_MEUR", "CLV10_MNAC", "CLV10_MEUR"),
          s_adj %in% c("NSA", "SA","SCA"),
          na_item %in% c("B1G", "D1", "D11", "D12")
   )
@@ -76,3 +76,13 @@ usethis::use_data(naq_eurostat_dat, overwrite = TRUE)
 usethis::use_data(naq_eurostat_dat_raw, overwrite = TRUE)
 usethis::use_data(ulc_eurostat_dat, overwrite = TRUE)
 
+
+# Exchange rates
+
+eur_usd_a <- get_eurostat("ert_bil_eur_a", filters = list(statinfo = "AVG", currency = "USD")) %>%
+  select(time, values)
+
+eur_usd_q<- get_eurostat("ert_bil_eur_q", filters = list(statinfo = "AVG", currency = "USD")) %>%
+  select(time, values)
+
+usethis::use_data(eur_usd_a, eur_usd_q, overwrite = TRUE)

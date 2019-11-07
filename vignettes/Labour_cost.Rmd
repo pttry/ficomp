@@ -60,7 +60,7 @@ Different definations for unit labour cost:
 
 lc_dat_nace <- 
   naq_eurostat_dat %>% 
-  unite(vars, na_item, unit) %>% 
+  unite(vars, na_item, unit) %>%  
   # filter(vars %in% c("D1_CP_MNAC", "B1G_CLV10_MNAC")) %>% 
   spread(vars, values) %>% 
   group_by(geo, nace_r2) %>% 
@@ -71,6 +71,7 @@ lc_dat_nace <-
     # nominal unit labour cost, adjusted to take account emploees/emplyed share
     nulc_hw_va = ind_ulc(D1_CP_MNAC / SAL_DC_THS_HW, B1G_CLV10_MNAC / EMP_DC_THS_HW, time = time, baseyear = base_year),
     nulc_hw = ind_ulc(D1_CP_MNAC / SAL_DC_THS_HW, B1GQ_CLV10_MNAC / EMP_DC_THS_HW, time = time, baseyear = base_year),
+    nulc_hw_eur = ind_ulc(D1_CP_MEUR / SAL_DC_THS_HW, B1GQ_CLV10_MNAC / EMP_DC_THS_HW, time = time, baseyear = base_year),
     nulc_per_va = ind_ulc(D1_CP_MNAC / SAL_DC_THS_PER, B1G_CLV10_MNAC / EMP_DC_THS_PER, time = time, baseyear = base_year),
     nulc_per = ind_ulc(D1_CP_MNAC / SAL_DC_THS_PER, B1GQ_CLV10_MNAC / EMP_DC_THS_PER, time = time, baseyear = base_year)) %>% 
   ungroup()
@@ -88,6 +89,20 @@ lc_dat %>%
   facet_wrap(~ ind)
 
 ```
+
+```{r nulc_eur}
+
+lc_dat %>% 
+  filter(geo %in% geos,
+         time >= start_time) %>% 
+  select(geo, time, nulc_hw, nulc_hw_eur, nulc_hw_eur2) %>% 
+  gather(ind, values, -geo, -time) %>% 
+  ggplot(aes(time, values, colour = geo)) +
+  geom_line() +
+  facet_wrap(~ ind)
+
+```
+
 
 ```{r nulc_per}
 
