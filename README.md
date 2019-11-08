@@ -11,6 +11,12 @@ The goal of ficomp is to ...
 
 ### National account data 
 
+- GDP
+- Import and export
+- Trade and service balance
+
+- [The Economic Complexity Index](https://oec.world/en/rankings/country/eci/) 
+
 - Eurostat (data-raw/get_eurostat.R)
   + Data: naq_eurostat_dat
   + Eu data
@@ -82,6 +88,11 @@ TODO: document, test
  * lc_dat
    + ulc nominal unit labour cost
    + ulc_adj nominal unit labour cost, adjusted to take account emploees/emplyed share
+
+## Model data
+
+* Q and A
+* also components
 
 ## Report
 
