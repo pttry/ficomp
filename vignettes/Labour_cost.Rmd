@@ -329,19 +329,63 @@ ea_weights <- weights_bis_broad %>%
          geo_base == "FI",
          geo != geo_base,
          geo %in% eurostat::ea_countries$code) %>% 
+  filter(geo != "MT") %>% 
   select(geo, weight) %>% 
   mutate(weight = weight / sum(weight))
 
 lc_dat_nace %>% 
-  filter(time >= "1995-01-01") %>% 
-  left_join(ea_weights, by = "geo") %>% 
-  group_by(time, nace_r2) %>% 
+  filter(time >= "1995-01-01", time < "2017-12-31", geo %in% ea_weights$geo) %>% 
+  left_join(ea_weights, by = "geo") %>% # filter(geo == "FI", is.na(nulc_va))
+  group_by(time, nace_r2) %>% # filter(geo == "FI")  %>% select(time, nace_r2, nulc_va)
   # summarise(tt = length(geo))
-  summarise(rel_nulc_va = 100 * nulc_va[geo == "FI"] / sum(nulc_va * weight, na.rm = TRUE)) %>% 
+  summarise(rel_nulc_va = 100 * nulc_va[geo == "FI"] / sum(nulc_va * weight)) %>% 
   ungroup() %>% 
     ggplot(aes(time, rel_nulc_va, colour = nace_r2)) +
   geom_line()
   
+lc_dat_nace %>% 
+  filter(time >= "1996-01-01", time < "2018-12-31", geo %in% c(ea_weights$geo, "FI")) %>% 
+  left_join(ea_weights, by = "geo") %>% # filter(geo == "FI", is.na(nulc_va))
+  filter(nace_r2 == "TOTAL") %>% # summarise(NA_WE = sum(is.na(weight), na_s = sum(is.na(nulc_va))))
+  group_by(time) %>% 
+  # summarise(tt = length(geo))
+  summarise(rel_nulc_va = 100 * weighted_gmean(nulc_va[geo == "FI"]/ nulc_va[geo != "FI"] , weight[geo != "FI"]) ) %>% 
+  ungroup() %>% 
+      ggplot(aes(time, rel_nulc_va)) +
+  geom_line()
+
+myvariable <- c(1,2,3,4) ##Some data to average
+myweight <- c(1,1,1,3) 
+
+
+kk <- lc_dat_nace %>% 
+  filter(time >= "1996-01-01", time < "2018-12-31", geo %in% c(ea_weights$geo, "FI")) %>% 
+  left_join(ea_weights, by = "geo") %>% # filter(geo == "FI", is.na(nulc_va))
+  filter(nace_r2 == "TOTAL", time == "2017-01-01") %>% 
+  select(time, geo, nulc_va)
+
+weight_index <- function(x, geo, time, weight_df = weights_bis_broad) {
+  w <- weight_df[weight_df$time == time & weight_df$geo %in% geo,]
+  w <- na.omit(w[order(match(w$geo, geo)),])
+   y <- purrr::imap_dbl(geo, ~ 100 * weighted_gmean(x[.y]/ x[-.y], 
+                                                w$weight[w$geo_base == .x & w$geo != .x]))
+   y
+}
+
+kk_d <- lc_dat_nace %>% 
+  filter(time >= "1996-01-01", time < "2018-12-31", geo %in% c(ea_weights$geo, "FI")) %>% 
+  filter(nace_r2 == "TOTAL") %>% # summarise(NA_WE = sum(is.na(weight), na_s = sum(is.na(nulc_va))))
+  group_by(time) %>% 
+  mutate(rel_nulc_va = weight_index(nulc_va, geo, 2015, weights_bis_broad)) %>% 
+  ungroup()
+  
+kk_d %>% 
+  ggplot(aes(time, rel_nulc_va, group = geo)) +
+  geom_line()
+
+
+weight_index(x = kk$nulc_va, kk$geo, 2015, weights_bis_broad)
+
 
 ```
 
