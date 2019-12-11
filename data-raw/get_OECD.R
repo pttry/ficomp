@@ -9,10 +9,14 @@ library(countrycode)
 # dataset_list <- get_datasets()
 
 ## Unit labour cost
+# ULC_QUA is discontinued
 
 # search_dataset("Unit", data = dataset_list)
 
+# Unit labour costs and labour productivity (employment based), Total economy
+# https://stats.oecd.org/Index.aspx?DataSetCode=ULC_EEQ
 ulc_str <- get_data_structure("ULC_EEQ")
+
 
 ulc_oecd_dat0 <-
   get_dataset("ULC_EEQ",
@@ -40,39 +44,59 @@ usethis::use_data(ulc_oecd_dat, overwrite = TRUE)
 
 # search_dataset("Quarterly National Accounts", data = dataset_list)
 
-# dataset_id <- "QNA"
+qna_id <- "QNA"
+
+qna_str <- get_data_structure(qna_id)
+
+qna_subjects <- c(
+  "B1_GS1", #"Gross domestic product",
+  "D1S1", #"Compensation of employees, total",
+  "P6", #"Exports of goods and services",
+  "P61", #"Exports of goods",
+  "B11") #"External balance of goods and services"
+
+qna_measures <- qna_str$MEASURE %>%
+  filter(
+    label %in% c(
+      "National currency, current prices, quarterly levels, seasonally adjusted",
+      "Volume index, OECD reference year, seasonally adjusted"
+    )
+  ) %>%
+  pull(id)
+
+qna_geo <- countrycode(oecd_geos, "eurostat", "iso3c", nomatch = NULL)
+
+oecd_dat_Q_0 <- get_dataset(dataset = qna_id,
+                          filter = list(qna_geo, qna_subjects, qna_measures, "Q"))
+
+# kk <- get_dataset(dataset = dataset_id,
+#                   filter = list("USA"), start_time = 2017) %>%
+#   mutate_if(is.character, as_factor)
 #
+# qna_str$SUBJECT %>%
+#   filter(id %in% unique(kk$SUBJECT)) %>% # View()
+#   filter(grepl("alue" , label))
 #
-# stan_str <- get_data_structure(dataset_id)
+# mm <- kk %>%
+#   filter(FREQUENCY == "Q") %>% distinct(MEASURE) %>% pull()
 #
-# subject_list <- stan_str$SUBJECT %>%
-#   filter(
-#     label %in% c(
-#       "Gross domestic product",
-#       "Gross value added at basic prices, total activity",
-#       "Compensation of employees, total",
-#       "Total employment",
-#       "Employees, total"
-#     )
-#   ) %>%
-#   pull(id)
+# qna_str$MEASURE %>%
+#   filter(id %in% mm) %>% View()
 #
-#
-# measure_list <- stan_str$MEASURE %>%
-#   filter(
-#     label %in% c(
-#       "National currency, current prices, quarterly levels, seasonally adjusted",
-#       "Volume index, OECD reference year, seasonally adjusted",
-#       "Hours worked, seasonally adjusted",
-#       "Jobs, seasonally adjusted"
-#     )
-#   ) %>%
-#   pull(id)
-#
-# geo <- c("FIN", "USA")
-#
-# oecd_dat_Q_0 <- get_dataset(dataset = dataset_id,
-#                           filter = list(geo, subject_list, measure_list, "Q"))
+# k <- get_dataset(dataset = dataset_id,
+#                  filter = list("USA", "GDP", "CQRSA", "Q"))
+
+oecd_dat_Q <- oecd_dat_Q_0 %>%
+  transmute(
+    time = yq(obsTime),
+    geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat", nomatch = NULL)),
+    na_item = as_factor(SUBJECT),
+    unit = as_factor(MEASURE),
+    currency = as_factor(UNIT),
+    values = obsValue)
+
+
+
 #
 # oecd_dat_Q_test <- get_dataset(dataset = dataset_id,
 #                             filter = list("USA"), start_time = "2015", end_time = "2015")
