@@ -13,6 +13,12 @@ library(countrycode)
 
 # search_dataset("Unit", data = dataset_list)
 
+# Exchange rates
+
+exh_str <- get_data_structure("REFSERIES_MSIT")
+
+
+
 # Unit labour costs and labour productivity (employment based), Total economy
 # https://stats.oecd.org/Index.aspx?DataSetCode=ULC_EEQ
 ulc_str <- get_data_structure("ULC_EEQ")
@@ -49,40 +55,38 @@ qna_id <- "QNA"
 qna_str <- get_data_structure(qna_id)
 
 qna_subjects <- c(
-  "B1_GS1", #"Gross domestic product",
-  "D1S1", #"Compensation of employees, total",
-  "P6", #"Exports of goods and services",
-  "P61", #"Exports of goods",
-  "B11") #"External balance of goods and services"
+  B1GQ = "B1_GS1", #"Gross domestic product",
+  D1 = "D1S1", #"Compensation of employees, total",
+  P6 = "P6", #"Exports of goods and services",
+  P61 = "P61", #"Exports of goods",
+  B11 = "B11") #"External balance of goods and services"
 
-qna_measures <- qna_str$MEASURE %>%
-  filter(
-    label %in% c(
-      "National currency, current prices, quarterly levels, seasonally adjusted",
-      "Volume index, OECD reference year, seasonally adjusted"
-    )
-  ) %>%
-  pull(id)
+qna_measures <-
+  c(
+    CP_NAC = "CQRSA",   # National currency, current prices, quarterly levels, seasonally adjusted
+    CLV_NAC = "LNBQRSA"  # National currency, chained volume estimates, national reference year, quarterly levels, seasonally adjusted
+  )
+
 
 qna_geo <- countrycode(oecd_geos, "eurostat", "iso3c", nomatch = NULL)
 
 oecd_dat_Q_0 <- get_dataset(dataset = qna_id,
                           filter = list(qna_geo, qna_subjects, qna_measures, "Q"))
 
-# kk <- get_dataset(dataset = dataset_id,
-#                   filter = list("USA"), start_time = 2017) %>%
-#   mutate_if(is.character, as_factor)
+kk <- get_dataset(dataset = qna_id,
+                  filter = list("USA", "B1_GS1"), start_time = 2017) %>%
+  mutate_if(is.character, as_factor)
 #
 # qna_str$SUBJECT %>%
 #   filter(id %in% unique(kk$SUBJECT)) %>% # View()
 #   filter(grepl("alue" , label))
 #
-# mm <- kk %>%
-#   filter(FREQUENCY == "Q") %>% distinct(MEASURE) %>% pull()
-#
-# qna_str$MEASURE %>%
-#   filter(id %in% mm) %>% View()
-#
+mm <- kk %>%
+  filter(FREQUENCY == "Q") %>% distinct(MEASURE) %>% pull()
+
+qna_str$MEASURE %>%
+  filter(id %in% mm) %>% View()
+                #
 # k <- get_dataset(dataset = dataset_id,
 #                  filter = list("USA", "GDP", "CQRSA", "Q"))
 
@@ -90,30 +94,13 @@ oecd_dat_Q <- oecd_dat_Q_0 %>%
   transmute(
     time = yq(obsTime),
     geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat", nomatch = NULL)),
-    na_item = as_factor(SUBJECT),
-    unit = as_factor(MEASURE),
+    na_item = fct_recode(SUBJECT, !!!qna_subjects),
+    unit = fct_recode(MEASURE, !!!qna_measures),
     currency = as_factor(UNIT),
     values = obsValue)
 
 
+usethis::use_data(oecd_dat_Q, overwrite = TRUE)
 
-#
-# oecd_dat_Q_test <- get_dataset(dataset = dataset_id,
-#                             filter = list("USA"), start_time = "2015", end_time = "2015")
-#
-# test <- oecd_dat_Q_test %>%
-#   filter(obsTime == "2015-Q1")
-#
-# stan_str$SUBJECT %>%
-#   left_join(select(test, id = SUBJECT, obsValue)) %>% View()
-#
-# oecd_dat_Q <- oecd_dat_Q_0 %>%
-#   mutate_if(is.character, as_factor) %>%
-#   filter(obsTime == "2015-Q1")
-#
-# table(is.na(oecd_dat_Q$obsValue))
-#
-# # Main economic indicators
-# mei_str <- get_data_structure("MEI")
-# # View(mei_str$SUBJECT)
+
 

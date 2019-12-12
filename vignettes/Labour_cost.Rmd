@@ -1,5 +1,5 @@
 ---
-title: "Labour cost index"
+title: "Unit labour cost index, quarterly data"
 output: rmarkdown::html_document
 vignette: >
   %\VignetteIndexEntry{Labour_cost}
@@ -42,7 +42,9 @@ start_time <- "1990-01-01"
 
 ```
 
-# data
+# Data
+
+Data for unit labour cost index
 
 ```{r}
 
@@ -229,6 +231,17 @@ lc_with %>%
 
 
 ```
+
+```{r }
+
+lc_with %>% 
+  gather(vars, values, - time, - geo) %>% 
+  filter(geo == "FI", vars %in% c("nulc", "nulc_per", "NULC_APER_OECD")) %>% 
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line()
+```
+
+
 
 ```{r nulc_comp_table}
 

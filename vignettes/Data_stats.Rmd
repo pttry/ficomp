@@ -48,7 +48,7 @@ data(naq_eurostat_dat, ulc_oecd_dat, ulc_eurostat_dat)
 
 naq_eurostat_dat_raw %>% 
   filter(unit == "CP_MNAC",
-         na_item == "D1") %>% 
+         na_item == "B1GQ") %>% 
   drop_na(values) %>% 
   group_by(geo, nace_r2, s_adj) %>% 
   mutate(tmin = min(time), 

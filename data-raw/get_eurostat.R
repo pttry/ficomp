@@ -19,10 +19,10 @@ namq_10_lp_ulc <- get_eurostat("namq_10_lp_ulc", cache = FALSE)
 naq0_eurostat_dat <- naq_eurostat %>%
   # 	Current prices, million units of national currency ,  Chain linked volumes (2010), million units of national currency
   #  	Seasonally and calendar adjusted data
-  # "Gross domestic product at market prices"
+  # "Gross domestic product at market prices", "Exports of goods and services", "Exports of goods", "External balance of goods and services"
   filter(unit %in% c("CP_MNAC", "CP_MEUR", "CLV10_MNAC", "CLV10_MEUR"),
          s_adj %in% c("NSA", "SA","SCA"),
-         na_item %in% c("B1GQ")
+         na_item %in% c("B1GQ", "P6", "P61", "B11")
   ) %>%
   mutate(nace_r2 = "TOTAL")
 
