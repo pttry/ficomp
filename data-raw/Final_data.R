@@ -1,5 +1,9 @@
 
 
+library(tidyr)
+library(dplyr)
+library(forcats)
+
 load_all()
 
 q_start_time <- "1995-01-01"
@@ -12,7 +16,7 @@ eu_countries<- eurostat::eu_countries$code
 other_eurostat_countries <- c("NO", "CH", "IS")
 agg_eurostat <- c("EA19", "EU28")
 
-eurostat_geos <- c(eu_countries, other_eurostat, agg_eurostat)
+eurostat_geos <- c(eu_countries, other_eurostat_countries, agg_eurostat)
 
 #9 other industrial countries (Australia, Canada, United States, Japan, Norway, New Zealand, Mexico, Switzerland and Turkey)
 IC37_other <- c("AU", "CA", "US", "JP", "NO", "NZ", "MX", "CH", "TR")
@@ -20,7 +24,12 @@ exec_countries <- c("CL", "CR", "IL", "IS", "KR")
 other_oecd <- c("AU", "CA", "US", "JP", "NO", "NZ", "CH")
 
 
-oecd_geos <- c("AU", "CA", "US", "JP", "NZ", "CH")
+# Some removed temporary due to missing data
+oecd_geos <- setdiff(c("AU", "CA", "US", "JP", "NZ", "CH"), c("CH"))
+eurostat_geos <- setdiff(c(eu_countries, other_eurostat_countries), c("CH", "HR", "IS", "PL"))
+
+
+all_geos <- c(eurostat_geos, oecd_geos)
 
 # setdiff(unique(ulc_eurostat_dat$geo), eurostat::eu_countries$code)
 #
@@ -29,6 +38,7 @@ oecd_geos <- c("AU", "CA", "US", "JP", "NZ", "CH")
 # eurostat::label_eurostat(kk, dic = "geo")
 # eurostat::label_eurostat(IC37_other, dic = "geo")
 
+# oecd_geos %in% weights_bis_broad$geo
 
 usethis::use_data(eurostat_geos, oecd_geos)
 
@@ -85,8 +95,23 @@ q_dat_oecd <- oecd_dat_Q %>%
 # combine
 q_dat <-
   q_dat_eurostat %>%
-  bind_rows(q_dat_oecd)
+  filter(geo %in% eurostat_geos) %>%
+  bind_rows(filter(q_dat_oecd, geo %in% oecd_geos)) %>%
+  group_by(time) %>%
+  mutate(nulc_aper_rel15 = weight_index(nulc_aper, geo, 2015, weight_df = weights_bis_broad)) %>%
+  ungroup()
 
+
+# q_dat %>%
+#   group_by(geo) %>%
+#   summarise_if(is.numeric, ~sum(is.na(.))) %>%
+#   ungroup() %>%
+#   filter((bkt_ind + exp_ind + nulc_aper) > 0)
+
+q_dat %>%
+  filter(geo == "FI") %>%
+  ggplot(aes(time, nulc_aper_rel15)) +
+  geom_line()
 
 ## Annual data
 

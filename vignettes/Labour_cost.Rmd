@@ -236,7 +236,7 @@ lc_with %>%
 
 lc_with %>% 
   gather(vars, values, - time, - geo) %>% 
-  filter(geo == "FI", vars %in% c("nulc", "nulc_per", "NULC_APER_OECD")) %>% 
+  filter(geo == "CH", vars %in% c("nulc", "nulc_per", "NULC_APER_OECD", "NULC_PER_ECB")) %>% 
   ggplot(aes(time, values, colour = vars)) +
   geom_line()
 ```
@@ -377,16 +377,10 @@ kk <- lc_dat_nace %>%
   filter(nace_r2 == "TOTAL", time == "2017-01-01") %>% 
   select(time, geo, nulc_va)
 
-weight_index <- function(x, geo, time, weight_df = weights_bis_broad) {
-  w <- weight_df[weight_df$time == time & weight_df$geo %in% geo,]
-  w <- na.omit(w[order(match(w$geo, geo)),])
-   y <- purrr::imap_dbl(geo, ~ 100 * weighted_gmean(x[.y]/ x[-.y], 
-                                                w$weight[w$geo_base == .x & w$geo != .x]))
-   y
-}
+
 
 kk_d <- lc_dat_nace %>% 
-  filter(time >= "1996-01-01", time < "2018-12-31", geo %in% c(ea_weights$geo, "FI")) %>% 
+  filter(geo %in% c(ea_weights$geo, "FI")) %>% 
   filter(nace_r2 == "TOTAL") %>% # summarise(NA_WE = sum(is.na(weight), na_s = sum(is.na(nulc_va))))
   group_by(time) %>% 
   mutate(rel_nulc_va = weight_index(nulc_va, geo, 2015, weights_bis_broad)) %>% 
@@ -399,6 +393,16 @@ kk_d %>%
 
 weight_index(x = kk$nulc_va, kk$geo, 2015, weights_bis_broad)
 
+q_dat %>% 
+  # filter(geo %in% c("US", "AU", "SE", "FI")) %>%
+  group_by(time) %>% 
+  mutate(rel_nulc_aper = weight_index(nulc_aper, geo, 2015, weights_bis_broad)) %>% 
+  ungroup() %>% 
+  filter(geo == "FI") %>% View()
+  ggplot(aes(time, rel_nulc_aper, group = geo)) +
+  geom_line()
 
+
+  
 ```
 
