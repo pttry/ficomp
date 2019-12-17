@@ -100,3 +100,45 @@ ert_eff_ic_q <- ert_eff_ic_q0 %>%
   mutate(exch_rt_label = label_eurostat(exch_rt, dic = "exch_rt"))
 
 usethis::use_data(ert_eff_ic_m, ert_eff_ic_q, overwrite = TRUE)
+
+
+# Annual national accounts
+
+
+nama_10_gdp_0 <- eurostat::get_eurostat("nama_10_gdp", time_format = "num", cache = FALSE)
+nama_10_a64_0 <- eurostat::get_eurostat("nama_10_a64", time_format = "num", cache = FALSE)
+nama_10_a64_e_0 <- eurostat::get_eurostat("nama_10_a64_e", time_format = "num", cache = FALSE)
+
+dat_nama_10_gdp <- nama_10_gdp_0 %>%
+  filter(unit %in% c("CLV10_MEUR", "CLV10_MNAC", "CP_MNAC"),
+         na_item %in% c("B1GQ", "P6", "P61", "B11")) %>%
+  unite(vars, na_item, unit, sep = "__") %>%
+  mutate(vars = as_factor(vars)) %>%
+  spread(vars, values)
+
+nama_10_a64 <- nama_10_a64_0 %>%
+  filter(unit %in% c("CLV10_MEUR", "CLV10_MNAC", "CP_MNAC", "PYP_MNAC"),
+         na_item %in% c("B1G", "D1")) %>%
+  unite(vars, na_item, unit, sep = "__") %>%
+  mutate(vars = as_factor(vars)) %>%
+  spread(vars, values)
+
+nama_10_a64_e <- nama_10_a64_e_0 %>%
+  filter(unit %in% c("THS_HW", "THS_PER"),
+         na_item %in% c("EMP_DC", "SAL_DC")) %>%
+  unite(vars, na_item, unit, sep = "__") %>%
+  mutate(vars = as_factor(vars)) %>%
+  spread(vars, values)
+
+dat_nama_10_a64 <-
+  nama_10_a64 %>%
+  left_join(nama_10_a64_e, by = c("nace_r2", "geo", "time")) %>%
+  mutate_at(c("geo", "nace_r2"), as_factor) %>%
+  filter(nace_r2 %in% c("TOTAL", "C")) %>%
+  droplevels() %>%
+  select(- D1__CLV10_MEUR, - D1__CLV10_MNAC, - D1__PYP_MNAC)  # mostly missind and not needed
+
+# visdat::vis_dat(dat_nama_10_a64)
+
+
+usethis::use_data(dat_nama_10_a64, dat_nama_10_gdp, overwrite = TRUE)

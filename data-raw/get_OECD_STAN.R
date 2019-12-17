@@ -4,6 +4,8 @@ library(OECD)
 library(tidyverse)
 library(countrycode)
 
+devtools::load_all()
+
 # dataset_list <- get_datasets()
 # search_dataset("STAN", data = dataset_list) # %>% View()
 
@@ -19,20 +21,25 @@ ind_codes <- c(D01T99 = "TOTAL", D10T33 = "C", D41T43 = "F", D45T47 = "G", D49T5
                D55T56 = "I", D58T63 = "J", D69T75 = "M", D77T82 = "N")
 
 
-stan_str$LOCATION %>%
-  mutate(code = countrycode(stan_str$LOCATION$id, "iso3c", "eurostat")) %>%
-  full_join(eurostat::eu_countries, by = c("code"))
+# stan_str$LOCATION %>%
+#   mutate(code = countrycode(stan_str$LOCATION$id, "iso3c", "eurostat")) %>%
+#   full_join(eurostat::eu_countries, by = c("code"))
 
+# Needed countries that are in STAN
+loc_list <- intersect(
+  countrycode(c(eurostat_geos, oecd_geos), "eurostat", "iso3c"),
+  stan_str$LOCATION$id)
 
 ind_list <- setNames(names(ind_codes), ind_codes)
 
 
+# stan_str$VAR %>% View()
 # Huom!
 var_list <- c(B1G__CP_MNAC = "VALU", B1G__CLV10_MNAC = "VALK", B1G__PYP_MNAC = "VKPY",
-              EMP_DC__THS_PER = "EMPN", EMP_DC__MIL_HW = "HRSN", SAL_DC__THS_HW = "HRSE", D1__CP_MNAC = "LABR")
+              EMP_DC__THS_PER = "EMPN", SAL_DC__THS_PER = "EMPE", EMP_DC__MIL_HW = "HRSN", SAL_DC__MIL_HW = "HRSE", D1__CP_MNAC = "LABR")
 
 
-dat_stan0 <- get_dataset("STANI4_2016", filter = list(stan_str$LOCATION$id, var_list, ind_list))
+dat_stan0 <- get_dataset("STANI4_2016", filter = list(loc_list, var_list, ind_list))
 
 # dat_stan %>%
 #   select(VAR, UNIT, LOCATION) %>%
@@ -46,11 +53,14 @@ stan_dat <-
             time = as.numeric(obsTime),
             values = obsValue) %>%
   spread(vars, values) %>%
-  mutate(EMP_DC__THS_HW = EMP_DC__MIL_HW * 1000) %>%
-  select(- EMP_DC__MIL_HW) %>%
+  mutate(EMP_DC__THS_HW = EMP_DC__MIL_HW * 1000,
+         SAL_DC__THS_HW = SAL_DC__MIL_HW * 1000) %>%
+  select(- EMP_DC__MIL_HW, - SAL_DC__MIL_HW) %>%
   group_by(geo, nace_r2) %>%
   mutate(B1G__PYP_MNAC = statfitools::pp(cp = B1G__CP_MNAC, fp = B1G__CLV10_MNAC, time = time)) %>%
   ungroup()
+
+# TODO: open sector
 
 
 usethis::use_data(stan_dat, overwrite = TRUE)

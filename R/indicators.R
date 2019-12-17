@@ -22,6 +22,8 @@ rebase <- function(x, time, baseyear) {
 #' @param input2 a labour input of output (not neccessary if input = input2)
 #'
 #' @export
+#' @example
+#' ind_ulc(cost = c(1,2,3), output = c(NA,4,6), time = c(1,2,3), baseyear = 2)
 
 ind_ulc <- function(cost, output, input1 = 1, input2 = 1, time, baseyear){
   ind <- (cost / input1) / (output / input2)

@@ -8,6 +8,8 @@ load_all()
 
 q_start_time <- "1995-01-01"
 q_base_year <- 2010
+a_start_time <- 1975
+a_base_year <- 2010
 
 ## Countries
 
@@ -26,7 +28,7 @@ other_oecd <- c("AU", "CA", "US", "JP", "NO", "NZ", "CH")
 
 # Some removed temporary due to missing data
 oecd_geos <- setdiff(c("AU", "CA", "US", "JP", "NZ", "CH"), c("CH"))
-eurostat_geos <- setdiff(c(eu_countries, other_eurostat_countries), c("CH", "HR", "IS", "PL"))
+eurostat_geos <- setdiff(c(eu_countries, other_eurostat_countries), c("CH", "HR", "IS", "PL", "MT", "CZ", "HU"))
 
 
 all_geos <- c(eurostat_geos, oecd_geos)
@@ -116,3 +118,60 @@ q_dat %>%
 ## Annual data
 
 data("stan_dat")
+
+data(oecd_dat_sna)
+
+a_dat_oecd <- oecd_dat_sna %>%
+  unite(vars, na_item, unit, sep = "__") %>%
+  filter(time >= a_start_time) %>%
+  spread(vars, values) %>%
+  group_by(geo) %>%
+  transmute(
+    time = time,
+    bkt_ind = rebase(B1GQ__CLV_NAC, time = time, baseyear = a_base_year),
+    exp_ind = rebase(P6__CLV_NAC, time = time, baseyear = a_base_year)
+    # tbalance = B11__CP_MEUR,
+  ) %>%
+  ungroup()
+
+a_dat_ulc_oecd <-
+  stan_dat %>%
+  mutate(nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV10_MNAC / EMP_DC__THS_PER, time = time, baseyear = a_base_year),
+         nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV10_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year))
+
+data("dat_nama_10_gdp", "dat_nama_10_a64")
+
+a_dat_dep <-
+  dat_nama_10_gdp %>%
+  filter(geo %in% eu_countries) %>%
+  group_by(geo) %>%
+  transmute(
+    time = time,
+    bkt_ind = rebase(B1GQ__CLV10_MNAC, time = time, baseyear = a_base_year),
+    exp_ind = rebase(P6__CLV10_MNAC, time = time, baseyear = a_base_year),
+    tbalance_gdp = 100 * B11__CP_MNAC / B1GQ__CP_MNAC,
+  ) %>%
+  ungroup()
+
+a_dat_ind <-
+  dat_nama_10_a64 %>%
+  filter(geo %in% eurostat_geos) %>%
+  group_by(geo, nace_r2) %>%
+  mutate(nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV10_MNAC / EMP_DC__THS_PER, time = time, baseyear = a_base_year),
+         nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV10_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year)
+         ) %>%
+  group_by(nace_r2, time) %>%
+  mutate(nulc_hw_va_rel15 = weight_index(nulc_hw_va, geo, 2015, weight_df = weights_bis_broad)) %>%
+  ungroup()
+
+a_dat_ind %>%
+  filter(geo == "FI", nace_r2 == "TOTAL") %>%
+  ggplot(aes(time, nulc_hw_va_rel15)) +
+  geom_line()
+
+visdat::vis_dat(a_dat_ind)
+
+a_dat_ind %>%
+  filter(is.na(nulc_hw_va_rel15)) %>% distinct(geo)
+
+weights_bis_broad %>% filter(geo_base == "SE", time == 2012)
