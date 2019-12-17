@@ -117,7 +117,7 @@ dat_nama_10_gdp <- nama_10_gdp_0 %>%
   spread(vars, values)
 
 nama_10_a64 <- nama_10_a64_0 %>%
-  filter(unit %in% c("CLV10_MEUR", "CLV10_MNAC", "CP_MNAC", "PYP_MNAC"),
+  filter(unit %in% c("CLV10_MEUR", "CLV10_MNAC", "CP_MNAC", "CP_MEUR", "PYP_MNAC"),
          na_item %in% c("B1G", "D1")) %>%
   unite(vars, na_item, unit, sep = "__") %>%
   mutate(vars = as_factor(vars)) %>%
