@@ -161,13 +161,13 @@ saveRDS(q_dat, file = "data-out/ficomp_quarterly_data.rds")
 
 ## Annual data
 
-data("stan_dat")
+data("stan_dat", "oecd_dat_sna")
 
-data(oecd_dat_sna)
 
 a_dat_oecd <- oecd_dat_sna %>%
+  filter(time >= a_start_time,
+         geo %in% oecd_geos) %>%
   unite(vars, na_item, unit, sep = "__") %>%
-  filter(time >= a_start_time) %>%
   spread(vars, values) %>%
   group_by(geo) %>%
   transmute(
@@ -178,10 +178,17 @@ a_dat_oecd <- oecd_dat_sna %>%
   ) %>%
   ungroup()
 
+# visdat::vis_dat(a_dat_oecd)
+
 a_dat_ulc_oecd <-
   stan_dat %>%
+  filter(time >= a_start_time,
+         geo %in% oecd_geos,
+         nace_r2 %in% c("TOTAL", "C")) %>%
   mutate(nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV10_MNAC / EMP_DC__THS_PER, time = time, baseyear = a_base_year),
          nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV10_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year))
+
+visdat::vis_dat(a_dat_ulc_oecd)
 
 data("dat_nama_10_gdp", "dat_nama_10_a64")
 
@@ -215,6 +222,19 @@ a_dat_ind <-
          rulc_hw_va_rel15 = weight_index(rulc_hw_va, geo, 2015, weight_df = weights_bis_broad)) %>%
   ungroup()
 
+a_dat_ind_oecd <-
+  dat_nama_10_a64 %>%
+  filter(geo %in% eurostat_geos) %>%
+  group_by(geo, nace_r2) %>%
+  mutate(nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV10_MNAC / EMP_DC__THS_PER, time = time, baseyear = a_base_year),
+         nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV10_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year),
+         nulc_hw_va_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_HW, B1G__CLV10_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year),
+         rulc_hw_va = rebase(nulc_hw_va / (B1G__CP_MNAC/B1G__CLV10_MNAC), time = time, baseyear = a_base_year)) %>%
+  group_by(nace_r2, time) %>%
+  mutate(nulc_hw_va_rel15 = weight_index(nulc_hw_va, geo, 2015, weight_df = weights_bis_broad),
+         nulc_hw_va_eur_rel15 = weight_index(nulc_hw_va_eur, geo, 2015, weight_df = weights_bis_broad),
+         rulc_hw_va_rel15 = weight_index(rulc_hw_va, geo, 2015, weight_df = weights_bis_broad)) %>%
+  ungroup()
 
 # library(ggplot2)
 # a_dat_ind %>%
@@ -238,6 +258,9 @@ a_dat_dep %>%
   filter(is.na(exp_ind)) %>% distinct(geo)
 
 # visdat::vis_dat(a_dat_dep)
+
+
+# Combine
 
 a_dat <-
   a_dat_dep %>%
