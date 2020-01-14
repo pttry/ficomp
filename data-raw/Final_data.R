@@ -75,6 +75,7 @@ var_labels <- c(
   rulc_hw_va_rel15 = "Relative real unit labour cost, hours, value added, related to other countries, 2014-2016  double trade weights"
 )
 
+usethis::use_data(var_labels, overwrite = TRUE)
 
 ## Quarterly data for ULC
 # Only for person based
@@ -144,17 +145,18 @@ q_dat <-
 #   ungroup() %>%
 #   filter((bkt_ind + exp_ind + nulc_aper) > 0)
 
-q_dat %>%
-  filter(geo == "FI") %>%
-  select(geo, time, gdp_ind, exp_ind, nulc_aper_rel15, gdp_ind_rel15, exp_ind_rel15) %>%
-  gather(vars, values, - geo, - time) %>%
-  ggplot(aes(time, values)) +
-  facet_wrap(~ vars, scales = "free_y") +
-  geom_line()
+# q_dat %>%
+#   filter(geo == "FI") %>%
+#   select(geo, time, gdp_ind, exp_ind, nulc_aper_rel15, gdp_ind_rel15, exp_ind_rel15) %>%
+#   gather(vars, values, - geo, - time) %>%
+#   ggplot(aes(time, values)) +
+#   facet_wrap(~ vars, scales = "free_y") +
+#   geom_line()
 
 # visdat::vis_dat(q_dat)
 # q_dat %>% filter(is.na(gdp_ind)) %>%distinct(geo)
 
+usethis::use_data(q_dat, overwrite = TRUE)
 write.csv2(q_dat, file = "data-out/ficomp_quarterly_data.csv")
 saveRDS(q_dat, file = "data-out/ficomp_quarterly_data.rds")
 
@@ -188,7 +190,7 @@ a_dat_ulc_oecd <-
   mutate(nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV10_MNAC / EMP_DC__THS_PER, time = time, baseyear = a_base_year),
          nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV10_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year))
 
-visdat::vis_dat(a_dat_ulc_oecd)
+# visdat::vis_dat(a_dat_ulc_oecd)
 
 data("dat_nama_10_gdp", "dat_nama_10_a64")
 
@@ -246,13 +248,13 @@ a_dat_ind_oecd <-
 #   geom_line()
 
 
-a_dat_dep %>%
-  filter(geo == "FI") %>%
-  select(geo, time, gdp_ind, exp_ind, gdp_ind_rel15, exp_ind_rel15, tbalance_gdp) %>%
-  gather(vars, values, - geo, - time) %>%
-  ggplot(aes(time, values)) +
-  facet_wrap(~ vars, scales = "free_y") +
-  geom_line()
+# a_dat_dep %>%
+#   filter(geo == "FI") %>%
+#   select(geo, time, gdp_ind, exp_ind, gdp_ind_rel15, exp_ind_rel15, tbalance_gdp) %>%
+#   gather(vars, values, - geo, - time) %>%
+#   ggplot(aes(time, values)) +
+#   facet_wrap(~ vars, scales = "free_y") +
+#   geom_line()
 
 a_dat_dep %>%
   filter(is.na(exp_ind)) %>% distinct(geo)
@@ -267,5 +269,6 @@ a_dat <-
   right_join(a_dat_ind, by = c("geo", "time")) %>%
   mutate(geo = as_factor(geo))
 
+usethis::use_data(a_dat, overwrite = TRUE)
 write.csv2(a_dat, file = "data-out/ficomp_annual_data.csv")
 saveRDS(a_dat, file = "data-out/ficomp_annual_data.rds")
