@@ -22,8 +22,8 @@ weights_bis_narrow <-
   map_dfr(wbis_narrow_sheets, ~readxl::read_xlsx(wbis_narrow_temp, sheet = ., range = "B6:AC33"), .id = "time") %>%
   rename(geo_base = ...1) %>%
   gather(geo, weight, -geo_base, - time) %>%
-  mutate(geo_base = countrycode(geo_base, "iso2c", "eurostat", custom_match = c(XM = "EA")),
-         geo = countrycode(geo, "iso2c", "eurostat", custom_match = c(XM = "EA")),
+  mutate(geo_base = countrycode::countrycode(geo_base, "iso2c", "eurostat", custom_match = c(XM = "EA")),
+         geo = countrycode::countrycode(geo, "iso2c", "eurostat", custom_match = c(XM = "EA")),
          time_range = time) %>%
   tidyr::separate(time, into = c("time1", "time2"), sep = "_", convert = TRUE) %>%
   mutate(time = (time1 + time2) / 2)
@@ -32,8 +32,8 @@ weights_bis_broad <-
   map_dfr(wbis_broad_sheets, ~readxl::read_xlsx(wbis_broad_temp, sheet = ., range = "B6:BJ66"), .id = "time") %>%
   rename(geo_base = ...1) %>%
   gather(geo, weight, -geo_base, - time) %>%
-  mutate(geo_base = countrycode(geo_base, "iso2c", "eurostat", custom_match = c(XM = "EA")),
-         geo = countrycode(geo, "iso2c", "eurostat", custom_match = c(XM = "EA")),
+  mutate(geo_base = countrycode::countrycode(geo_base, "iso2c", "eurostat", custom_match = c(XM = "EA")),
+         geo = countrycode::countrycode(geo, "iso2c", "eurostat", custom_match = c(XM = "EA")),
          time_range = time) %>%
   tidyr::separate(time, into = c("time1", "time2"), sep = "_", convert = TRUE) %>%
   mutate(time = (time1 + time2) / 2)

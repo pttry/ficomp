@@ -134,6 +134,7 @@ q_dat <-
   bind_rows(filter(q_dat_oecd, geo %in% oecd_geos)) %>%
   group_by(time) %>%
   mutate(nulc_aper_rel15 = weight_index(nulc_aper, geo, 2015, weight_df = weights_bis_broad),
+         nulc_aper_rel_bis = weight_index(nulc_aper, geo, lubridate::year(time), weight_df = weights_bis_broad),
          gdp_ind_rel15 = weight_index(gdp_ind, geo, 2015, weight_df = weights_bis_broad),
          exp_ind_rel15 = weight_index(exp_ind, geo, 2015, weight_df = weights_bis_broad)) %>%
   ungroup()

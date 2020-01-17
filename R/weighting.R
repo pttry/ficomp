@@ -23,9 +23,11 @@ weighted_gmean <- function(x, w) { prod(x^prop.table(w)) }
 #' @param a vector to indicate countries
 #' @param a year for weights
 #' @param weitht_df a weigthing data.frame in long form. Should have time, geo_base and geo columns.
+#' @param nearest a logical whether to use nearest year for weight table
 #'
 #' @export
-weight_index <- function(x, geo, time, weight_df = weights_bis_broad) {
+weight_index <- function(x, geo, time, weight_df = weights_bis_broad, nearest = TRUE) {
+  if (nearest) time <- weights_bis_broad$time[which.min(abs(weights_bis_broad$time-time))]
   w <- weight_df[weight_df$time == time & weight_df$geo %in% geo,]
   w <- w[order(match(w$geo, geo)),]
   y <- purrr::imap_dbl(geo, ~ 100 * weighted_gmean(x[.y]/ x[-.y],
