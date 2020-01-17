@@ -1,0 +1,411 @@
+---
+title: "Kilpailukykymuuttujat"
+output: rmarkdown::html_document
+vignette: >
+  %\VignetteIndexEntry{Labour_cost}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", 
+  fig.height = 7,
+  fig.width = 16,
+  fig.path = "Report/", 
+  echo = FALSE, message = FALSE, warning = FALSE
+)
+
+
+# library(ficomp)
+
+devtools::load_all()
+
+library(dplyr)
+library(forcats)
+library(ggplot2)
+library(eurostat)
+library(tidyr)
+library(ggptt)
+
+set_proj_theme(22)
+
+data(q_dat, a_dat, naq_eurostat_dat)
+
+base_year <- 2010
+base_years <- 2000:2018
+geos <- c(Finland = "FI", Sweden = "SE", Germany = "DE", France = "FR")
+start_time <- "1990-01-01"
+
+```
+
+# Data
+
+Data for unit labour cost index
+
+```{r}
+
+tibble(code = levels(naq_eurostat_dat$na_item), name = label_eurostat(levels(naq_eurostat_dat$na_item), "na_item"))
+
+```
+
+
+# Nominal unit labour cost
+
+Different definations for unit labour cost:
+* Output: GDP or value added
+* Relation to hours worked or persons (relevant if adjusted for self-employed or for decomposition)
+
+## Different measures quarterly
+
+```{r nulc}
+
+lc_dat_nace <- 
+  naq_eurostat_dat %>% 
+  unite(vars, na_item, unit) %>%  
+  # filter(vars %in% c("D1_CP_MNAC", "B1G_CLV10_MNAC")) %>% 
+  spread(vars, values) %>% 
+  group_by(geo, nace_r2) %>% 
+  mutate(
+    # nominal unit labour cost
+    nulc_va = ind_ulc(D1_CP_MNAC, B1G_CLV10_MNAC, time = time, baseyear = base_year),
+    nulc = ind_ulc(D1_CP_MNAC, B1GQ_CLV10_MNAC, time = time, baseyear = base_year),
+    # nominal unit labour cost, adjusted to take account emploees/emplyed share
+    nulc_hw_va = ind_ulc(D1_CP_MNAC / SAL_DC_THS_HW, B1G_CLV10_MNAC / EMP_DC_THS_HW, time = time, baseyear = base_year),
+    nulc_hw = ind_ulc(D1_CP_MNAC / SAL_DC_THS_HW, B1GQ_CLV10_MNAC / EMP_DC_THS_HW, time = time, baseyear = base_year),
+    nulc_hw_eur = ind_ulc(D1_CP_MEUR / SAL_DC_THS_HW, B1GQ_CLV10_MNAC / EMP_DC_THS_HW, time = time, baseyear = base_year),
+    nulc_per_va = ind_ulc(D1_CP_MNAC / SAL_DC_THS_PER, B1G_CLV10_MNAC / EMP_DC_THS_PER, time = time, baseyear = base_year),
+    nulc_per = ind_ulc(D1_CP_MNAC / SAL_DC_THS_PER, B1GQ_CLV10_MNAC / EMP_DC_THS_PER, time = time, baseyear = base_year)) %>% 
+  ungroup()
+
+lc_dat <- lc_dat_nace %>% 
+  filter(nace_r2 == "TOTAL")
+
+lc_dat %>% 
+  filter(geo %in% geos,
+         time >= start_time) %>% 
+  select(geo, time, nulc, nulc_va, nulc_hw, nulc_hw_va, nulc_per, nulc_per_va) %>% 
+  gather(ind, values, -geo, -time) %>% 
+  ggplot(aes(time, values, colour = geo)) +
+  geom_line() +
+  facet_wrap(~ ind) +
+  the_title_blank() 
+
+```
+
+
+On short term a NULC indicator selection does not matter. On longer term
+differences acculumate. 
+
+```{r nulc_fi}
+
+lc_dat %>% 
+  filter(geo == "FI",
+         time >= start_time) %>% 
+  select(geo, time, nulc, nulc_va, nulc_hw, nulc_hw_va, nulc_per, nulc_per_va) %>% 
+  gather(ind, values, -geo, -time) %>% 
+  group_by(geo, ind) %>% 
+  mutate(change = values / lag(values, 4, order_by = time) - 1) %>% 
+  ungroup() %>% 
+  gather(vars, values, values, change) %>% 
+  ggplot(aes(time, values, colour = ind)) +
+  facet_wrap(~ vars, scales = "free_y") +
+  geom_line() +
+  the_title_blank()
+
+```
+
+
+
+## ULC yearly from stan
+
+```{r nulc_stan}
+
+lc_dat_stan <- 
+  stan_dat %>% 
+  # filter(vars %in% c("D1_CP_MNAC", "B1G_CLV10_MNAC")) %>% 
+  group_by(geo, nace_r2) %>% 
+  mutate(
+    # nominal unit labour cost, adjusted to take account emploees/emplyed share
+    nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV10_MNAC / EMP_DC__THS_HW, time = time, baseyear = base_year),
+    nulc_va = ind_ulc(D1__CP_MNAC, B1G__CLV10_MNAC, time = time, baseyear = base_year),
+) %>% 
+  ungroup()
+
+lc_dat_stan %>% 
+   filter(geo %in% c(geos, "US"),
+          nace_r2 == "TOTAL") %>% 
+  select(geo, time, nulc_va, nulc_hw_va) %>% 
+  gather(ind, values, -geo, -time) %>% 
+  ggplot(aes(time, values, colour = geo)) +
+  geom_line() +
+  facet_wrap(~ ind)
+
+```
+
+### In own and in common currency
+
+```{r nulc_eur}
+
+lc_dat %>% 
+  filter(geo %in% geos,
+         time >= start_time) %>% 
+  select(geo, time, nulc_hw, nulc_hw_eur) %>% 
+  gather(ind, values, -geo, -time) %>% 
+  ggplot(aes(time, values, colour = geo)) +
+  geom_line() +
+  facet_wrap(~ ind) +
+  the_title_blank()
+
+```
+
+
+```{r nulc_per}
+
+lc_dat %>% 
+  filter(geo %in% geos,
+         time >= start_time) %>% 
+  select(geo, time, nulc_per) %>% 
+  gather(ind, values, -geo, -time) %>% 
+  mutate(geo = fct_recode(geo, !!!geos)) %>% 
+  ggplot(aes(time, values, colour = geo)) +
+  geom_line() +
+  labs(title = "Unit labour cost, employment based",
+       y = "index, 2008 = 100") +
+  the_title_blank(c("x", "l"))
+
+```
+
+
+
+
+# Nominal unit labour cost comparison from different sources
+
+NULC_APER_OECD = NULC_PER_ECB = nulc_per 
+  = (D1_CP_MNAC / SAL_DC_THS_PER) / (B1GQ_CLV10_MNAC / EMP_DC_THS_PER)
+  
+NULC_HW_ECB = nulc_hw 
+  = (D1_CP_MNAC / SAL_DC_THS_HW) / (B1GQ_CLV10_MNAC / EMP_DC_THS_HW)
+
+```{r nulc_comp}
+
+ulc_oecd_with <- ulc_oecd_dat %>% 
+  select(- unit) %>% 
+  filter(na_item == "NULC_APER") %>% 
+  mutate(na_item = paste0(na_item, "_OECD")) %>% 
+  group_by(geo, na_item) %>% 
+  mutate(values = rebase(values, time, base_year)) %>% 
+  ungroup() %>% 
+  spread(na_item, values)
+
+ulc_eurostat_with <- ulc_eurostat_dat %>% 
+  filter(na_item %in% c("NULC_HW", "NULC_PER")) %>% 
+  select(time, geo, na_item, values) %>% 
+  mutate(na_item = paste0(na_item, "_eurostat")) %>% 
+  group_by(geo, na_item) %>% 
+  mutate(values = rebase(values, time, base_year)) %>% 
+  ungroup() %>% 
+  spread(na_item, values)
+
+ulc_ecb_with <- ulc_ecb_dat %>% 
+  filter(na_item %in% c("NULC_HW", "NULC_PER")) %>% 
+  select(time, geo, na_item, values) %>% 
+  mutate(na_item = paste0(na_item, "_ECB")) %>% 
+  group_by(geo, na_item) %>% 
+  mutate(values = rebase(values, time, base_year)) %>% 
+  ungroup() %>% 
+  spread(na_item, values)
+
+lc_with <- lc_dat %>% 
+  select(time, geo, nulc, nulc_va, nulc_hw, nulc_hw_va, nulc_per, nulc_per_va) %>% 
+  left_join(ulc_oecd_with, by = c("time", "geo")) %>% 
+  # left_join(ulc_eurostat_with, by = c("time", "geo")) %>%
+  left_join(ulc_ecb_with, by = c("time", "geo")) # %>%   filter(geo == "FI") %>% View()
+
+lc_with %>% 
+  gather(vars, values, - time, - geo) %>% 
+  mutate(vars = fct_relevel(vars, "NULC_APER", after = Inf)) %>% 
+  filter(geo == "FI") %>% 
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line()
+
+
+```
+
+
+
+
+
+# Nominal unit labour cost manufacturing
+
+```{r ulc_c}
+
+lc_dat_c <- 
+  naq_eurostat_dat %>% 
+  filter(nace_r2 == "C") %>% 
+  unite(vars, na_item, unit) %>% 
+  # filter(vars %in% c("D1_CP_MNAC", "B1G_CLV10_MNAC")) %>% 
+  spread(vars, values) %>% 
+  group_by(geo) %>% 
+  mutate(
+    # nominal unit labour cost
+    ulc = ind_ulc(D1_CP_MNAC, B1G_CLV10_MNAC, time = time, baseyear = base_years),
+    # nominal unit labour cost, adjusted to take account emploees/emplyed share
+    ulc_adj = ind_ulc(D1_CP_MNAC / SAL_DC_THS_HW, B1G_CLV10_MNAC / EMP_DC_THS_HW, time = time, baseyear = base_years)) %>% 
+  ungroup()
+
+lc_dat_c %>% 
+  filter(geo %in% geos,
+         time >= start_time) %>% 
+  select(geo, time, ulc, ulc_adj) %>% 
+  gather(ind, values, -geo, -time) %>% 
+  ggplot(aes(time, values, colour = geo)) +
+  geom_line() +
+  facet_wrap(~ ind)
+
+```
+
+# Hourly compensation
+
+```{r comp_h}
+
+
+naq_eurostat_dat %>% 
+  filter(nace_r2 %in% c("TOTAL", "C")) %>% 
+  unite(vars, na_item, unit) %>% 
+  # filter(vars %in% c("D1_CP_MNAC", "B1G_CLV10_MNAC")) %>% 
+  spread(vars, values) %>% 
+  group_by(geo, nace_r2) %>% 
+  mutate(comp_h = rebase(D1_CP_MNAC / SAL_DC_THS_HW, time = time, baseyear = base_year),
+         d_comp_h = 100 * (comp_h / lag(comp_h, 4) - 1)) %>% 
+  ungroup() %>% 
+  filter(geo %in% geos,
+         time >= start_time) %>% 
+  ggplot(aes(time, d_comp_h, colour = geo)) +
+  geom_line() +
+  facet_wrap(~ nace_r2)
+
+```
+```{r d_comp_h}
+
+
+naq_eurostat_dat %>% 
+  filter(nace_r2 %in% c("TOTAL", "C")) %>% 
+  unite(vars, na_item, unit) %>% 
+  # filter(vars %in% c("D1_CP_MNAC", "B1G_CLV10_MNAC")) %>% 
+  spread(vars, values) %>% 
+  group_by(geo, nace_r2) %>% 
+  mutate(comp_h = rebase(D1_CP_MNAC / SAL_DC_THS_HW, time = time, baseyear = base_year),
+         d_comp_h = 100 * (comp_h / lag(comp_h, 4) - 1)) %>% 
+  ungroup() %>% 
+  filter(geo %in% c("FI", "SE"),
+         time >= "2010-01-01") %>% 
+  ggplot(aes(time, d_comp_h, colour = geo)) +
+  geom_line() +
+  facet_wrap(~ nace_r2)
+
+```
+```{r q_dat_geos}
+
+unique(q_dat$geo)
+
+```
+
+
+```{r q_dat}
+
+h_geos <- "FI"
+
+q_dat %>% 
+  select(geo, time, nulc_aper, nulc_aper_rel15) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+         geo = fct_relevel(geo, h_geos, after = Inf)) %>% 
+  ggplot(aes(time, values, group = geo, colour = h_geo, size = h_geo)) +
+  geom_line() +
+  facet_wrap(~ vars, scales = "free") +
+  scale_size_manual(values = c(2,1)) +
+  the_title_blank()
+
+```
+
+```{r q_dat_ind}
+
+
+q_dat %>% 
+  filter(geo %in% c("FI", "DE", "FR", "IT")) %>% 
+  select(geo, time, nulc_aper_rel15, gdp_ind_rel15, exp_ind_rel15) %>% 
+  mutate(inv_nulc_aper_rel15 = rebase(1/nulc_aper_rel15, time, base_year)) %>% 
+  select(-nulc_aper_rel15) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  # mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+  #        geo = fct_relevel(geo, h_geos, after = Inf)) %>% 
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line() +
+  facet_wrap(~ geo, scales = "free") +
+  scale_size_manual(values = c(2,1)) +
+  the_title_blank()
+
+```
+
+```{r a_dat}
+
+h_geos <- "FI"
+
+a_dat %>% 
+  select(-contains("__")) %>% 
+  filter(nace_r2 == "TOTAL") %>% 
+  select(-nace_r2) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+         geo = fct_relevel(geo, h_geos, after = Inf)) %>% 
+  ggplot(aes(time, values, group = geo, colour = h_geo, size = h_geo)) +
+  geom_line() +
+  facet_wrap(~ vars, scales = "free") +
+  scale_size_manual(values = c(2,1)) +
+  the_title_blank()
+
+```
+```{r a_dat_ind}
+
+
+a_dat %>% 
+  filter(nace_r2 == "TOTAL") %>% 
+  select(-nace_r2) %>% 
+  filter(geo %in% c("FI", "DE", "FR", "IT")) %>% 
+  select(geo, time, nulc_hw_va_rel15, rulc_hw_va_rel15, gdp_ind_rel15, exp_ind_rel15) %>% 
+  mutate(inv_nulc_hw_va_rel15 = rebase(1/nulc_hw_va_rel15, time, base_year),
+         inv_rulc_hw_va_rel15 = rebase(1/rulc_hw_va_rel15, time, base_year)) %>% 
+  select(-nulc_hw_va_rel15, -rulc_hw_va_rel15) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  # mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+  #        geo = fct_relevel(geo, h_geos, after = Inf)) %>% 
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line() +
+  facet_wrap(~ geo, scales = "free_y") +
+  scale_size_manual(values = c(2,1)) +
+  the_title_blank()
+```
+
+```{r a_dat_ind_eur}
+
+
+a_dat %>% 
+  filter(nace_r2 == "TOTAL") %>% 
+  select(-nace_r2) %>% 
+  filter(geo %in% c("FI", "DE", "FR", "IT")) %>% 
+  select(geo, time, nulc_hw_va_rel15, nulc_hw_va_eur_rel15, gdp_ind_rel15, exp_ind_rel15) %>% 
+  mutate(inv_nulc_hw_va_eur_rel15 = rebase(1/nulc_hw_va_eur_rel15, time, base_year),
+         inv_nulc_hw_va_rel15 = rebase(1/nulc_hw_va_rel15, time, base_year)) %>% 
+  select(-nulc_hw_va_eur_rel15, -nulc_hw_va_rel15) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  # mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+  #        geo = fct_relevel(geo, h_geos, after = Inf)) %>% 
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line() +
+  facet_wrap(~ geo, scales = "free_y") +
+  scale_size_manual(values = c(2,1)) +
+  the_title_blank()
+
+```

@@ -10,8 +10,13 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>", 
+  fig.height = 7,
+  fig.width = 16,
+  fig.path = "UCL_tot/", 
+  echo = FALSE, message = FALSE, warning = FALSE
 )
+
 ```
 
 ```{r setup}
@@ -23,8 +28,9 @@ library(dplyr)
 library(ameco)
 library(tidyr)
 library(ggplot2)
+library(ggptt)
 
-
+set_proj_theme(20)
 
 ```
 
@@ -36,6 +42,16 @@ ameco2 <- ameco %>%
 
 
 ```
+
+```{r}
+
+ameco2 %>% 
+  distinct(title_code, title) %>% 
+  # filter(grepl("djuste", title)) %>% 
+  knitr::kable()
+
+```
+
 
 # Terms of trade adjusted GDP
 
@@ -87,4 +103,28 @@ fi_dat2 %>%
   
 ```
 
+# Terms of trade adjusted NULC
+
+```{r nulc_tot}
+
+ameco2 %>% 
+  filter(title_code %in% c("UWCD", "OVGD", "OVGDA", "NWTD", "NETD"),
+         country_code %in% c("FIN", "SWE", "DEU", "FRA"),
+         !grepl("ECU", unit),
+         !grepl("PPS", unit),
+         year > 1989) %>%             # only EURO-national currency series
+  select(country_code ,title_code, year, value) %>% 
+  spread(title_code, value) %>% 
+  group_by(country_code) %>% 
+  mutate(nulc_per = rebase((UWCD / NWTD) / (OVGD / NETD), year, 2010),
+         nulc_per_tota = rebase((UWCD / NWTD) / (OVGDA / NETD), year, 2010)) %>% 
+  ungroup() %>% 
+  select(country_code, year, nulc_per, nulc_per_tota) %>% 
+  gather(vars, values, nulc_per, nulc_per_tota) %>% 
+  ggplot(aes(year, values, colour = vars)) +
+  facet_wrap(~ country_code) +
+  geom_line() +
+  the_title_blank()
+
+```
 
