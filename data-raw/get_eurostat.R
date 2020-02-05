@@ -79,13 +79,17 @@ usethis::use_data(ulc_eurostat_dat, overwrite = TRUE)
 
 # Exchange rates
 
-eur_usd_a <- get_eurostat("ert_bil_eur_a", filters = list(statinfo = "AVG", currency = "USD")) %>%
-  select(time, values)
+countrycode::codelist %>% View()
 
-eur_usd_q<- get_eurostat("ert_bil_eur_q", filters = list(statinfo = "AVG", currency = "USD")) %>%
-  select(time, values)
+currencies <- c(AU = "AUD", CA = "CAD", US = "USD", JP = "JPY", NZ = "NZD", CH = "CHF")
 
-usethis::use_data(eur_usd_a, eur_usd_q, overwrite = TRUE)
+exh_eur_a <- get_eurostat("ert_bil_eur_a", filters = list(statinfo = "AVG", currency = currencies), time_format = "num") %>%
+  select(time, geo = currency, values)
+
+exh_eur_q<- get_eurostat("ert_bil_eur_q", filters = list(statinfo = "AVG", currency = currencies)) %>%
+  select(time, geo = currency, values)
+
+usethis::use_data(exh_eur_a, exh_eur_q, overwrite = TRUE)
 
 
 # Effective exchange rates

@@ -2,6 +2,7 @@
 
 library(OECD)
 library(dplyr)
+library(tidyr)
 library(forcats)
 library(lubridate)
 library(countrycode)
@@ -12,10 +13,6 @@ library(countrycode)
 # ULC_QUA is discontinued
 
 # search_dataset("Unit", data = dataset_list)
-
-# Exchange rates
-
-exh_str <- get_data_structure("REFSERIES_MSIT")
 
 
 
@@ -109,6 +106,8 @@ usethis::use_data(oecd_dat_Q, overwrite = TRUE)
 
 # search_dataset("SNA", data = dataset_list) %>% View()
 
+dataset_list %>% filter(grepl("SNA", id)) %>% View()
+
 sna1_str <- get_data_structure("SNA_TABLE1")
 
 sna1_str$TRANSACT %>% View()
@@ -143,6 +142,7 @@ oecd_dat_sna <- oecd_dat_sna_0 %>%
     unit = fct_recode(MEASURE, !!!sna_measures),
     currency = as_factor(UNIT),
     values = obsValue)
+
 
 
 usethis::use_data(oecd_dat_sna, overwrite = TRUE)

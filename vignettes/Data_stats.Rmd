@@ -130,3 +130,17 @@ ulc_oecd_dat %>%
     geom_hline(yintercept = as.numeric(as.Date("1995-01-01")))
 
 ```
+
+
+```{r}
+
+oecd_dat_sna %>% 
+  group_by(geo, na_item, unit) %>% 
+  mutate(ind_10 = rebase(values, time, 2010)) %>% 
+  ungroup() %>% 
+  ggplot(aes(time, ind_10, group = geo)) +
+  facet_grid(na_item ~ unit, scales = "free_y") +
+  geom_line()
+
+```
+
