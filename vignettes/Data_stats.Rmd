@@ -144,3 +144,17 @@ oecd_dat_sna %>%
 
 ```
 
+```{r}
+
+eo_ulc_a_dat %>% 
+  drop_na(values) %>% 
+  group_by(geo, na_item) %>% 
+  mutate(tmin = min(time), 
+         tmax = max(time)) %>% 
+  ungroup() %>% 
+  ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = na_item)) +
+    geom_linerange(position = position_dodge(width = 0.5)) +
+    coord_flip() +
+    geom_hline(yintercept = as.numeric(as.Date("1995-01-01")))
+
+```
