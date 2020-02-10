@@ -22,7 +22,7 @@ eci_dat <- eci_dat0 %>%
 
 usethis::use_data(eci_dat, overwrite = TRUE)
 
-# eci_dat %>%
-#   ggplot(aes(time, eci, group = geo)) +
-#   geom_line(colour = "grey50") +
-#   geom_line(data = filter(eci_dat, geo == "FI"), colour = "blue")
+eci_dat %>%
+  ggplot(aes(time, eci, group = geo)) +
+  geom_line(colour = "grey50") +
+  geom_line(data = filter(eci_dat, geo == "FI"), colour = "blue")
