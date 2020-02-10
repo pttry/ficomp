@@ -7,6 +7,8 @@ library(forcats)
 library(lubridate)
 library(countrycode)
 
+start_year <- 1995
+
 # dataset_list <- get_datasets()
 
 ## Unit labour cost
@@ -14,7 +16,7 @@ library(countrycode)
 
 # search_dataset("Unit", data = dataset_list)
 
-
+# HUOM esim Japanille Jobs pidempi sarja
 
 # Unit labour costs and labour productivity (employment based), Total economy
 # https://stats.oecd.org/Index.aspx?DataSetCode=ULC_EEQ
@@ -109,8 +111,13 @@ usethis::use_data(oecd_dat_Q, overwrite = TRUE)
 dataset_list %>% filter(grepl("SNA", id)) %>% View()
 
 sna1_str <- get_data_structure("SNA_TABLE1")
+# sna6_str <- get_data_structure("SNA_TABLE6")
+sna6a_str <- get_data_structure("SNA_TABLE6A")
+sna7a_str <- get_data_structure("SNA_TABLE7A")
 
-sna1_str$TRANSACT %>% View()
+sna1_str$TRANSACT %>% knitr::kable()
+sna6a_str$TRANSACT %>% knitr::kable()
+sna7a_str$MEASURE %>% knitr::kable()
 
 sna_transact <- c(
   B1GQ = "B1_GA", #"Gross domestic product",
@@ -119,10 +126,34 @@ sna_transact <- c(
   P61 = "P61", #"Exports of goods",
   B11 = "B11") #"External balance of goods and services"
 
+sna6a_transact <- c(
+  B1G = "B1GA", #"Gross Value added",
+  D1 = "D1A" #"Compensation of employees, total",
+  )
+
+sna7a_transact <- c(
+  EMP_DC = "ETOA", # "Total empoyment",
+  SAL_DC = "EEMA" #"Employees",
+)
+
+sna6_activity <- c(
+  TOTAL = "TOT",
+  C = "D"
+)
+
+sna6a_activity <- c(
+  TOTAL = "VTOT",
+  C = "VC"
+)
 
 sna_measures <-   c(
   CP_NAC = "C",   # current prices
   CLV_NAC = "V"  # Constant prices
+)
+
+sna7a_measures <-   c(
+  THS_PER = "PER",   # current prices
+  THS_HW = "HRS"  # Constant prices
 )
 
 # Needed countries that are in SNA
@@ -131,10 +162,22 @@ sna_geo <- intersect(
     sna1_str$LOCATION$id)
 
 
-oecd_dat_sna_0 <- get_dataset(dataset = "SNA_TABLE1",
+oecd_dat_sna1_0 <- get_dataset(dataset = "SNA_TABLE1",
                             filter = list(sna_geo, sna_transact, sna_measures))
 
-oecd_dat_sna <- oecd_dat_sna_0 %>%
+# oecd_dat_sna6_0 <- get_dataset(dataset = "SNA_TABLE6",
+#                               filter = list(sna_geo, sna6_transact, sna6_activity, sna_measures))
+
+oecd_dat_sna6a_0 <- get_dataset(dataset = "SNA_TABLE6A",
+                               filter = list(sna_geo, sna6a_transact, sna6a_activity, sna_measures))
+
+oecd_dat_sna7a_0 <- get_dataset(dataset = "SNA_TABLE7A",
+                                filter = list(sna_geo, sna7a_transact, sna6a_activity, sna7a_measures))
+
+
+unique(oecd_dat_sna7a_0$MEASURE)
+
+oecd_dat_sna <- oecd_dat_sna1_0 %>%
   transmute(
     time = as.numeric(obsTime),
     geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat", nomatch = NULL)),
@@ -143,6 +186,36 @@ oecd_dat_sna <- oecd_dat_sna_0 %>%
     currency = as_factor(UNIT),
     values = obsValue)
 
+oecd_dat_sna6a <- oecd_dat_sna6a_0 %>%
+  transmute(
+    time = as.numeric(obsTime),
+    geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat", nomatch = NULL)),
+    nace_r2 = fct_recode(ACTIVITY, !!!sna6a_activity),
+    na_item = fct_recode(TRANSACT, !!!sna6a_transact),
+    unit = fct_recode(MEASURE, !!!sna_measures),
+    currency = as_factor(UNIT),
+    values = obsValue)  %>%
+  unite(vars, na_item, unit, sep = "__") %>%
+  mutate(vars = as_factor(vars)) %>%
+  spread(vars, values)
 
+oecd_dat_sna7a <- oecd_dat_sna7a_0 %>%
+  transmute(
+    time = as.numeric(obsTime),
+    geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat", nomatch = NULL)),
+    nace_r2 = fct_recode(ACTIVITY, !!!sna6a_activity),
+    na_item = fct_recode(TRANSACT, !!!sna7a_transact),
+    unit = fct_recode(MEASURE, !!!sna7a_measures),
+    values = obsValue) %>%
+  unite(vars, na_item, unit, sep = "__") %>%
+  mutate(vars = as_factor(vars)) %>%
+  spread(vars, values)
+
+dat_oecd_sna_nace <-
+  oecd_dat_sna6a %>%
+  left_join(oecd_dat_sna7a, by = c("time", "geo", "nace_r2")) %>%
+  filter(time >= start_year)
+
+visdat::vis_dat(dat_oecd_sna_nace)
 
 usethis::use_data(oecd_dat_sna, overwrite = TRUE)

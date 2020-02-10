@@ -19,20 +19,39 @@ eo_str$VARIABLE %>% knitr::kable()
 
 # Needed countries that are in STAN
 loc_list <- intersect(
-  countrycode(c(eurostat_geos, oecd_geos, c("AU", "CA", "US", "JP", "NZ", "CH")), "eurostat", "iso3c"),
-  stan_str$LOCATION$id)
+  countrycode(c(eurostat_geos, oecd_geos), "eurostat", "iso3c"),
+  eo_str$LOCATION$id)
 
 
 var_list_exp <- c("SHTGSVD", "MSHA", "XSHA", "CTGSVD", "MPEN", "XMKT", "XPERF", "TGSVD")
 
-var_list_ulc <- c("HRS", "PDTY", "ULC", "WRT", "WSST")
+var_list_ulc <- c(nulc = "ULC",
+                  D1__CP_MNAC = "WSSS",
+                  B11__CP_MNAC = "FBGS",
+                  B1GQ__CP_MNAC = "GDP",
+                  B1GQ__CLV10_MNAC = "GDPV",
+                  P6__CLV10_MNAC = "XGSV",
+                  P6__CP_MNAC = "XGS")
+
+var_list_eo <- c(nulc = "ULC",
+                 D1__CP_MNAC = "WSSS",
+                 B11__CP_MNAC = "FBGS",
+                 B1GQ__CP_MNAC = "GDP",
+                 B1GQ__CLV10_MNAC = "GDPV",
+                 P6__CLV10_MNAC = "XGSV",
+                 P6__CP_MNAC = "XGS",
+                 XPERF = "XPERF",
+                 XSHA = "XSHA"
+                 )
+
 
 eo_str$VARIABLE %>%
-  filter(id %in% var_list) %>%
+  filter(id %in% var_list_exp) %>%
   knitr::kable()
 
 dat_eo_exp0 <- get_dataset("EO", filter = list(loc_list, var_list_exp))
 dat_eo_ulc0 <- get_dataset("EO", filter = list(loc_list, var_list_ulc))
+dat_eo_0 <- get_dataset("EO", filter = list(loc_list, var_list_eo))
 # dat_eo0_fi <- get_dataset("EO", filter = list("FIN", var_list))
 
 
@@ -48,13 +67,37 @@ eo_q_dat <-
 
 # Annual data
 eo_a_dat <-
-  dat_eo_exp0 %>%
+  dat_eo_0 %>%
   filter(FREQUENCY == "A") %>%
   transmute(geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat")),
-            vars = as_factor(VARIABLE),
-            freq = as_factor(FREQUENCY),
+            vars = fct_recode(VARIABLE, !!!var_list_eo),
+            unit = as_factor(UNIT),
             time = as.numeric(obsTime),
-            values = obsValue)
+            values = obsValue) %>%
+  filter(time > 1990, time < 2019) %>%
+  select(-unit) %>%
+  complete(geo, time, vars) %>%
+  spread(vars, values) %>%
+  group_by(geo) %>%
+  mutate(
+    gdp_ind = rebase(B1GQ__CLV10_MNAC, time = time, baseyear = a_base_year),
+    exp_ind = rebase(P6__CLV10_MNAC, time = time, baseyear = a_base_year),
+    tbalance_gdp = B11__CP_MNAC / B1GQ__CP_MNAC) %>%
+  ungroup() %>%
+  group_by(time) %>%
+  mutate(nulc_rel15 = weight_index(nulc, geo, 2015, weight_df = weights_bis_broad),
+         nulc_rel = weight_index(nulc, geo, time, weight_df = weights_bis_broad),
+         gdp_ind_rel15 = weight_index(gdp_ind, geo, 2015, weight_df = weights_bis_broad),
+         exp_ind_rel15 = weight_index(exp_ind, geo, 2015, weight_df = weights_bis_broad)) %>%
+  ungroup()
+
+
+
+visdat::vis_dat(eo_a_dat)
+
+eo_a_dat %>%
+  filter(is.na(nulc)) %>%
+  distinct(geo, time)
 
 eo_q_dat %>%
   ggplot(aes(time, values, group = geo)) +
@@ -114,3 +157,6 @@ eo_dat %>%
 
 usethis::use_data(oecd_eo_dat, overwrite = TRUE)
 
+
+write.csv2(eo_a_dat, file = "data-out/eo_annual_data.csv")
+saveRDS(a_dat, file = "data-out/eo_annual_data.rds")

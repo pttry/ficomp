@@ -148,13 +148,30 @@ oecd_dat_sna %>%
 
 eo_ulc_a_dat %>% 
   drop_na(values) %>% 
-  group_by(geo, na_item) %>% 
+  group_by(geo, vars) %>% 
   mutate(tmin = min(time), 
          tmax = max(time)) %>% 
   ungroup() %>% 
-  ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = na_item)) +
+  ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = vars)) +
     geom_linerange(position = position_dodge(width = 0.5)) +
-    coord_flip() +
-    geom_hline(yintercept = as.numeric(as.Date("1995-01-01")))
+    coord_flip() 
 
 ```
+
+
+```{r}
+a_dat_ind %>% 
+  filter(nace_r2 == "C") %>% 
+  select(geo, time, nulc_aper_va, D1__CP_MNAC, B1G__CLV10_MNAC) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  drop_na(values) %>% 
+  group_by(geo, vars) %>% 
+  mutate(tmin = min(time), 
+         tmax = max(time)) %>% 
+  ungroup() %>% 
+  ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = vars)) +
+    geom_linerange(position = position_dodge(width = 0.5)) +
+    coord_flip() 
+
+```
+

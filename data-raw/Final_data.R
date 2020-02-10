@@ -8,7 +8,7 @@ load_all()
 
 q_start_time <- "1996-01-01"
 q_base_year <- 2010
-a_start_time <- 1975
+a_start_time <- 1995
 a_base_year <- 2010
 
 ## Countries
@@ -18,7 +18,7 @@ eu_countries<- eurostat::eu_countries$code
 other_eurostat_countries <- c("NO", "CH", "IS")
 agg_eurostat <- c("EA19", "EU28")
 
-eurostat_geos <- c(eu_countries, other_eurostat_countries, agg_eurostat)
+eurostat_geos <- c("BE", "DK", "DE", "IE", "ES", "FR", "IT", "NL", "AT", "FI", "SE", "UK")
 
 #9 other industrial countries (Australia, Canada, United States, Japan, Norway, New Zealand, Mexico, Switzerland and Turkey)
 IC37_other <- c("AU", "CA", "US", "JP", "NO", "NZ", "MX", "CH", "TR")
@@ -26,9 +26,8 @@ exec_countries <- c("CL", "CR", "IL", "IS", "KR")
 other_oecd <- c("AU", "CA", "US", "JP", "NO", "NZ", "CH")
 
 
-# Some removed temporary due to missing data
-oecd_geos <- setdiff(c("AU", "CA", "US", "JP", "NZ", "CH"), c("CH", "AU", "CA", "NZ"))
-eurostat_geos <- setdiff(c(eu_countries, other_eurostat_countries), c("CH", "HR", "IS", "PL", "MT", "CZ", "HU", "UK"))
+oecd_geos <- c("AU", "CA", "US", "JP", "CH")
+
 
 
 all_geos <- c(eurostat_geos, oecd_geos)
@@ -72,7 +71,9 @@ var_labels <- c(
   rulc_hw_va = "Real unit labour cost, hours, value added",
   nulc_hw_va_rel15 = "Relative nominal unit labour cost, hours, value added, related to other countries, 2014-2016  double trade weights",
   nulc_hw_va_eur_rel15 = "Relative nominal unit labour cost, hours, value added, in common currency (EUR), related to other countries, 2014-2016  double trade weights",
-  rulc_hw_va_rel15 = "Relative real unit labour cost, hours, value added, related to other countries, 2014-2016  double trade weights"
+  rulc_hw_va_rel15 = "Relative real unit labour cost, hours, value added, related to other countries, 2014-2016  double trade weights",
+  XPERF = "Export performance for goods and services, volume",
+  XSHA = "Share of value exports of goods and services in world exports in USD"
 )
 
 usethis::use_data(var_labels, overwrite = TRUE)
@@ -197,7 +198,10 @@ data("dat_nama_10_gdp", "dat_nama_10_a64")
 
 a_dat_dep <-
   dat_nama_10_gdp %>%
-  filter(geo %in% eurostat_geos) %>%
+  filter(geo %in% eurostat_geos,
+         time >= a_start_time) %>%
+  droplevels() %>%
+  complete(geo, time) %>%
   group_by(geo) %>%
   transmute(
     time = time,
@@ -205,6 +209,7 @@ a_dat_dep <-
     exp_ind = rebase(P6__CLV10_MNAC, time = time, baseyear = a_base_year),
     tbalance_gdp = 100 * B11__CP_MNAC / B1GQ__CP_MNAC,
   ) %>%
+  complete(geo, time) %>%
   group_by(time) %>%
   mutate(gdp_ind_rel15 = weight_index(gdp_ind, geo, 2015, weight_df = weights_bis_broad),
          exp_ind_rel15 = weight_index(exp_ind, geo, 2015, weight_df = weights_bis_broad)) %>%
@@ -213,7 +218,10 @@ a_dat_dep <-
 
 a_dat_ind <-
   dat_nama_10_a64 %>%
-  filter(geo %in% eurostat_geos) %>%
+  filter(geo %in% eurostat_geos,
+         time >= a_start_time) %>%
+  droplevels() %>%
+  complete(geo, time, nace_r2) %>%
   group_by(geo, nace_r2) %>%
   mutate(nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV10_MNAC / EMP_DC__THS_PER, time = time, baseyear = a_base_year),
          nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV10_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year),
@@ -227,7 +235,8 @@ a_dat_ind <-
 
 a_dat_ind_oecd <-
   dat_nama_10_a64 %>%
-  filter(geo %in% eurostat_geos) %>%
+  filter(geo %in% eurostat_geos,
+         time >= a_start_time) %>%
   group_by(geo, nace_r2) %>%
   mutate(nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV10_MNAC / EMP_DC__THS_PER, time = time, baseyear = a_base_year),
          nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV10_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year),
@@ -257,10 +266,11 @@ a_dat_ind_oecd <-
 #   facet_wrap(~ vars, scales = "free_y") +
 #   geom_line()
 
-a_dat_dep %>%
-  filter(is.na(exp_ind)) %>% distinct(geo)
+a_dat_ind %>%
+  filter(nace_r2 == "TOTAL") %>%
+  filter(is.na(B1G__CLV10_MEUR)) %>% distinct(geo)
 
-# visdat::vis_dat(a_dat_dep)
+visdat::vis_dat(a_dat_dep)
 
 
 # Combine
