@@ -7,9 +7,15 @@ library(forcats)
 library(lubridate)
 library(countrycode)
 
+devtools::load_all()
+
 start_year <- 1995
 
 # dataset_list <- get_datasets()
+
+
+
+
 
 ## Unit labour cost
 # ULC_QUA is discontinued
@@ -104,20 +110,22 @@ oecd_dat_Q <- oecd_dat_Q_0 %>%
 usethis::use_data(oecd_dat_Q, overwrite = TRUE)
 
 
-## National accounts
+
+
+## Annual national accounts
 
 # search_dataset("SNA", data = dataset_list) %>% View()
 
-dataset_list %>% filter(grepl("SNA", id)) %>% View()
+# dataset_list %>% filter(grepl("SNA", id)) %>% View()
 
 sna1_str <- get_data_structure("SNA_TABLE1")
 # sna6_str <- get_data_structure("SNA_TABLE6")
 sna6a_str <- get_data_structure("SNA_TABLE6A")
 sna7a_str <- get_data_structure("SNA_TABLE7A")
 
-sna1_str$TRANSACT %>% knitr::kable()
-sna6a_str$TRANSACT %>% knitr::kable()
-sna7a_str$MEASURE %>% knitr::kable()
+# sna1_str$TRANSACT %>% knitr::kable()
+# sna6a_str$TRANSACT %>% knitr::kable()
+# sna7a_str$MEASURE %>% knitr::kable()
 
 sna_transact <- c(
   B1GQ = "B1_GA", #"Gross domestic product",
