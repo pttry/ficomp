@@ -26,11 +26,18 @@ eurostat_geos <- c("BE", "DK", "DE", "IE", "ES", "FR", "IT", "NL", "AT", "FI", "
 # other_oecd <- c("AU", "CA", "US", "JP", "NO", "NZ", "CH")
 
 
-oecd_geos <- c("AU", "CA", "US", "JP", "CH")
+oecd_geos <- c("US", "JP")
 
 
 
 all_geos <- c(eurostat_geos, oecd_geos)
+
+countries <- setNames(all_geos, countrycode::countrycode(all_geos, "eurostat", "cldr.name.fi",
+                                                           custom_match = c(EA12 = "Euroalue-12")))
+
+
+main_nace_sna <- c(VTOT = "TOTAL", VC = "C", V26 = "C26",  VF = "F", VG = "G", VH = "H",
+                   VI = "I", VJ = "J", VM = "M", VN = "N")
 
 # setdiff(unique(ulc_eurostat_dat$geo), eurostat::eu_countries$code)
 #
@@ -41,7 +48,7 @@ all_geos <- c(eurostat_geos, oecd_geos)
 
 # oecd_geos %in% weights_bis_broad$geo
 
-usethis::use_data(eurostat_geos, oecd_geos, overwrite = TRUE)
+usethis::use_data(eurostat_geos, oecd_geos, main_nace_sna, a_start_time, overwrite = TRUE)
 
 # Variables used
 
@@ -283,3 +290,81 @@ a_dat <-
 usethis::use_data(a_dat, overwrite = TRUE)
 write.csv2(a_dat, file = "data-out/ficomp_annual_data.csv")
 saveRDS(a_dat, file = "data-out/ficomp_annual_data.rds")
+
+
+
+## Final annual data
+
+data_main_nace_a <-
+  data_eurostat_nama_nace_a %>%
+  bind_rows(select(data_oecd_sna_nace_a, all_of(names(.)))) %>%
+  # filter(time >= start_time_main,
+  #        geo %in% countries) %>%
+  mutate(geo_name = fct_recode(geo, !!!countries),
+         geo = as_factor(geo))
+
+# visdat::vis_dat(data_main_nace_a)
+
+data_main_groups_a <-
+  data_main_nace_a %>%
+  gather(vars, values, -time, - geo, -geo_name, - nace_r2) %>%
+  group_by(geo, geo_name, time, vars) %>%
+  summarise(
+    total = values[nace_r2 == "TOTAL"],
+            private = sum(values[!(nace_r2 %in% c("TOTAL", "C26"))]),
+            private_ex26 = private - values[nace_r2 == "C26"],
+            manu = sum(values[nace_r2 == "C"]),
+            manu_ex26 = manu - values[nace_r2 == "C26"],
+            service = sum(values[nace_r2 %in% c(c("G", "H", "I", "J", "M", "N"))])) %>%
+  ungroup() %>%
+  gather(nace0, values, total, private, private_ex26, manu, manu_ex26, service) %>%
+  mutate(nace0 = as_factor(nace0)) %>%
+  spread(vars, values) %>%
+  group_by(geo, geo_name, nace0) %>%
+  # volyymia ei voi laskea yhteen, täytyy laske cp ja pp sarjoista
+  mutate(B1G__CLV15_MNAC = statfitools::fp(cp = B1G__CP_MNAC, pp = B1G__PYP_MNAC, time = time, year = 2015)) %>%
+  ungroup() %>%
+  mutate(geo_name = fct_relevel(geo_name, rev(names(countries)))) %>%
+  group_by(geo, nace0) %>%
+  mutate(nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = a_base_year),
+         nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year),
+         nulc_hw_va_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year),
+         rulc_hw_va = rebase(nulc_hw_va / (B1G__CP_MNAC/B1G__CLV15_MNAC), time = time, baseyear = a_base_year)) %>%
+  group_by(nace0, time) %>%
+  mutate(nulc_hw_va_rel15 = weight_index(nulc_hw_va, geo, 2015, weight_df = weights_bis_broad),
+         nulc_hw_va_eur_rel15 = weight_index(nulc_hw_va_eur, geo, 2015, weight_df = weights_bis_broad),
+         rulc_hw_va_rel15 = weight_index(rulc_hw_va, geo, 2015, weight_df = weights_bis_broad)) %>%
+  ungroup()
+
+data_main_total_a <-
+  data_eurostat_nama_a %>%
+  bind_rows(select(data_oecd_sna_a, all_of(names(.)))) %>%
+  # filter(time >= start_time_main,
+  #        geo %in% countries) %>%
+  mutate(geo_name = fct_recode(geo, !!!countries),
+         geo = as_factor(geo)) %>%
+  select(- nace_r2) %>%
+  left_join(select(filter(eo_a_dat, time >= a_start_time), geo, time, XPERF, XSHA, eci, nulc_eo = nulc), by = c("geo", "time")) %>%
+  group_by(geo) %>%
+  mutate(
+    gdp_ind = rebase(B1GQ__CLV15_MNAC, time = time, baseyear = a_base_year),
+    exp_ind = rebase(P6__CLV15_MNAC, time = time, baseyear = a_base_year),
+    tbalance_gdp = B11__CP_MNAC / B1GQ__CP_MNAC) %>%
+  ungroup() %>%
+  group_by(time) %>%
+  mutate(gdp_ind_rel15 = weight_index(gdp_ind, geo, 2015, weight_df = weights_bis_broad),
+         exp_ind_rel15 = weight_index(exp_ind, geo, 2015, weight_df = weights_bis_broad)) %>%
+  ungroup()
+
+# visdat::vis_dat(data_main_total_a)
+#
+# filter(data_main_total_a, is.na(XSHA)) %>% distinct(geo, time)
+
+data_main_groups_a
+
+usethis::use_data(data_main_groups_a, data_main_total_a, overwrite = TRUE)
+write.csv2(data_main_groups_a, file = "data-out/data_main_groups_annual.csv")
+saveRDS(data_main_groups_a, file = "data-out/data_main_groups_annual.rds")
+
+write.csv2(data_main_total_a, file = "data-out/data_main_total_annual.csv")
+saveRDS(data_main_total_a, file = "data-out/data_main_total_annual.rds")

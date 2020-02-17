@@ -84,10 +84,10 @@ countrycode::codelist %>% View()
 currencies <- c(AU = "AUD", CA = "CAD", US = "USD", JP = "JPY", NZ = "NZD", CH = "CHF")
 
 exh_eur_a <- get_eurostat("ert_bil_eur_a", filters = list(statinfo = "AVG", currency = currencies), time_format = "num") %>%
-  select(time, geo = currency, values)
+  select(time, currency, values)
 
 exh_eur_q<- get_eurostat("ert_bil_eur_q", filters = list(statinfo = "AVG", currency = currencies)) %>%
-  select(time, geo = currency, values)
+  select(time, currency, values)
 
 usethis::use_data(exh_eur_a, exh_eur_q, overwrite = TRUE)
 
@@ -114,19 +114,20 @@ dat_nama_10_a64_0 <- eurostat::get_eurostat("nama_10_a64", time_format = "num", 
 dat_nama_10_a64_e_0 <- eurostat::get_eurostat("nama_10_a64_e", time_format = "num", cache = FALSE)
 
 dat_nama_10_gdp <- dat_nama_10_gdp_0 %>%
-  filter(unit %in% c("CLV10_MEUR", "CLV10_MNAC", "CP_MNAC"),
+  filter(unit %in% c("CLV15_MNAC", "CP_MNAC", "CP_MEUR"),
          na_item %in% c("B1GQ", "P6", "P61", "B11")) %>%
   unite(vars, na_item, unit, sep = "__") %>%
-  mutate(vars = as_factor(vars)) %>%
+  mutate(vars = as_factor(vars),
+         nace_r2 = as_factor("TOTAL")) %>%
   spread(vars, values)
 
 dat_nama_10_a64 <- dat_nama_10_a64_0 %>%
-  filter(unit %in% c("CLV15_MEUR", "CLV15_MNAC", "CP_MNAC", "PYP_MNAC"),
+  filter(unit %in% c("CLV15_MNAC", "CP_MNAC", "PYP_MNAC", "CP_MEUR"),
          na_item %in% c("B1G", "D1")) %>%
   unite(vars, na_item, unit, sep = "__") %>%
   mutate(vars = as_factor(vars)) %>%
   spread(vars, values) %>%
-  select(- D1__CLV15_MEUR, -D1__CLV15_MNAC, -D1__PYP_MNAC)
+  select(- D1__CLV15_MNAC, -D1__PYP_MNAC)
 
 dat_nama_10_a64_e <- dat_nama_10_a64_e_0 %>%
   filter(unit %in% c("THS_HW", "THS_PER"),
@@ -136,12 +137,12 @@ dat_nama_10_a64_e <- dat_nama_10_a64_e_0 %>%
   spread(vars, values)
 
 
-# Main
+# Main nace
 dat_eurostat_nace <-
   dat_nama_10_a64 %>%
   left_join(dat_nama_10_a64_e, by = c("nace_r2", "geo", "time")) %>%
   mutate_at(c("geo", "nace_r2"), as_factor) %>%
-  filter(nace_r2 %in% main_nace_sna, geo %in% countries, time >= start_year) %>%
+  filter(nace_r2 %in% main_nace_sna, geo %in% eurostat_geos, time >= a_start_time) %>%
   droplevels() %>%
   complete(geo, time, nace_r2)
 
@@ -156,5 +157,15 @@ dat_eurostat_nace_imput <-
 
 # visdat::vis_dat(dat_nama_10_a64)
 
+data_eurostat_nama_nace_a <-
+  dat_eurostat_nace_imput
 
-usethis::use_data(dat_nama_10_a64, dat_nama_10_gdp, overwrite = TRUE)
+data_eurostat_nama_a <-
+  dat_nama_10_gdp %>%
+  filter(geo %in% eurostat_geos, time >= a_start_time)
+
+#
+# setdiff(names(data_eurostat_nama_a, ), names(data_oecd_sna_a))
+# setdiff(names(data_oecd_sna_a), names(data_eurostat_nama_a))
+
+usethis::use_data(data_eurostat_nama_a , data_eurostat_nama_nace_a, data_eurostat_nama_a, overwrite = TRUE)
