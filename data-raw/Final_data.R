@@ -360,7 +360,7 @@ data_main_total_a <-
 #
 # filter(data_main_total_a, is.na(XSHA)) %>% distinct(geo, time)
 
-data_main_groups_a
+
 
 usethis::use_data(data_main_groups_a, data_main_total_a, overwrite = TRUE)
 write.csv2(data_main_groups_a, file = "data-out/data_main_groups_annual.csv")
