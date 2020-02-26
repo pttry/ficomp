@@ -63,11 +63,19 @@ Data:
 * Narrow: weights_bis_narrow
 * Broad: weights_bis_broad
 
-Update: data-raw(get_BIS.R)
+Update: data-raw/get_BIS.R
 
 Vignette: Weights.Rmd
 
 TODO: document, test
+
+#### IMF EER weights
+
+Source: email STA-EERWeights@imf.org
+
+Data: weights_imf 
+
+Update: data-raw/get_IMF_weights.R
 
 #### Export
 

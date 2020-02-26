@@ -24,5 +24,6 @@ Suggests:
     readxl,
     pxweb,
     uljas,
-    ecb
+    ecb,
+    stringr
 VignetteBuilder: knitr
