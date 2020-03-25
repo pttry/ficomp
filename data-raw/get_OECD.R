@@ -183,11 +183,11 @@ dat_oecd_sna7a_0 <- get_dataset(dataset = "SNA_TABLE7A",
 
 
 
-dat_oecd_sna <- oecd_dat_sna1_0 %>%
+dat_oecd_sna <- dat_oecd_sna1_0 %>%
   transmute(
     time = as.numeric(obsTime),
     geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat", nomatch = NULL)),
-    na_item = fct_recode(TRANSACT, !!!sna_transact),
+    na_item = fct_recode(TRANSACT, !!!sna1_transact),
     unit = fct_recode(MEASURE, !!!sna_measures),
     currency = as_factor(UNIT),
     values = obsValue) %>%

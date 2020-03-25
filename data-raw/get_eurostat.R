@@ -168,4 +168,4 @@ data_eurostat_nama_a <-
 # setdiff(names(data_eurostat_nama_a, ), names(data_oecd_sna_a))
 # setdiff(names(data_oecd_sna_a), names(data_eurostat_nama_a))
 
-usethis::use_data(data_eurostat_nama_a , data_eurostat_nama_nace_a, data_eurostat_nama_a, overwrite = TRUE)
+usethis::use_data(data_eurostat_nama_nace_a, data_eurostat_nama_a, overwrite = TRUE)

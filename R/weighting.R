@@ -27,8 +27,8 @@ weighted_gmean <- function(x, w) { prod(x^prop.table(w)) }
 #'
 #' @export
 weight_index <- function(x, geo, time, weight_df = weights_bis_broad, nearest = TRUE) {
-  if (nearest) time <- weights_bis_broad$time[which.min(abs(weights_bis_broad$time-time))]
-  w <- weight_df[weight_df$time == time & weight_df$geo %in% geo,]
+  if (nearest) time <- weight_df$time[which.min(abs(weight_df$time-time))]
+  w <- weight_df[weight_df$time == time & weight_df$geo %in% geo & weight_df$geo_base %in% geo,]
   w <- w[order(match(w$geo, geo)),]
   y <- purrr::imap_dbl(geo, ~ 100 * weighted_gmean(x[.y]/ x[-.y],
                                                    w$weight[w$geo_base == .x & w$geo != .x]))

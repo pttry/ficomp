@@ -41,7 +41,9 @@ var_list_eo <- c(nulc = "ULC",
                  P6__CLV10_MNAC = "XGSV",
                  P6__CP_MNAC = "XGS",
                  XPERF = "XPERF",
-                 XSHA = "XSHA"
+                 XSHA = "XSHA",
+                 XGSVD = "XGSVD",
+                 XMKT = "XMKT"
                  )
 
 
@@ -56,7 +58,7 @@ dat_eo_0 <- get_dataset("EO", filter = list(loc_list, var_list_eo))
 
 
 # Quarterly data
-
+ # note no XSHA in q-data
 eo_q_dat <-
   dat_eo_0 %>%
   filter(FREQUENCY == "Q") %>%

@@ -48,7 +48,7 @@ main_nace_sna <- c(VTOT = "TOTAL", VC = "C", V26 = "C26",  VF = "F", VG = "G", V
 
 # oecd_geos %in% weights_bis_broad$geo
 
-usethis::use_data(eurostat_geos, oecd_geos, main_nace_sna, a_start_time, overwrite = TRUE)
+usethis::use_data(eurostat_geos, oecd_geos, main_nace_sna, a_start_time, a_base_year, overwrite = TRUE)
 
 # Variables used
 
@@ -76,11 +76,13 @@ var_labels <- c(
   nulc_hw_va = "Nominal unit labour cost, hours, value added",
   nulc_hw_va_eur = "Nominal unit labour cost, hours, value added, in common currency (EUR)",
   rulc_hw_va = "Real unit labour cost, hours, value added",
-  nulc_hw_va_rel15 = "Relative nominal unit labour cost, hours, value added, related to other countries, 2014-2016  double trade weights",
-  nulc_hw_va_eur_rel15 = "Relative nominal unit labour cost, hours, value added, in common currency (EUR), related to other countries, 2014-2016  double trade weights",
-  rulc_hw_va_rel15 = "Relative real unit labour cost, hours, value added, related to other countries, 2014-2016  double trade weights",
+  nulc_hw_va_rel = "Relative nominal unit labour cost, hours, value added, related to other countries, rolling  double trade weights",
+  nulc_hw_va_eur_rel = "Relative nominal unit labour cost, hours, value added, in common currency (EUR), related to other countries, rolling  double trade weights",
+  rulc_hw_va_rel = "Relative real unit labour cost, hours, value added, related to other countries, rolling double trade weights",
   XPERF = "Export performance for goods and services, volume",
-  XSHA = "Share of value exports of goods and services in world exports in USD"
+  XSHA = "Share of value exports of goods and services in world exports in USD",
+  XGSVD = "",
+  XMKT = ""
 )
 
 usethis::use_data(var_labels, overwrite = TRUE)
@@ -172,19 +174,17 @@ saveRDS(q_dat, file = "data-out/ficomp_quarterly_data.rds")
 
 ## Annual data
 
-data("stan_dat", "oecd_dat_sna")
+data("stan_dat")
+data("data_oecd_sna_a")
 
-
-a_dat_oecd <- oecd_dat_sna %>%
+a_dat_oecd <- data_oecd_sna_a %>%
   filter(time >= a_start_time,
          geo %in% oecd_geos) %>%
-  unite(vars, na_item, unit, sep = "__") %>%
-  spread(vars, values) %>%
   group_by(geo) %>%
   transmute(
     time = time,
-    bkt_ind = rebase(B1GQ__CLV_NAC, time = time, baseyear = a_base_year),
-    exp_ind = rebase(P6__CLV_NAC, time = time, baseyear = a_base_year)
+    bkt_ind = rebase(B1GQ__CLV15_MNAC, time = time, baseyear = a_base_year),
+    exp_ind = rebase(P6__CLV15_MNAC, time = time, baseyear = a_base_year)
     # tbalance = B11__CP_MEUR,
   ) %>%
   ungroup()
@@ -212,14 +212,14 @@ a_dat_dep <-
   group_by(geo) %>%
   transmute(
     time = time,
-    gdp_ind = rebase(B1GQ__CLV10_MNAC, time = time, baseyear = a_base_year),
-    exp_ind = rebase(P6__CLV10_MNAC, time = time, baseyear = a_base_year),
+    gdp_ind = rebase(B1GQ__CLV15_MNAC, time = time, baseyear = a_base_year),
+    exp_ind = rebase(P6__CLV15_MNAC, time = time, baseyear = a_base_year),
     tbalance_gdp = 100 * B11__CP_MNAC / B1GQ__CP_MNAC,
   ) %>%
   complete(geo, time) %>%
   group_by(time) %>%
-  mutate(gdp_ind_rel15 = weight_index(gdp_ind, geo, 2015, weight_df = weights_bis_broad),
-         exp_ind_rel15 = weight_index(exp_ind, geo, 2015, weight_df = weights_bis_broad)) %>%
+  mutate(gdp_ind_rel = weight_index(gdp_ind, geo, time, weight_df = weights_bis_broad),
+         exp_ind_rel = weight_index(exp_ind, geo, time, weight_df = weights_bis_broad)) %>%
   ungroup()
 
 
@@ -235,9 +235,9 @@ a_dat_ind <-
          nulc_hw_va_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_HW, B1G__CLV10_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year),
          rulc_hw_va = rebase(nulc_hw_va / (B1G__CP_MNAC/B1G__CLV10_MNAC), time = time, baseyear = a_base_year)) %>%
   group_by(nace_r2, time) %>%
-  mutate(nulc_hw_va_rel15 = weight_index(nulc_hw_va, geo, 2015, weight_df = weights_bis_broad),
-         nulc_hw_va_eur_rel15 = weight_index(nulc_hw_va_eur, geo, 2015, weight_df = weights_bis_broad),
-         rulc_hw_va_rel15 = weight_index(rulc_hw_va, geo, 2015, weight_df = weights_bis_broad)) %>%
+  mutate(nulc_hw_va_rel = weight_index(nulc_hw_va, geo, time, weight_df = weights_bis_broad),
+         nulc_hw_va_eur_rel = weight_index(nulc_hw_va_eur, geo, time, weight_df = weights_bis_broad),
+         rulc_hw_va_rel = weight_index(rulc_hw_va, geo, time, weight_df = weights_bis_broad)) %>%
   ungroup()
 
 a_dat_ind_oecd <-
@@ -250,19 +250,10 @@ a_dat_ind_oecd <-
          nulc_hw_va_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_HW, B1G__CLV10_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year),
          rulc_hw_va = rebase(nulc_hw_va / (B1G__CP_MNAC/B1G__CLV10_MNAC), time = time, baseyear = a_base_year)) %>%
   group_by(nace_r2, time) %>%
-  mutate(nulc_hw_va_rel15 = weight_index(nulc_hw_va, geo, 2015, weight_df = weights_bis_broad),
-         nulc_hw_va_eur_rel15 = weight_index(nulc_hw_va_eur, geo, 2015, weight_df = weights_bis_broad),
-         rulc_hw_va_rel15 = weight_index(rulc_hw_va, geo, 2015, weight_df = weights_bis_broad)) %>%
+  mutate(nulc_hw_va_rel = weight_index(nulc_hw_va, geo, time, weight_df = weights_bis_broad),
+         nulc_hw_va_eur_rel = weight_index(nulc_hw_va_eur, geo, time, weight_df = weights_bis_broad),
+         rulc_hw_va_rel = weight_index(rulc_hw_va, geo, time, weight_df = weights_bis_broad)) %>%
   ungroup()
-
-# library(ggplot2)
-# a_dat_ind %>%
-#   filter(geo == "FI", nace_r2 == "TOTAL") %>%
-#   select(geo, time, nulc_aper_va, nulc_hw_va, nulc_hw_va_eur, nulc_hw_va_rel15, rulc_hw_va, nulc_hw_va_eur_rel15, rulc_hw_va_rel15) %>%
-#   gather(vars, values, - geo, - time) %>%
-#   ggplot(aes(time, values)) +
-#   facet_wrap(~ vars, scales = "free_y") +
-#   geom_line()
 
 
 # a_dat_dep %>%
@@ -273,11 +264,11 @@ a_dat_ind_oecd <-
 #   facet_wrap(~ vars, scales = "free_y") +
 #   geom_line()
 
-a_dat_ind %>%
-  filter(nace_r2 == "TOTAL") %>%
-  filter(is.na(B1G__CLV10_MEUR)) %>% distinct(geo)
+# a_dat_ind %>%
+#   filter(nace_r2 == "TOTAL") %>%
+#   filter(is.na(B1G__CLV10_MEUR)) %>% distinct(geo)
 
-visdat::vis_dat(a_dat_dep)
+# visdat::vis_dat(a_dat_dep)
 
 
 # Combine
@@ -331,9 +322,12 @@ data_main_groups_a <-
          nulc_hw_va_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year),
          rulc_hw_va = rebase(nulc_hw_va / (B1G__CP_MNAC/B1G__CLV15_MNAC), time = time, baseyear = a_base_year)) %>%
   group_by(nace0, time) %>%
-  mutate(nulc_hw_va_rel15 = weight_index(nulc_hw_va, geo, 2015, weight_df = weights_bis_broad),
-         nulc_hw_va_eur_rel15 = weight_index(nulc_hw_va_eur, geo, 2015, weight_df = weights_bis_broad),
-         rulc_hw_va_rel15 = weight_index(rulc_hw_va, geo, 2015, weight_df = weights_bis_broad)) %>%
+  mutate(nulc_hw_va_rel = weight_index(nulc_hw_va, geo, time, weight_df = weights_bis_broad),
+         nulc_hw_va_eur_rel = weight_index(nulc_hw_va_eur, geo, time, weight_df = weights_bis_broad),
+         rulc_hw_va_rel = weight_index(rulc_hw_va, geo, time, weight_df = weights_bis_broad),
+         nulc_hw_va_rel_imf = weight_index(nulc_hw_va, geo, time, weight_df = weights_imf),
+         nulc_hw_va_eur_rel_imf = weight_index(nulc_hw_va_eur, geo, time, weight_df = weights_imf),
+         rulc_hw_va_rel_imf = weight_index(rulc_hw_va, geo, time, weight_df = weights_imf)) %>%
   ungroup()
 
 data_main_total_a <-
@@ -344,7 +338,7 @@ data_main_total_a <-
   mutate(geo_name = fct_recode(geo, !!!countries),
          geo = as_factor(geo)) %>%
   select(- nace_r2) %>%
-  left_join(select(filter(eo_a_dat, time >= a_start_time), geo, time, XPERF, XSHA, eci, nulc_eo = nulc), by = c("geo", "time")) %>%
+  left_join(select(filter(eo_a_dat, time >= a_start_time), geo, time, XPERF, XSHA, XGSVD, XMKT, eci, nulc_eo = nulc), by = c("geo", "time")) %>%
   group_by(geo) %>%
   mutate(
     gdp_ind = rebase(B1GQ__CLV15_MNAC, time = time, baseyear = a_base_year),
@@ -352,13 +346,15 @@ data_main_total_a <-
     tbalance_gdp = B11__CP_MNAC / B1GQ__CP_MNAC) %>%
   ungroup() %>%
   group_by(time) %>%
-  mutate(gdp_ind_rel15 = weight_index(gdp_ind, geo, 2015, weight_df = weights_bis_broad),
-         exp_ind_rel15 = weight_index(exp_ind, geo, 2015, weight_df = weights_bis_broad)) %>%
+  mutate(gdp_ind_rel = weight_index(gdp_ind, geo, time, weight_df = weights_bis_broad),
+         exp_ind_rel = weight_index(exp_ind, geo, time, weight_df = weights_bis_broad),
+         gdp_ind_rel_imf = weight_index(gdp_ind, geo, time, weight_df = weights_imf),
+         exp_ind_rel_imf = weight_index(exp_ind, geo, time, weight_df = weights_imf)) %>%
   ungroup()
 
 # visdat::vis_dat(data_main_total_a)
 #
-# filter(data_main_total_a, is.na(XSHA)) %>% distinct(geo, time)
+
 
 
 
