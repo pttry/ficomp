@@ -172,6 +172,10 @@ write.csv2(q_dat, file = "data-out/ficomp_quarterly_data.csv")
 saveRDS(q_dat, file = "data-out/ficomp_quarterly_data.rds")
 
 
+
+
+
+
 ## Annual data
 
 data("stan_dat")

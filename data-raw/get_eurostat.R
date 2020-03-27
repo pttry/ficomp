@@ -5,6 +5,8 @@ library(forcats)
 library(tidyr)
 library(eurostat)
 
+devtools::load_all()
+
 # Total national accounts
 naq_eurostat <- get_eurostat("namq_10_gdp", cache = FALSE)
 # national accounts 10 industies
@@ -79,7 +81,6 @@ usethis::use_data(ulc_eurostat_dat, overwrite = TRUE)
 
 # Exchange rates
 
-countrycode::codelist %>% View()
 
 currencies <- c(AU = "AUD", CA = "CAD", US = "USD", JP = "JPY", NZ = "NZD", CH = "CHF")
 
