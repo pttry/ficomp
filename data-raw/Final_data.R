@@ -13,9 +13,9 @@ a_base_year <- 2010
 
 ## Countries
 
-ea_countries <- eurostat::ea_countries$code
-eu_countries<- eurostat::eu_countries$code
-other_eurostat_countries <- c("NO", "CH", "IS")
+ea_geo <- eurostat::ea_countries$code
+eu_geo <- eurostat::eu_countries$code
+other_eurostat_geo <- c("NO", "CH", "IS")
 agg_eurostat <- c("EA19", "EU28")
 
 eurostat_geos <- c("BE", "DK", "DE", "IE", "ES", "FR", "IT", "NL", "AT", "FI", "SE", "UK")
@@ -25,15 +25,17 @@ eurostat_geos <- c("BE", "DK", "DE", "IE", "ES", "FR", "IT", "NL", "AT", "FI", "
 # exec_countries <- c("CL", "CR", "IL", "IS", "KR")
 # other_oecd <- c("AU", "CA", "US", "JP", "NO", "NZ", "CH")
 
-
+oecd_geos_ulcq <- c("AU", "CA", "US", "JP", "NO", "NZ")
 oecd_geos <- c("US", "JP")
 
 
 
 all_geos <- c(eurostat_geos, oecd_geos)
 
-geo_fi <- setNames(countrycode::countrycode(all_geos, "eurostat", "cldr.name.fi",
-                                            custom_match = c(EA12 = "Euroalue-12")), all_geos)
+all_extra_geos <- c(eu_geo, other_eurostat_geo, c("AU", "CA", "US", "JP", "NO", "NZ", "MX", "CH", "TR", "IL", "KR"))
+
+geo_fi <- setNames(countrycode::countrycode(all_extra_geos, "eurostat", "cldr.name.fi",
+                                            custom_match = c(EA12 = "Euroalue-12")), all_extra_geos)
 
 
 main_nace_sna <- c(VTOT = "TOTAL", VC = "C", V26 = "C26",  VF = "F", VG = "G", VH = "H",
@@ -48,11 +50,44 @@ main_nace_sna <- c(VTOT = "TOTAL", VC = "C", V26 = "C26",  VF = "F", VG = "G", V
 
 # oecd_geos %in% weights_bis_broad$geo
 
-usethis::use_data(eurostat_geos, oecd_geos, main_nace_sna, a_start_time, a_base_year, geo_fi, overwrite = TRUE)
+usethis::use_data(eurostat_geos, oecd_geos_ulcq, oecd_geos, main_nace_sna, a_start_time, a_base_year, geo_fi, overwrite = TRUE)
 
 # Variables used
 
 var_labels <- c(
+  geo = "Countries",
+  time = "time",
+  gdp_ind = "GDP volume index",
+  exp_ind = "Export of goods and services volume index",
+  tbalance_gdp = "Trade and services balace as share of GDP",
+  gdp_ind_rel15 = "GDP volume index related to other countries",
+  exp_ind_rel15 = "Export volume index related to other countries, 2014-2016  double trade weights",
+  nace_r2 = "Industry classification",
+  B1G__CLV10_MEUR = "Value added volume in euros",
+  B1G__CLV10_MNAC = "Value added volume in national currency",
+  B1G__CP_MEUR = "Value added in current prices in euros",
+  D1__CP_MEUR = "Compensation of employees in euros",
+  B1G__CP_MNAC = "Value added in current prices in national currency",
+  D1__CP_MNAC = "Compensation of employees in national currency",
+  B1G__PYP_MNAC = "Value added in previous years prices in national currency",
+  EMP_DC__THS_HW = "Total hours of employed domestic concept, thousand",
+  SAL_DC__THS_HW = "Total hours of employees domestic concept, thousand",
+  EMP_DC__THS_PER = "Total employment domestic concept, thousand persons",
+  SAL_DC__THS_PER = "Employees domestic concept, thousand persons",
+  nulc_aper_va = "Nominal unit labour cost, persons, value added",
+  nulc_hw_va = "Nominal unit labour cost, hours, value added",
+  nulc_hw_va_eur = "Nominal unit labour cost, hours, value added, in common currency (EUR)",
+  rulc_hw_va = "Real unit labour cost, hours, value added",
+  nulc_hw_va_rel = "Relative nominal unit labour cost, hours, value added, related to other countries, rolling  double trade weights",
+  nulc_hw_va_eur_rel = "Relative nominal unit labour cost, hours, value added, in common currency (EUR), related to other countries, rolling  double trade weights",
+  rulc_hw_va_rel = "Relative real unit labour cost, hours, value added, related to other countries, rolling double trade weights",
+  XPERF = "Export performance for goods and services, volume",
+  XSHA = "Share of value exports of goods and services in world exports in USD",
+  XGSVD = "",
+  XMKT = ""
+)
+
+var_labels_fi <- c(
   geo = "Countries",
   time = "time",
   gdp_ind = "GDP volume index",
@@ -113,14 +148,15 @@ q_dat_eurostat <- naq_eurostat_dat %>%
 data("ulc_oecd_dat")
 
 q_dat_oecd_ulc <- ulc_oecd_dat %>%
-  filter(time >= q_start_time, geo %in% oecd_geos) %>%
+  filter(time >= q_start_time, geo %in% c(eurostat_geos, oecd_geos_ulcq)) %>%
   spread(na_item, values) %>%
   group_by(geo) %>%
   transmute(
     time = time,
     nulc_aper = rebase(NULC_APER, time = time, baseyear = q_base_year)
-
   ) %>%
+  group_by(time) %>%
+  mutate(nulc_aper_rel_imf = weight_index(nulc_aper, geo, lubridate::year(time), weight_df = weights_imf)) %>%
   ungroup()
 
 q_dat_oecd <- oecd_dat_Q %>%
@@ -167,7 +203,7 @@ q_dat <-
 # visdat::vis_dat(q_dat)
 # q_dat %>% filter(is.na(gdp_ind)) %>%distinct(geo)
 
-usethis::use_data(q_dat, overwrite = TRUE)
+usethis::use_data(q_dat, q_dat_oecd_ulc, overwrite = TRUE)
 write.csv2(q_dat, file = "data-out/ficomp_quarterly_data.csv")
 saveRDS(q_dat, file = "data-out/ficomp_quarterly_data.rds")
 

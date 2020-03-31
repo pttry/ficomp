@@ -11,8 +11,8 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>", 
-  fig.height = 7,
-  fig.width = 16,
+  fig.height = 6,
+  fig.width = 8,
   fig.path = "Report/", 
   echo = FALSE, message = FALSE, warning = FALSE
 )
@@ -29,14 +29,17 @@ library(eurostat)
 library(tidyr)
 library(ggptt)
 
-set_proj_theme(22)
+set_proj_theme()
 
-data(q_dat, a_dat, naq_eurostat_dat)
+data(ulc_oecd_dat, q_dat, a_dat, naq_eurostat_dat)
 
 base_year <- 2010
 base_years <- 2000:2018
 geos <- c(Finland = "FI", Sweden = "SE", Germany = "DE", France = "FR")
-start_time <- "1990-01-01"
+start_time <- "1996-01-01"
+geo_trans <- geo_fi
+h_geos <- c("FI", "SE", "DE", "US")
+
 
 ```
 
@@ -51,13 +54,108 @@ tibble(code = levels(naq_eurostat_dat$na_item), name = label_eurostat(levels(naq
 ```
 
 
-# Nominal unit labour cost
+# Nimellinen yksikkötyökustannus
+
+## OECD quarterly ULC data
+
+OECD ULC tiedoissa olevat maat: `r levels(ulc_oecd_dat$geo)`. 
+
+Maiden lukumäärä `r length(levels(ulc_oecd_dat$geo))`.
+
+Muuttujat: `r levels(ulc_oecd_dat$na_item)`
+
+
+```{r oecd_ulc_q_all}
+
+
+
+ulc_oecd_dat %>% 
+  filter(na_item == "NULC_APER") %>% 
+  mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+         h_geo = fct_relevel(h_geo, h_geos),
+         geo = fct_relevel(geo, rev(h_geos), after = Inf),
+         size = !(geo %in% h_geo)) %>% 
+  translate(h_geo, geo_trans) %>% 
+  ggplot(aes(time, values, group = geo, colour = h_geo, size = size)) +
+  geom_line() +
+  scale_size_manual(values = c(2,1), guide = "none") +
+  scale_colour_manual(values = geo_col(length(h_geos) + 1)) +
+  the_title_blank()
+
+# library(ggiraph)
+# 
+# ggi <- last_plot() + geom_line_interactive(aes(tooltip = geo))
+# girafe(print(ggi))
+
+```
+
+Tiedot alkavat pääosin vuodesta 1995. Aloittamalla vuodesta 1996 saadaan muutama muu maa mukaan.
+Tietojen saatavuuden ja vertailtavuuden perusteella mukaan on otettu seuraavat maat.
+
+```{r oecd_ulc_q_stat, fig.height=7}
+
+ulc_oecd_dat %>% 
+  filter(na_item == "NULC_APER") %>% 
+  drop_na(values) %>% 
+  group_by(geo, na_item) %>% 
+  mutate(tmin = min(time), 
+         tmax = max(time)) %>% 
+  ungroup() %>% 
+  mutate(selected = geo %in% c(eurostat_geos, oecd_geos_ulcq)) %>% 
+  translate(geo, geo_trans) %>% 
+  ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = selected)) +
+    geom_linerange(size = 2) +
+    coord_flip() +
+    geom_hline(yintercept = as.numeric(as.Date("1996-01-01"))) +
+    scale_y_date(breaks = as.Date(c("1960-01-01", "1980-01-01", 
+                                    "1996-01-01", "2000-01-01", "2020-01-01")), 
+                 date_labels = "%Y") +
+    scale_colour_manual(values = rev(geo_col(2)), guide = "none") +
+    the_title_blank("y")
+
+save_fig("2_ulc_oecd_selected_geo", height = 5.8)
+
+```
+
+
+### Valitut maat OECD quarterly
+
+Indeksi ja suhteellinen indeksi IMF painoilla. y-akseli on katkaistu. 
+
+```{r oecd_ulc_q_selected}
+
+
+
+q_dat_oecd_ulc %>% 
+  # filter(geo != "JP") %>%
+  select(geo, time, nulc_aper, nulc_aper_rel_imf) %>% 
+  gather(vars, values, nulc_aper, nulc_aper_rel_imf) %>% 
+  mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+         h_geo = fct_relevel(h_geo, h_geos),
+         geo = fct_relevel(geo, rev(h_geos), after = Inf),
+         size = !(geo %in% h_geo)) %>% 
+  translate(h_geo, geo_trans) %>% 
+  translate(vars, c(nulc_aper = "Indeksi", 
+                    nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  ggplot(aes(time, values, group = geo, colour = h_geo, size = size)) +
+  facet_wrap(~ vars) +
+  geom_line() +
+  scale_size_manual(values = c(2,1), guide = "none") +
+  scale_colour_manual(values = geo_col(length(h_geos) + 1)) +
+  the_title_blank(c("x", "l")) +
+  scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
+  labs(y = "indeksi, 2010 = 100")
+
+save_fig("3_ulc_oecd")
+
+```
+
+
+## Different measures quarterly
 
 Different definations for unit labour cost:
 * Output: GDP or value added
 * Relation to hours worked or persons (relevant if adjusted for self-employed or for decomposition)
-
-## Different measures quarterly
 
 ```{r nulc}
 

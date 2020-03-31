@@ -27,14 +27,22 @@ start_year <- 1995
 
 # Unit labour costs and labour productivity (employment based), Total economy
 # https://stats.oecd.org/Index.aspx?DataSetCode=ULC_EEQ
-ulc_str <- get_data_structure("ULC_EEQ")
 
+ulc_id <- "ULC_EEQ"
+
+ulc_str <- get_data_structure(ulc_id)
+
+ulc_subjects <- c(
+  NULC_APER = "ULQEUL01",
+  D1_EMP_APER = "ULQECU01",
+  GDP_EMP_PER = "ULQELP01"
+)
 
 ulc_oecd_dat0 <-
-  get_dataset("ULC_EEQ",
+  get_dataset(ulc_id,
               filter = list(
                 ulc_str$LOCATION$id,
-                ulc_str$SUBJECT$id,
+                ulc_subjects,
                 "IXOBSA",             # Index, seasonally adjusted
                 "Q"))
 
@@ -42,9 +50,7 @@ ulc_oecd_dat <- ulc_oecd_dat0 %>%
   transmute(
     time = yq(obsTime),
     geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat", nomatch = NULL)),
-    na_item = factor(SUBJECT,
-                     levels = c("ULQEUL01", "ULQECU01", "ULQELP01"),
-                     labels = c("NULC_APER", "D1_EMP_APER", "GDP_EMP_PER")),
+    na_item = fct_recode(SUBJECT, !!!ulc_subjects),
     unit = as_factor("I15"),
     values = obsValue)
 
