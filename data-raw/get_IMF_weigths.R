@@ -24,7 +24,12 @@ weights_imf <- map(sheets, ~read_xlsx(imf_file, .x)) %>%
          time2 = as.numeric(str_sub(Series_code, 16, 19)),
          time = (time1 + if_else(is.na(time2), time1 + 2, time2)) / 2,
          time_range = paste0(time1, "_", time2),
-         weight = Weights)
+         weight = Weights) %>%
+  filter(geo_base %in% all_extra_geos, geo %in% all_extra_geos) %>%
+  complete(geo_base, geo, time) %>%
+  group_by(geo_base, geo) %>%
+  tidyr::fill(weight, weight, .direction = "updown") %>%
+  ungroup()
 
 
 usethis::use_data(weights_imf, overwrite = TRUE)

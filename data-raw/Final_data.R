@@ -50,7 +50,7 @@ main_nace_sna <- c(VTOT = "TOTAL", VC = "C", V26 = "C26",  VF = "F", VG = "G", V
 
 # oecd_geos %in% weights_bis_broad$geo
 
-usethis::use_data(eurostat_geos, oecd_geos_ulcq, oecd_geos, main_nace_sna, a_start_time, a_base_year, geo_fi, overwrite = TRUE)
+usethis::use_data(eurostat_geos, oecd_geos_ulcq, oecd_geos, all_extra_geos, main_nace_sna, a_start_time, a_base_year, geo_fi, overwrite = TRUE)
 
 # Variables used
 
@@ -181,6 +181,7 @@ q_dat <-
   group_by(time) %>%
   mutate(nulc_aper_rel15 = weight_index(nulc_aper, geo, 2015, weight_df = weights_bis_broad),
          nulc_aper_rel_bis = weight_index(nulc_aper, geo, lubridate::year(time), weight_df = weights_bis_broad),
+         nulc_aper_rel_imf = weight_index(nulc_aper, geo, lubridate::year(time), weight_df = weights_imf),
          gdp_ind_rel15 = weight_index(gdp_ind, geo, 2015, weight_df = weights_bis_broad),
          exp_ind_rel15 = weight_index(exp_ind, geo, 2015, weight_df = weights_bis_broad)) %>%
   ungroup()

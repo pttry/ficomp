@@ -33,11 +33,12 @@ weighted_gmean <- function(x, w) { prod(x^prop.table(w)) }
 #' x <- c(1, 2)
 #' geo <- c("FI", "DE")
 #' weight_index(x, geo, 2015)
-weight_index <- function(x, geo, time, weight_df = weights_bis_broad, nearest = TRUE) {
+weight_index <- function(x, geo, time, weight_df = weights_bis_broad, nearest = TRUE, na_zero = TRUE) {
   if (any(is.na(x))) return(rep_along(x, NA))
   if (nearest) time <- weight_df$time[which.min(abs(weight_df$time-time))]
   w <- weight_df[weight_df$time == time & weight_df$geo %in% geo & weight_df$geo_base %in% geo,]
   w <- w[order(match(w$geo, geo)),]
+  if (na_zero) w[is.na(w)] <- 0
   y <- purrr::imap_dbl(geo, ~ 100 * weighted_gmean(x[.y]/ x[-.y],
                                                    w$weight[w$geo_base == .x & w$geo != .x]))
   y

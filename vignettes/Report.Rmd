@@ -150,6 +150,138 @@ save_fig("3_ulc_oecd")
 
 ```
 
+# OECD Economic Outlook
+
+
+```{r oecd_eo_q_stat, fig.height=7}
+
+eo_q_dat_large %>% 
+  select(geo, time, values = nulc) %>% 
+  group_by(geo) %>% 
+  mutate(tmin = min(time[!is.na(values)]), 
+         tmax = max(time[!is.na(values)])) %>% 
+  ungroup() %>% 
+  mutate(selected = geo %in% c(eurostat_geos, oecd_geos_ulcq)) %>% 
+  translate(geo, geo_trans) %>% 
+  ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = selected)) +
+    geom_linerange(size = 2, na.rm = TRUE) +
+    coord_flip() +
+    geom_hline(yintercept = as.numeric(as.Date("1996-01-01"))) +
+    scale_y_date(breaks = as.Date(c("1960-01-01", "1980-01-01", 
+                                    "1996-01-01", "2000-01-01", "2020-01-01")), 
+                 date_labels = "%Y") +
+    scale_colour_manual(values = rev(geo_col(2)), guide = "none") +
+    the_title_blank("y")
+
+
+
+```
+
+# Neljännesvuosidata
+
+Yhdistelmä Eurostatin ja OECD:n datasta [mikä?]
+
+
+```{r q_dat_stat, fig.height=7}
+
+q_dat %>% 
+  select(geo, time, values = nulc_aper) %>% 
+  group_by(geo) %>% 
+  mutate(tmin = min(time[!is.na(values)]), 
+         tmax = max(time[!is.na(values)])) %>% 
+  ungroup() %>% 
+  mutate(selected = geo %in% c(eurostat_geos, oecd_geos_ulcq)) %>% 
+  translate(geo, geo_trans) %>% 
+  ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = selected)) +
+    geom_linerange(size = 2, na.rm = TRUE) +
+    coord_flip() +
+    # geom_hline(yintercept = as.numeric(as.Date("1996-01-01"))) +
+    # scale_y_date(breaks = as.Date(c("1996-01-01", "2000-01-01", 
+    #                                 "2020-01-01")), 
+                 # date_labels = "%Y") +
+    scale_colour_manual(values = rev(geo_col(2)), guide = "none") +
+    the_title_blank("y")
+
+
+```
+
+```{r q_dat_nulc}
+
+q_dat %>% 
+  # filter(geo != "JP") %>%
+  select(geo, time, nulc_aper, nulc_aper_rel_imf) %>% 
+  gather(vars, values, nulc_aper, nulc_aper_rel_imf) %>% 
+  mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+         h_geo = fct_relevel(h_geo, h_geos),
+         geo = fct_relevel(geo, rev(h_geos), after = Inf),
+         size = !(geo %in% h_geo)) %>% 
+  translate(h_geo, geo_trans) %>% 
+  translate(vars, c(nulc_aper = "Indeksi", 
+                    nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  ggplot(aes(time, values, group = geo, colour = h_geo, size = size)) +
+  facet_wrap(~ vars) +
+  geom_line() +
+  scale_size_manual(values = c(2,1), guide = "none") +
+  scale_colour_manual(values = geo_col(length(h_geos) + 1)) +
+  the_title_blank(c("x", "l")) +
+  scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
+  labs(y = "indeksi, 2010 = 100")
+
+```
+
+## Vertailu OECD ULC ja yhdistelmä
+
+```{r comb_fi}
+
+bind_rows("Eurostat ja EO" = q_dat,
+          "OECD ULC" = q_dat_oecd_ulc, .id = "source") %>% 
+  filter(geo == "FI") %>% 
+  select(source, time, nulc_aper, nulc_aper_rel_imf) %>% 
+  gather(vars, values, nulc_aper, nulc_aper_rel_imf) %>% 
+  # mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+  #        h_geo = fct_relevel(h_geo, h_geos),
+  #        geo = fct_relevel(geo, rev(h_geos), after = Inf),
+  #        size = !(geo %in% h_geo)) %>% 
+  # translate(h_geo, geo_trans) %>% 
+  translate(vars, c(nulc_aper = "Indeksi", 
+                    nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  ggplot(aes(time, values, colour = source)) +
+  facet_wrap(~ vars) +
+  geom_line() +
+  # scale_size_manual(values = c(2,1), guide = "none") +
+  # scale_colour_manual(values = geo_col(length(h_geos) + 1)) +
+  the_title_blank(c("x", "l")) +
+  # scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
+  labs(y = "indeksi, 2010 = 100")
+  
+
+
+```
+
+```{r comb_all, fig.height=15}
+
+bind_rows("Eurostat ja EO" = q_dat,
+          "OECD ULC" = q_dat_oecd_ulc, .id = "source") %>% 
+  select(geo, source, time, nulc_aper, nulc_aper_rel_imf) %>% 
+  gather(vars, values, nulc_aper, nulc_aper_rel_imf) %>% 
+  # mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+  #        h_geo = fct_relevel(h_geo, h_geos),
+  #        geo = fct_relevel(geo, rev(h_geos), after = Inf),
+  #        size = !(geo %in% h_geo)) %>% 
+  # translate(h_geo, geo_trans) %>% 
+  mutate(source = fct_rev(as_factor(source))) %>% 
+  translate(vars, c(nulc_aper = "Indeksi", 
+                    nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  ggplot(aes(time, values, colour = source)) +
+  facet_grid(geo ~ vars) +
+  geom_line() +
+  # scale_size_manual(values = c(2,1), guide = "none") +
+  # scale_colour_manual(values = geo_col(length(h_geos) + 1)) +
+  the_title_blank(c("x", "l")) +
+  # scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
+  labs(y = "indeksi, 2010 = 100")
+  
+```
 
 ## Different measures quarterly
 

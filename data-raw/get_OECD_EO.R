@@ -22,6 +22,9 @@ loc_list <- intersect(
   countrycode(c(eurostat_geos, oecd_geos), "eurostat", "iso3c"),
   eo_str$LOCATION$id)
 
+loc_list_large <- intersect(
+  countrycode(c(eurostat_geos, oecd_geos_ulcq), "eurostat", "iso3c"),
+  eo_str$LOCATION$id)
 
 # var_list_exp <- c("SHTGSVD", "MSHA", "XSHA", "CTGSVD", "MPEN", "XMKT", "XPERF", "TGSVD")
 #
@@ -56,9 +59,15 @@ var_list_eo <- c(nulc = "ULC",
 dat_eo_0 <- get_dataset("EO", filter = list(loc_list, var_list_eo))
 # dat_eo0_fi <- get_dataset("EO", filter = list("FIN", var_list))
 
+dat_eo_0_large <- get_dataset("EO", filter = list(loc_list_large, var_list_eo))
+
 
 # Quarterly data
  # note no XSHA in q-data
+
+# eo_q_dat_large <-
+  # dat_eo_0_large %>%
+
 eo_q_dat <-
   dat_eo_0 %>%
   filter(FREQUENCY == "Q") %>%
@@ -66,10 +75,10 @@ eo_q_dat <-
             vars = fct_recode(VARIABLE, !!!var_list_eo),
             unit = as_factor(UNIT),
             time = lubridate::yq(obsTime),
-            year = lubridate::year(time),
             values = obsValue) %>%
-  filter(year > 1990, year < 2019,
-         !(geo %in% c("DK", "CH", "ES"))) %>% droplevels() %>%
+  # filter(year > 1990, year < 2019,
+  #        !(geo %in% c("DK", "CH", "ES"))) %>%
+  droplevels() %>%
   select(-unit) %>%
   complete(geo, time, vars) %>%
   spread(vars, values) %>%
@@ -79,6 +88,7 @@ eo_q_dat <-
     exp_ind = rebase(P6__CLV10_MNAC, time = time, baseyear = a_base_year),
     tbalance_gdp = B11__CP_MNAC / B1GQ__CP_MNAC) %>%
   ungroup() %>%
+  mutate(year = lubridate::year(time)) %>%
   group_by(time) %>%
   mutate(nulc_rel15 = weight_index(nulc, geo, 2015, weight_df = weights_bis_broad),
          nulc_rel = weight_index(nulc, geo, year, weight_df = weights_bis_broad),

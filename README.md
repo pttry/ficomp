@@ -55,6 +55,8 @@ The goal of ficomp is to ...
 
 ### Weights
 
+In weightning missing weights are extrapolated or if not possible treated as zeros.
+
 #### BIS double trade weights
 
 Source: [BIS Effective exchange rate indices](https://www.bis.org/statistics/eer.htm)
@@ -76,6 +78,9 @@ Source: email STA-EERWeights@imf.org
 Data: weights_imf 
 
 Update: data-raw/get_IMF_weights.R
+
+Note:
+* Missing yearly weights are extraploted from closest data. In earlier weights data treshold for inclusion was higher (1%) than in more resent (0.45%)
 
 #### Export
 

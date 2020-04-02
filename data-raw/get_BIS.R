@@ -26,7 +26,11 @@ weights_bis_narrow <-
          geo = countrycode::countrycode(geo, "iso2c", "eurostat", custom_match = c(XM = "EA")),
          time_range = time) %>%
   tidyr::separate(time, into = c("time1", "time2"), sep = "_", convert = TRUE) %>%
-  mutate(time = (time1 + time2) / 2)
+  mutate(time = (time1 + time2) / 2) %>%
+  complete(geo_base, geo, time) %>%
+  group_by(geo_base, geo) %>%
+  tidyr::fill(weight, weight, .direction = "updown") %>%
+  ungroup()
 
 weights_bis_broad <-
   map_dfr(wbis_broad_sheets, ~readxl::read_xlsx(wbis_broad_temp, sheet = ., range = "B6:BJ66"), .id = "time") %>%
@@ -36,7 +40,11 @@ weights_bis_broad <-
          geo = countrycode::countrycode(geo, "iso2c", "eurostat", custom_match = c(XM = "EA")),
          time_range = time) %>%
   tidyr::separate(time, into = c("time1", "time2"), sep = "_", convert = TRUE) %>%
-  mutate(time = (time1 + time2) / 2)
+  mutate(time = (time1 + time2) / 2) %>%
+  complete(geo_base, geo, time) %>%
+  group_by(geo_base, geo) %>%
+  tidyr::fill(weight, weight, .direction = "updown") %>%
+  ungroup()
 
 
 usethis::use_data(weights_bis_narrow, overwrite = TRUE)
