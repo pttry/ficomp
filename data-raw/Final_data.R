@@ -332,15 +332,14 @@ data_main_nace_a <-
   bind_rows(select(data_oecd_sna_nace_a, all_of(names(.)))) %>%
   # filter(time >= start_time_main,
   #        geo %in% countries) %>%
-  mutate(geo_name = fct_recode(geo, !!!countries),
-         geo = as_factor(geo))
+  mutate(geo = as_factor(geo))
 
 # visdat::vis_dat(data_main_nace_a)
 
 data_main_groups_a <-
   data_main_nace_a %>%
-  gather(vars, values, -time, - geo, -geo_name, - nace_r2) %>%
-  group_by(geo, geo_name, time, vars) %>%
+  gather(vars, values, -time, - geo, - nace_r2) %>%
+  group_by(geo, time, vars) %>%
   summarise(
     total = values[nace_r2 == "TOTAL"],
             private = sum(values[!(nace_r2 %in% c("TOTAL", "C26"))]),
@@ -352,11 +351,10 @@ data_main_groups_a <-
   gather(nace0, values, total, private, private_ex26, manu, manu_ex26, service) %>%
   mutate(nace0 = as_factor(nace0)) %>%
   spread(vars, values) %>%
-  group_by(geo, geo_name, nace0) %>%
+  group_by(geo, nace0) %>%
   # volyymia ei voi laskea yhteen, täytyy laske cp ja pp sarjoista
   mutate(B1G__CLV15_MNAC = statfitools::fp(cp = B1G__CP_MNAC, pp = B1G__PYP_MNAC, time = time, year = 2015)) %>%
   ungroup() %>%
-  mutate(geo_name = fct_relevel(geo_name, rev(names(countries)))) %>%
   group_by(geo, nace0) %>%
   mutate(nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = a_base_year),
          nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year),
@@ -376,8 +374,7 @@ data_main_total_a <-
   bind_rows(select(data_oecd_sna_a, all_of(names(.)))) %>%
   # filter(time >= start_time_main,
   #        geo %in% countries) %>%
-  mutate(geo_name = fct_recode(geo, !!!countries),
-         geo = as_factor(geo)) %>%
+  mutate(geo = as_factor(geo)) %>%
   select(- nace_r2) %>%
   left_join(select(filter(eo_a_dat, time >= a_start_time), geo, time, XPERF, XSHA, XGSVD, XMKT, eci, nulc_eo = nulc), by = c("geo", "time")) %>%
   group_by(geo) %>%
