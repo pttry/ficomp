@@ -9,6 +9,7 @@ devtools::load_all()
 # dataset_list <- get_datasets()
 # search_dataset("Outlook", data = dataset_list)  %>% View()
 
+start_eo <- "1991-01-01"
 
 eo_str <- get_data_structure("EO")
 
@@ -17,7 +18,7 @@ eo_str <- get_data_structure("EO")
 # eo_str$LOCATION %>% knitr::kable()
 
 
-# Needed countries that are in STAN
+# Needed countries that are in STAN, missing for Q are c("NO", "DK", "NZ", "ES")
 loc_list <- intersect(
   countrycode(c(eurostat_geos, oecd_geos), "eurostat", "iso3c"),
   eo_str$LOCATION$id)
@@ -54,10 +55,9 @@ var_list_eo <- c(nulc = "ULC",
 #   filter(id %in% var_list_exp) %>%
 #   knitr::kable()
 
-# dat_eo_exp0 <- get_dataset("EO", filter = list(loc_list, var_list_exp))
-# dat_eo_ulc0 <- get_dataset("EO", filter = list(loc_list, var_list_ulc))
+
 dat_eo_0 <- get_dataset("EO", filter = list(loc_list, var_list_eo))
-# dat_eo0_fi <- get_dataset("EO", filter = list("FIN", var_list))
+
 
 dat_eo_0_large <- get_dataset("EO", filter = list(loc_list_large, var_list_eo))
 
@@ -76,14 +76,15 @@ eo_q_dat <-
             unit = as_factor(UNIT),
             time = lubridate::yq(obsTime),
             values = obsValue) %>%
-  # filter(year > 1990, year < 2019,
-  #        !(geo %in% c("DK", "CH", "ES"))) %>%
+  filter(time >= start_eo,
+         !(geo %in% c("NO", "DK", "NZ", "ES"))) %>%
   droplevels() %>%
   select(-unit) %>%
   complete(geo, time, vars) %>%
   spread(vars, values) %>%
   group_by(geo) %>%
   mutate(
+    nulc = rebase(nulc, time = time, baseyear = a_base_year),
     gdp_ind = rebase(B1GQ__CLV10_MNAC, time = time, baseyear = a_base_year),
     exp_ind = rebase(P6__CLV10_MNAC, time = time, baseyear = a_base_year),
     tbalance_gdp = B11__CP_MNAC / B1GQ__CP_MNAC) %>%
@@ -92,11 +93,33 @@ eo_q_dat <-
   group_by(time) %>%
   mutate(nulc_rel15 = weight_index(nulc, geo, 2015, weight_df = weights_bis_broad),
          nulc_rel = weight_index(nulc, geo, year, weight_df = weights_bis_broad),
+         nulc_rel_imf = weight_index(nulc, geo, year, weight_df = weights_imf),
          gdp_ind_rel15 = weight_index(gdp_ind, geo, 2015, weight_df = weights_bis_broad),
          exp_ind_rel15 = weight_index(exp_ind, geo, 2015, weight_df = weights_bis_broad)) %>%
   ungroup() %>%
   left_join(select(eci_dat, geo, year = time, eci), by = c("geo", "year"))
 
+eo_q_dat_large <-
+  dat_eo_0_large %>%
+  filter(FREQUENCY == "Q") %>%
+  transmute(geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat")),
+            vars = fct_recode(VARIABLE, !!!var_list_eo),
+            unit = as_factor(UNIT),
+            time = lubridate::yq(obsTime),
+            values = obsValue) %>%
+  # filter(year > 1990, year < 2019,
+  #        !(geo %in% c("DK", "CH", "ES"))) %>%
+  droplevels() %>%
+  select(-unit) %>%
+  complete(geo, time, vars) %>%
+  spread(vars, values) %>%
+  group_by(geo) %>%
+  mutate(
+    nulc = rebase(nulc, time = time, baseyear = a_base_year),
+    gdp_ind = rebase(B1GQ__CLV10_MNAC, time = time, baseyear = a_base_year),
+    exp_ind = rebase(P6__CLV10_MNAC, time = time, baseyear = a_base_year),
+    tbalance_gdp = B11__CP_MNAC / B1GQ__CP_MNAC) %>%
+  ungroup()
 
 
 # Annual data
@@ -108,12 +131,13 @@ eo_a_dat <-
             unit = as_factor(UNIT),
             time = as.numeric(obsTime),
             values = obsValue) %>%
-  filter(time > 1990, time < 2019) %>%
+  filter(time >= lubridate::year(start_eo)) %>%
   select(-unit) %>%
   complete(geo, time, vars) %>%
   spread(vars, values) %>%
   group_by(geo) %>%
   mutate(
+    nulc = rebase(nulc, time = time, baseyear = a_base_year),
     gdp_ind = rebase(B1GQ__CLV10_MNAC, time = time, baseyear = a_base_year),
     exp_ind = rebase(P6__CLV10_MNAC, time = time, baseyear = a_base_year),
     tbalance_gdp = B11__CP_MNAC / B1GQ__CP_MNAC) %>%
@@ -121,6 +145,7 @@ eo_a_dat <-
   group_by(time) %>%
   mutate(nulc_rel15 = weight_index(nulc, geo, 2015, weight_df = weights_bis_broad),
          nulc_rel = weight_index(nulc, geo, time, weight_df = weights_bis_broad),
+         nulc_rel_imf = weight_index(nulc, geo, time, weight_df = weights_imf),
          gdp_ind_rel15 = weight_index(gdp_ind, geo, 2015, weight_df = weights_bis_broad),
          exp_ind_rel15 = weight_index(exp_ind, geo, 2015, weight_df = weights_bis_broad)) %>%
   ungroup() %>%
@@ -148,7 +173,7 @@ eo_a_dat <-
 #   str()
 
 
-usethis::use_data(eo_a_dat, eo_q_dat, overwrite = TRUE)
+usethis::use_data(eo_a_dat, eo_q_dat, eo_q_dat_large, overwrite = TRUE)
 
 
 write.csv2(eo_a_dat, file = "data-out/eo_annual_data.csv")

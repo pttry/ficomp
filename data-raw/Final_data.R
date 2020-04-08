@@ -123,7 +123,42 @@ var_labels_fi <- c(
 usethis::use_data(var_labels, overwrite = TRUE)
 
 ## Quarterly data for ULC
-# Only for person based
+
+# and from OECD ULC
+#  source("data-raw/get_OECD.R")
+data("ulc_oecd_dat")
+
+q_dat_oecd_ulc <- ulc_oecd_dat %>%
+  filter(time >= q_start_time, geo %in% c(eurostat_geos, oecd_geos_ulcq)) %>%
+  spread(na_item, values) %>%
+  group_by(geo) %>%
+  transmute(
+    time = time,
+    nulc_aper = rebase(NULC_APER, time = time, baseyear = q_base_year)
+  ) %>%
+  group_by(time) %>%
+  mutate(nulc_aper_rel_imf = weight_index(nulc_aper, geo, lubridate::year(time), weight_df = weights_imf)) %>%
+  ungroup()
+
+
+# OECD QNA
+
+q_dat_oecd <- oecd_dat_Q %>%
+  unite(vars, na_item, unit, sep = "__") %>%
+  filter(time >= q_start_time, geo %in% oecd_geos) %>%
+  spread(vars, values) %>%
+  group_by(geo) %>%
+  transmute(
+    time = time,
+    gdp_ind = rebase(B1GQ__CLV_NAC, time = time, baseyear = q_base_year),
+    exp_ind = rebase(P6__CLV_NAC, time = time, baseyear = q_base_year)
+    # tbalance = B11__CP_MEUR,
+  ) %>%
+  ungroup() %>%
+  left_join(q_dat_oecd_ulc, by = c("geo", "time"))
+
+
+
 
 # Data from eurostat
 #  source("data-raw/eurostat.R")
@@ -143,35 +178,7 @@ q_dat_eurostat <- naq_eurostat_dat %>%
     nulc_aper = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1GQ__CLV10_MNAC / EMP_DC__THS_PER, time = time, baseyear = q_base_year)) %>%
   ungroup()
 
-# and from OECD
-#  source("data-raw/get_OECD.R")
-data("ulc_oecd_dat")
 
-q_dat_oecd_ulc <- ulc_oecd_dat %>%
-  filter(time >= q_start_time, geo %in% c(eurostat_geos, oecd_geos_ulcq)) %>%
-  spread(na_item, values) %>%
-  group_by(geo) %>%
-  transmute(
-    time = time,
-    nulc_aper = rebase(NULC_APER, time = time, baseyear = q_base_year)
-  ) %>%
-  group_by(time) %>%
-  mutate(nulc_aper_rel_imf = weight_index(nulc_aper, geo, lubridate::year(time), weight_df = weights_imf)) %>%
-  ungroup()
-
-q_dat_oecd <- oecd_dat_Q %>%
-  unite(vars, na_item, unit, sep = "__") %>%
-  filter(time >= q_start_time, geo %in% oecd_geos) %>%
-  spread(vars, values) %>%
-  group_by(geo) %>%
-  transmute(
-    time = time,
-    gdp_ind = rebase(B1GQ__CLV_NAC, time = time, baseyear = q_base_year),
-    exp_ind = rebase(P6__CLV_NAC, time = time, baseyear = q_base_year)
-    # tbalance = B11__CP_MEUR,
-    ) %>%
-  ungroup() %>%
-  left_join(q_dat_oecd_ulc, by = c("geo", "time"))
 
 # combine
 q_dat <-
@@ -402,3 +409,4 @@ saveRDS(data_main_groups_a, file = "data-out/data_main_groups_annual.rds")
 
 write.csv2(data_main_total_a, file = "data-out/data_main_total_annual.csv")
 saveRDS(data_main_total_a, file = "data-out/data_main_total_annual.rds")
+

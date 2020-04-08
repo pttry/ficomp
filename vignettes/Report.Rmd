@@ -31,7 +31,7 @@ library(ggptt)
 
 set_proj_theme()
 
-data(ulc_oecd_dat, q_dat, a_dat, naq_eurostat_dat)
+data(ulc_oecd_dat, q_dat, a_dat, naq_eurostat_dat, eo_q_dat)
 
 base_year <- 2010
 base_years <- 2000:2018
@@ -152,23 +152,25 @@ save_fig("3_ulc_oecd")
 
 # OECD Economic Outlook
 
+Alkaa 1991, mutta neljännesvuositieodoissa osasta maista ei tietoja. c("NO", "DK", "NZ", "ES")
 
-```{r oecd_eo_q_stat, fig.height=7}
+```{r oecd_eo_q_stat}
 
 eo_q_dat_large %>% 
   select(geo, time, values = nulc) %>% 
   group_by(geo) %>% 
-  mutate(tmin = min(time[!is.na(values)]), 
-         tmax = max(time[!is.na(values)])) %>% 
+  # coaleasce and na_if to set same min and ma for countries with all missing
+  mutate(tmin = coalesce(na_if(min(time[!is.na(values)]), Inf), as.Date("1996-01-01")), 
+         tmax = coalesce(na_if(max(time[!is.na(values)]), -Inf), as.Date("1996-01-01"))) %>% 
   ungroup() %>% 
   mutate(selected = geo %in% c(eurostat_geos, oecd_geos_ulcq)) %>% 
   translate(geo, geo_trans) %>% 
   ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = selected)) +
-    geom_linerange(size = 2, na.rm = TRUE) +
+    geom_linerange(size = 2, colour = geo_col(2)[1]) +
     coord_flip() +
-    geom_hline(yintercept = as.numeric(as.Date("1996-01-01"))) +
+    geom_hline(yintercept = as.numeric(as.Date("1991-01-01"))) +
     scale_y_date(breaks = as.Date(c("1960-01-01", "1980-01-01", 
-                                    "1996-01-01", "2000-01-01", "2020-01-01")), 
+                                    "1991-01-01", "2000-01-01", "2020-01-01")), 
                  date_labels = "%Y") +
     scale_colour_manual(values = rev(geo_col(2)), guide = "none") +
     the_title_blank("y")
@@ -179,10 +181,10 @@ eo_q_dat_large %>%
 
 # Neljännesvuosidata
 
-Yhdistelmä Eurostatin ja OECD:n datasta [mikä?]
+Yhdistelmä Eurostatin ja OECD:n Quarterly National Accounts datasta 
 
 
-```{r q_dat_stat, fig.height=7}
+```{r q_dat_stat}
 
 q_dat %>% 
   select(geo, time, values = nulc_aper) %>% 
@@ -193,12 +195,12 @@ q_dat %>%
   mutate(selected = geo %in% c(eurostat_geos, oecd_geos_ulcq)) %>% 
   translate(geo, geo_trans) %>% 
   ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = selected)) +
-    geom_linerange(size = 2, na.rm = TRUE) +
+    geom_linerange(size = 2, colour = geo_col(2)[1]) +
     coord_flip() +
-    # geom_hline(yintercept = as.numeric(as.Date("1996-01-01"))) +
-    # scale_y_date(breaks = as.Date(c("1996-01-01", "2000-01-01", 
-    #                                 "2020-01-01")), 
-                 # date_labels = "%Y") +
+    geom_hline(yintercept = as.numeric(as.Date("1996-01-01"))) +
+    scale_y_date(breaks = as.Date(c("1996-01-01", "2000-01-01",
+                                    "2020-01-01")),
+    date_labels = "%Y") +
     scale_colour_manual(values = rev(geo_col(2)), guide = "none") +
     the_title_blank("y")
 
@@ -233,9 +235,11 @@ q_dat %>%
 
 ```{r comb_fi}
 
-bind_rows("Eurostat ja EO" = q_dat,
-          "OECD ULC" = q_dat_oecd_ulc, .id = "source") %>% 
-  filter(geo == "FI") %>% 
+bind_rows("Eurostat ja OECD QNA" = q_dat,
+          "OECD ULC" = q_dat_oecd_ulc,
+          "OECD EO" = rename(eo_q_dat, nulc_aper = nulc, nulc_aper_rel_imf = nulc_rel_imf),
+          .id = "source") %>% 
+  filter(geo == "FI", time >= start_time) %>% 
   select(source, time, nulc_aper, nulc_aper_rel_imf) %>% 
   gather(vars, values, nulc_aper, nulc_aper_rel_imf) %>% 
   # mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),

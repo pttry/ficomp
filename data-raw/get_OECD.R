@@ -68,6 +68,8 @@ qna_id <- "QNA"
 
 qna_str <- get_data_structure(qna_id)
 
+# qna_str$SUBJECT %>% View()
+
 qna_subjects <- c(
   B1GQ = "B1_GS1", #"Gross domestic product",
   D1 = "D1S1", #"Compensation of employees, total",
