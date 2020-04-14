@@ -7,6 +7,10 @@ library(eurostat)
 
 devtools::load_all()
 
+main_nace_sna_q <- c("TOTAL", "C", "F", "G-I", "J", "M_N")
+
+## Quaterly national accounts
+
 # Total national accounts
 naq_eurostat <- get_eurostat("namq_10_gdp", cache = FALSE)
 # national accounts 10 industies
@@ -22,17 +26,19 @@ naq0_eurostat_dat <- naq_eurostat %>%
   # 	Current prices, million units of national currency ,  Chain linked volumes (2010), million units of national currency
   #  	Seasonally and calendar adjusted data
   # "Gross domestic product at market prices", "Exports of goods and services", "Exports of goods", "External balance of goods and services"
-  filter(unit %in% c("CP_MNAC", "CP_MEUR", "CLV10_MNAC", "CLV10_MEUR"),
+  filter(unit %in% c("CP_MNAC", "CP_MEUR", "CLV15_MNAC", "CLV15_MEUR"),
          s_adj %in% c("NSA", "SA","SCA"),
          na_item %in% c("B1GQ", "P6", "P61", "B11")
   ) %>%
   mutate(nace_r2 = "TOTAL")
 
+
+
 naq10_eurostat_dat <- naq10_eurostat %>%
   # 	Current prices, million units of national currency ,  Chain linked volumes (2010), million units of national currency
   #  	Non-seasonally adjusted, Seasonally adjusted, Seasonally and calendar adjusted data
   #   "Value added, gross", "Compensation of employees", "Wages and salaries", "Employers' social contributions"
-  filter(unit %in% c("CP_MNAC", "CP_MEUR", "CLV10_MNAC", "CLV10_MEUR"),
+  filter(unit %in% c("CP_MNAC", "CP_MEUR", "CLV15_MNAC", "CLV15_MEUR"),
          s_adj %in% c("NSA", "SA","SCA"),
          na_item %in% c("B1G", "D1", "D11", "D12")
   )
@@ -59,7 +65,6 @@ naq_eurostat_dat_raw <-
   naq0_eurostat_dat %>%
   bind_rows(naq10_eurostat_dat) %>%
   bind_rows(naq10e_eurostat_dat) %>%
-  filter(nace_r2 %in% c("TOTAL", "C")) %>%
   mutate(unit = as_factor(unit),
          na_item = as_factor(na_item),
          geo = as_factor(geo),
@@ -68,13 +73,28 @@ naq_eurostat_dat_raw <-
 
 # some data is just SA. SCA is completed with SA.
 naq_eurostat_dat <- naq_eurostat_dat_raw %>%
+  filter(nace_r2 %in% c("TOTAL", "C")) %>%
   filter(s_adj %in% c("SA","SCA")) %>%
   spread(s_adj, values) %>%
   mutate(values = coalesce(SCA, SA)) %>%
   select(-SA, -SCA)
 
+naq_eurostat_nace_dat <- naq_eurostat_dat_raw %>%
+  filter(s_adj %in% c("SA","SCA")) %>%
+  filter(nace_r2 %in% main_nace_sna_q, geo %in% eurostat_geos, time >= q_start_time) %>%
+  # remove na_item without nace data
+  filter(!(na_item %in% c("B1GQ", "P6", "P61", "B11"))) %>%
+  spread(s_adj, values) %>%
+  mutate(values = coalesce(SCA, SA)) %>%
+  select(-SA, -SCA) %>%
+  droplevels()
+
+
+
+
 # Save final data
 usethis::use_data(naq_eurostat_dat, overwrite = TRUE)
+usethis::use_data(naq_eurostat_nace_dat, overwrite = TRUE)
 usethis::use_data(naq_eurostat_dat_raw, overwrite = TRUE)
 usethis::use_data(ulc_eurostat_dat, overwrite = TRUE)
 

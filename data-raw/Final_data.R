@@ -63,8 +63,8 @@ var_labels <- c(
   gdp_ind_rel15 = "GDP volume index related to other countries",
   exp_ind_rel15 = "Export volume index related to other countries, 2014-2016  double trade weights",
   nace_r2 = "Industry classification",
-  B1G__CLV10_MEUR = "Value added volume in euros",
-  B1G__CLV10_MNAC = "Value added volume in national currency",
+  B1G__CLV15_MEUR = "Value added volume in euros",
+  B1G__CLV15_MNAC = "Value added volume in national currency",
   B1G__CP_MEUR = "Value added in current prices in euros",
   D1__CP_MEUR = "Compensation of employees in euros",
   B1G__CP_MNAC = "Value added in current prices in national currency",
@@ -96,8 +96,8 @@ var_labels_fi <- c(
   gdp_ind_rel15 = "GDP volume index related to other countries",
   exp_ind_rel15 = "Export volume index related to other countries, 2014-2016  double trade weights",
   nace_r2 = "Industry classification",
-  B1G__CLV10_MEUR = "Value added volume in euros",
-  B1G__CLV10_MNAC = "Value added volume in national currency",
+  B1G__CLV15_MEUR = "Value added volume in euros",
+  B1G__CLV15_MNAC = "Value added volume in national currency",
   B1G__CP_MEUR = "Value added in current prices in euros",
   D1__CP_MEUR = "Compensation of employees in euros",
   B1G__CP_MNAC = "Value added in current prices in national currency",
@@ -122,9 +122,10 @@ var_labels_fi <- c(
 
 usethis::use_data(var_labels, overwrite = TRUE)
 
-## Quarterly data for ULC
+## Quarterly data for Total economy
 
-# and from OECD ULC
+# OECD ULC
+
 #  source("data-raw/get_OECD.R")
 data("ulc_oecd_dat")
 
@@ -172,10 +173,10 @@ q_dat_eurostat <- naq_eurostat_dat %>%
   group_by(geo) %>%
   transmute(
     time = time,
-    gdp_ind = rebase(B1GQ__CLV10_MNAC, time = time, baseyear = q_base_year),
-    exp_ind = rebase(P6__CLV10_MNAC, time = time, baseyear = q_base_year),
+    gdp_ind = rebase(B1GQ__CLV15_MNAC, time = time, baseyear = q_base_year),
+    exp_ind = rebase(P6__CLV15_MNAC, time = time, baseyear = q_base_year),
     # tbalance = B11__CP_MEUR,
-    nulc_aper = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1GQ__CLV10_MNAC / EMP_DC__THS_PER, time = time, baseyear = q_base_year)) %>%
+    nulc_aper = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1GQ__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = q_base_year)) %>%
   ungroup()
 
 
@@ -191,7 +192,8 @@ q_dat <-
          nulc_aper_rel_imf = weight_index(nulc_aper, geo, lubridate::year(time), weight_df = weights_imf),
          gdp_ind_rel15 = weight_index(gdp_ind, geo, 2015, weight_df = weights_bis_broad),
          exp_ind_rel15 = weight_index(exp_ind, geo, 2015, weight_df = weights_bis_broad)) %>%
-  ungroup()
+  ungroup() %>%
+  left_join(select(filter(eo_q_dat, time >= q_start_time), geo, time, XPERF, XGSVD, XMKT, eci, nulc_eo = nulc), by = c("geo", "time"))
 
 
 # q_dat %>%
@@ -208,15 +210,58 @@ q_dat <-
 #   facet_wrap(~ vars, scales = "free_y") +
 #   geom_line()
 
-# visdat::vis_dat(q_dat)
+# visdat::vis_dat(q_dat_eurostat)
 # q_dat %>% filter(is.na(gdp_ind)) %>%distinct(geo)
 
 usethis::use_data(q_dat, q_dat_oecd_ulc, overwrite = TRUE)
-write.csv2(q_dat, file = "data-out/ficomp_quarterly_data.csv")
-saveRDS(q_dat, file = "data-out/ficomp_quarterly_data.rds")
+write.csv2(q_dat, file = "data-out/data_main_total_quarterly.csv")
+saveRDS(q_dat, file = "data-out/data_main_total_quarterly.rds")
+
+
+## Quarterly industry group data
+
+data_eurostat_nace_q <- naq_eurostat_nace_dat %>%
+  unite(vars, na_item, unit, sep = "__") %>%
+  filter(time >= q_start_time) %>%
+  spread(vars, values)
+
+# visdat::vis_dat(data_eurostat_nace_q)
+
+
+data_main_nace_q <-
+  data_eurostat_nace_q %>%
+  filter(geo != "BE") %>%
+  # bind_rows(select(data_oecd_sna_nace_q, all_of(names(.)))) %>%
+  # filter(time >= start_time_main,
+  #        geo %in% countries) %>%
+  mutate(geo = as_factor(geo))
+
+# Take only total and C. For other need to calculate PYP
+
+data_main_groups_q <-
+  data_main_nace_q %>%
+  filter(nace_r2 %in% c("TOTAL", "C")) %>%
+  mutate(nace0 = fct_recode(nace_r2, total = "TOTAL", manu = "C")) %>%
+  select(-nace_r2) %>%
+  group_by(geo, nace0) %>%
+  mutate(nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = a_base_year),
+         nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year),
+         nulc_hw_va_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year),
+         rulc_hw_va = rebase(nulc_hw_va / (B1G__CP_MNAC/B1G__CLV15_MNAC), time = time, baseyear = a_base_year)) %>%
+  group_by(nace0, time) %>%
+  mutate(nulc_hw_va_rel = weight_index(nulc_hw_va, geo, time, weight_df = weights_bis_broad),
+         nulc_hw_va_eur_rel = weight_index(nulc_hw_va_eur, geo, time, weight_df = weights_bis_broad),
+         rulc_hw_va_rel = weight_index(rulc_hw_va, geo, time, weight_df = weights_bis_broad),
+         nulc_aper_va_rel_imf = weight_index(nulc_aper_va, geo, time, weight_df = weights_imf),
+         nulc_hw_va_eur_rel_imf = weight_index(nulc_hw_va_eur, geo, time, weight_df = weights_imf),
+         rulc_hw_va_rel_imf = weight_index(rulc_hw_va, geo, time, weight_df = weights_imf)) %>%
+  ungroup()
 
 
 
+usethis::use_data(data_main_groups_q, overwrite = TRUE)
+write.csv2(data_main_groups_q, file = "data-out/data_main_groups_quarterly.csv")
+saveRDS(data_main_groups_q, file = "data-out/data_main_groups_quarterly.rds")
 
 
 

@@ -287,6 +287,32 @@ bind_rows("Eurostat ja EO" = q_dat,
   
 ```
 
+## Groups
+
+```{r q_groups}
+
+data_main_groups_q %>% 
+    select(geo, nace0, time, nulc_aper = nulc_aper_va, nulc_aper_rel_imf = nulc_aper_va_rel_imf) %>% 
+  gather(vars, values, nulc_aper, nulc_aper_rel_imf) %>% 
+  mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+         h_geo = fct_relevel(h_geo, h_geos),
+         geo = fct_relevel(geo, rev(h_geos), after = Inf),
+         size = !(geo %in% h_geo)) %>% 
+  translate(h_geo, geo_trans) %>% 
+  translate(vars, c(nulc_aper = "Indeksi", 
+                    nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  ggplot(aes(time, values, group = geo, colour = h_geo, size = size)) +
+  facet_grid(nace0 ~ vars) +
+  geom_line() +
+  scale_size_manual(values = c(2,1), guide = "none") +
+  scale_colour_manual(values = geo_col(length(h_geos) + 1)) +
+  the_title_blank(c("x", "l")) +
+  scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
+  labs(y = "indeksi, 2010 = 100")
+
+```
+
+
 ## Different measures quarterly
 
 Different definations for unit labour cost:
