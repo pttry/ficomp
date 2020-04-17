@@ -15,7 +15,6 @@ The goal of ficomp is to ...
 - Import and export
 - Trade and service balance
 
-- [The Economic Complexity Index](https://oec.world/en/rankings/country/eci/) 
 
 - Eurostat (data-raw/get_eurostat.R)
   + Data: naq_eurostat_dat
@@ -36,6 +35,14 @@ The goal of ficomp is to ...
       + Total
       + Manufacturing
       + TODO: Open / private sector
+      
+- OECD 
+  + Quaterly nationanl accounts (QNA)
+    - Only total economy. Industry data available only mainly EU countries.
+    - Transformed to same base year as Eurostat 2015
+    - Calculated euros for current price series
+  + Annual national accounts
+  + Economic outlook data
   
 ### ULC data  
   
@@ -51,6 +58,10 @@ The goal of ficomp is to ...
 - Nominal and real effective exchange rates from Eurostat - DG ECFIN
   + data-raw/get_eurostat.r
   + vignettes/EER.Rmd
+
+### Other data
+
+- [The Economic Complexity Index](https://oec.world/en/rankings/country/eci/) 
 
 
 ### Weights

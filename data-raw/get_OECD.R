@@ -72,15 +72,26 @@ qna_str <- get_data_structure(qna_id)
 
 qna_subjects <- c(
   B1GQ = "B1_GS1", #"Gross domestic product",
-  D1 = "D1S1", #"Compensation of employees, total",
+  D1 = "D1S1", #"Compensation of employees",
   P6 = "P6", #"Exports of goods and services",
   P61 = "P61", #"Exports of goods",
+  P62 = "P62", #"Export of services"
   B11 = "B11") #"External balance of goods and services"
+
+# industry level data, manufacturing. Not use because not avaible for US and Japan
+# gna_subjects_ind <- c(
+#   # B1GxTOTAL = "B1G",  # Gross value added at basic prices, total activity
+#   # B1GxC = "B1GVC",    # Gross value added at basic prices, manufacturing
+#   # D1xTOTAL = "D1",    #"Compensation of employees, total",
+#   # D1xC = "D1VC",      #"Compensation of employees, manufacturing",
+#   EMP_DC__TH_PERxTOTAL = "ETO",  # Employment, total
+#   EMP_DC__TH_PERxC = "ETOVC"  # Employment, manufacturing
+# )
 
 qna_measures <-
   c(
-    CP_NAC = "CQRSA",   # National currency, current prices, quarterly levels, seasonally adjusted
-    CLV_NAC = "LNBQRSA"  # National currency, chained volume estimates, national reference year, quarterly levels, seasonally adjusted
+    CP_MNAC = "CQRSA",   # National currency, current prices, quarterly levels, seasonally adjusted
+    CLV_MNAC = "LNBQRSA"  # National currency, chained volume estimates, national reference year, quarterly levels, seasonally adjusted
   )
 
 
@@ -88,6 +99,9 @@ qna_geo <- countrycode(oecd_geos, "eurostat", "iso3c", nomatch = NULL)
 
 oecd_dat_Q_0 <- get_dataset(dataset = qna_id,
                           filter = list(qna_geo, qna_subjects, qna_measures, "Q"))
+
+oecd_dat_Q_0 <- get_dataset(dataset = qna_id,
+                            filter = list(qna_geo, "B1GD"))
 
 # kk <- get_dataset(dataset = qna_id,
 #                   filter = list("USA", "B1_GS1"), start_time = 2017) %>%
@@ -113,7 +127,8 @@ oecd_dat_Q <- oecd_dat_Q_0 %>%
     na_item = fct_recode(SUBJECT, !!!qna_subjects),
     unit = fct_recode(MEASURE, !!!qna_measures),
     currency = as_factor(UNIT),
-    values = obsValue)
+    values = obsValue) %>%
+  filter(!(na_item == "B11" & unit == "CLV_MNAC")) # constant p balance not needed
 
 
 usethis::use_data(oecd_dat_Q, overwrite = TRUE)
@@ -147,6 +162,7 @@ sna1_transact <- c(
   D1 = "D11", #"Compensation of employees, total",
   P6 = "P6", #"Exports of goods and services",
   P61 = "P61", #"Exports of goods",
+  P62 = "P62", #"Export of services"
   B11 = "B11") #"External balance of goods and services"
 
 sna6a_transact <- c(
@@ -265,7 +281,7 @@ data_oecd_sna_nace_a <-
 
 data_oecd_sna_a <-
   dat_oecd_sna %>%
-  mutate_at(c("D1__CP_MNAC", "B11__CP_MNAC", "B1GQ__CP_MNAC", "P6__CP_MNAC", "P61__CP_MNAC"),
+  mutate_at(c("D1__CP_MNAC", "B11__CP_MNAC", "B1GQ__CP_MNAC", "P6__CP_MNAC", "P61__CP_MNAC", "P62__CP_MNAC"),
             .funs = list(EUR = ~EUR(., time, currency, exh_eur_a))) %>%
   rename_at(vars(contains("MNAC_EUR")), list(~gsub("NAC_", "", .))) %>%
   filter(time >= a_start_time)

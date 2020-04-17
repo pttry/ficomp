@@ -4,11 +4,13 @@
 #' @param x a numeric vector. An index to rebase
 #' @param time a time variable in a Date format.
 #' @param baseyear a year or vector of years.
+#' @param basevalue index base values. if NULL value of x at base year.
 #'
 #' @export
-rebase <- function(x, time, baseyear) {
+rebase <- function(x, time, baseyear, basevalue = 100) {
   time_year <- if (lubridate::is.Date(time)) lubridate::year(time) else time
-  y <- 100 * x / mean(x[time_year %in% baseyear])
+  if (is.null(basevalue)) basevalue <- mean(x[time_year %in% baseyear])
+  y <- basevalue * x / mean(x[time_year %in% baseyear])
   y
 }
 
