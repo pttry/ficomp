@@ -83,8 +83,8 @@ var_labels <- c(
   rulc_hw_va_rel = "Relative real unit labour cost, hours, value added, related to other countries, rolling double trade weights",
   XPERF = "Export performance for goods and services, volume",
   XSHA = "Share of value exports of goods and services in world exports in USD",
-  XGSVD = "",
-  XMKT = ""
+  XGSVD = "Exports of goods and services, volume, USD, 2005 prices",
+  XMKT = "Export market for goods and services, volume, USD, 2005 prices"
 )
 
 var_labels_fi <- c(
@@ -176,14 +176,6 @@ q_dat_eurostat <- naq_eurostat_dat %>%
   spread(vars, values)
 
 
-  transmute(
-    gdp_ind = rebase(B1GQ__CLV15_MNAC, time = time, baseyear = q_base_year),
-    exp_ind = rebase(P6__CLV15_MNAC, time = time, baseyear = q_base_year),
-    # tbalance = B11__CP_MEUR,
-    nulc_aper = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1GQ__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = q_base_year)) %>%
-  ungroup()
-
-
 
 # combine
 q_dat <-
@@ -195,9 +187,13 @@ q_dat <-
             by = c("geo", "time")) %>%
   group_by(geo) %>%
   mutate(
+    nulc = ind_ulc(D1__CP_MNAC, B1GQ__CLV15_MNAC, time = time, baseyear = q_base_year),
+    nulc_eur = ind_ulc(D1__CP_MEUR, B1GQ__CLV15_MNAC, time = time, baseyear = q_base_year),
+    nulc_va = ind_ulc(D1__CP_MNAC, B1G__CLV15_MNAC, time = time, baseyear = q_base_year),
     nulc_aper = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1GQ__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = q_base_year),
     nulc_aper = coalesce(nulc_aper, nulc_aper_oecd),
     nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = a_base_year),
+    nulc_hw = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1GQ__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year),
     nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year),
     nulc_hw_va_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year),
     rulc_aper = rebase(nulc_aper / (B1GQ__CP_MNAC/B1GQ__CLV15_MNAC), time = time, baseyear = a_base_year),
@@ -213,6 +209,8 @@ q_dat <-
     nulc_aper_rel15 = weight_index(nulc_aper, geo, 2015, weight_df = weights_bis_broad),
     nulc_aper_rel_bis = weight_index(nulc_aper, geo, lubridate::year(time), weight_df = weights_bis_broad),
     nulc_aper_rel_imf = weight_index(nulc_aper, geo, lubridate::year(time), weight_df = weights_imf),
+    nulc_rel_imf = weight_index(nulc, geo, lubridate::year(time), weight_df = weights_imf),
+    nulc_eur_rel_imf = weight_index(nulc_eur, geo, lubridate::year(time), weight_df = weights_imf),
     rulc_aper_imf = weight_index(rulc_aper, geo, time, weight_df = weights_imf),
     gdp_ind_rel_imf = weight_index(gdp_ind, geo, time, weight_df = weights_imf),
     exp_ind_rel_imf = weight_index(exp_ind, geo, time, weight_df = weights_imf),
