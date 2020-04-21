@@ -274,14 +274,14 @@ dat_oecd_sna_nace_imput <-
 
 data_oecd_sna_nace_a <-
   dat_oecd_sna_nace_imput %>%
-  mutate_at(c("B1G__CP_MNAC", "D1__CP_MNAC"),
+  mutate_at(vars(matches("CP_MNAC")),
             .funs = list(EUR = ~EUR(., time, currency, exh_eur_a))) %>%
   rename_at(vars(contains("MNAC_EUR")), list(~gsub("NAC_", "", .))) %>%
   filter(time >= a_start_time)
 
 data_oecd_sna_a <-
   dat_oecd_sna %>%
-  mutate_at(c("D1__CP_MNAC", "B11__CP_MNAC", "B1GQ__CP_MNAC", "P6__CP_MNAC", "P61__CP_MNAC", "P62__CP_MNAC"),
+  mutate_at(vars(matches("CP_MNAC")),
             .funs = list(EUR = ~EUR(., time, currency, exh_eur_a))) %>%
   rename_at(vars(contains("MNAC_EUR")), list(~gsub("NAC_", "", .))) %>%
   filter(time >= a_start_time)
