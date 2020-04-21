@@ -1,0 +1,231 @@
+---
+title: "Kilpailukykymuuttujat vuositiedot"
+output: rmarkdown::html_document
+vignette: >
+  %\VignetteIndexEntry{Labour_cost}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", 
+  fig.height = 6,
+  fig.width = 8,
+  fig.path = "Report/", 
+  echo = FALSE, message = FALSE, warning = FALSE
+)
+
+
+# library(ficomp)
+
+devtools::load_all()
+
+library(dplyr)
+library(forcats)
+library(ggplot2)
+library(eurostat)
+library(tidyr)
+library(ggptt)
+
+set_proj_theme()
+
+data(ulc_oecd_dat, q_dat, a_dat, naq_eurostat_dat, eo_q_dat)
+
+base_year <- 2010
+base_years <- 2000:2018
+geos <- c(Finland = "FI", Sweden = "SE", Germany = "DE", France = "FR")
+start_time <- "1996-01-01"
+geo_trans <- geo_fi
+h_geos <- c("FI", "SE", "DE", "US")
+
+
+```
+
+# Data
+
+TODO
+
+Yhdistelmä Eurostatin ja OECD:n National Accounts datasta 
+
+Maat ja vuodet.
+
+```{r a_dat_stat}
+
+data_main_groups_a %>% 
+  filter(nace0 == "total") %>% 
+  select(geo, time, values = nulc_aper_va) %>% 
+  group_by(geo) %>% 
+  mutate(tmin = min(time[!is.na(values)]), 
+         tmax = max(time[!is.na(values)])) %>% 
+  ungroup() %>% 
+  mutate(selected = geo %in% c(eurostat_geos, oecd_geos_ulcq)) %>% 
+  translate(geo, geo_trans) %>% 
+  ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = selected)) +
+    geom_linerange(size = 2, colour = geo_col(2)[1]) +
+    coord_flip() +
+    scale_colour_manual(values = rev(geo_col(2)), guide = "none") +
+    the_title_blank("y")
+
+
+```
+
+# Nimellinen yksikkötyökustannus koko talous
+
+Tunnit, taso (2018) ja suhteellinen (2017, koska Yhdysvallat)
+
+```{r a_dat_nulc}
+
+data_main_groups_a %>% 
+  filter(nace0 == "total") %>%
+  select(geo, time, nulc_hw_va, nulc_hw_va_rel_imf) %>% 
+  gather(vars, values, nulc_hw_va, nulc_hw_va_rel_imf) %>% 
+  mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+         h_geo = fct_relevel(h_geo, h_geos),
+         geo = fct_relevel(geo, rev(h_geos), after = Inf),
+         size = !(geo %in% h_geo)) %>% 
+  translate(h_geo, geo_trans) %>% 
+  translate(vars, c(nulc_aper = "Indeksi", 
+                    nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  ggplot(aes(time, values, group = geo, colour = h_geo, size = size)) +
+  facet_wrap(~ vars) +
+  geom_line() +
+  scale_size_manual(values = c(2,1), guide = "none") +
+  scale_colour_manual(values = geo_col(length(h_geos) + 1)) +
+  the_title_blank(c("x", "l")) +
+  scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
+  labs(y = "indeksi, 2010 = 100")
+
+```
+
+### Nimellinen yksikkötyökustannus toimialaryhmittäin
+
+Koko talous, yksityinen sektori (pl. vaikeasti mitattavat), teollisuus ja palvelut. Yksityinen ja teollisuus myös ilman eletroniikkateollisuutta.
+
+
+```{r a_dat_nulc_groups, fig.height=10}
+
+data_main_groups_a %>% 
+  select(geo, time, nace0, nulc_hw_va, nulc_hw_va_rel_imf) %>% 
+  gather(vars, values, nulc_hw_va, nulc_hw_va_rel_imf) %>% 
+  mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+         h_geo = fct_relevel(h_geo, h_geos),
+         geo = fct_relevel(geo, rev(h_geos), after = Inf),
+         size = !(geo %in% h_geo)) %>% 
+  translate(h_geo, geo_trans) %>% 
+  translate(vars, c(nulc_aper = "Indeksi", 
+                    nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  ggplot(aes(time, values, group = geo, colour = h_geo, size = size)) +
+  facet_grid(nace0 ~ vars) +
+  geom_line() +
+  scale_size_manual(values = c(2,1), guide = "none") +
+  scale_colour_manual(values = geo_col(length(h_geos) + 1)) +
+  the_title_blank(c("x", "l")) +
+  scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
+  labs(y = "indeksi, 2010 = 100")
+
+```
+
+### Toimialaryhmät Suomelle
+
+```{r a_dat_nulc_groups_fi}
+
+data_main_groups_a %>% 
+  filter(geo == "FI") %>% 
+  select(geo, time, nace0, nulc_hw_va, nulc_hw_va_rel_imf) %>% 
+  gather(vars, values, nulc_hw_va, nulc_hw_va_rel_imf) %>% 
+  # mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+  #        h_geo = fct_relevel(h_geo, h_geos),
+  #        geo = fct_relevel(geo, rev(h_geos), after = Inf),
+  #        size = !(geo %in% h_geo)) %>% 
+  # translate(h_geo, geo_trans) %>% 
+  translate(vars, c(nulc_aper = "Indeksi", 
+                    nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  ggplot(aes(time, values, colour = nace0)) +
+  facet_wrap( ~ vars) +
+  geom_line() +
+  scale_size_manual(values = c(2,1), guide = "none") +
+  # scale_colour_manual(values = geo_col(length(h_geos) + 1)) +
+  the_title_blank(c("x", "l")) +
+  scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
+  labs(y = "indeksi, 2010 = 100")
+
+```
+
+### Koko talous ja yrityssektori (pl. vaikeasti mitattavat) Suomelle
+
+```{r a_dat_rnulc_total_fi}
+
+data_main_groups_a %>% 
+  filter(geo == "FI", nace0 %in% c("total", "private")) %>% 
+  select(geo, time, nace0, nulc_hw_va, nulc_hw_va_rel_imf) %>% 
+  gather(vars, values, nulc_hw_va, nulc_hw_va_rel_imf) %>% 
+  # mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+  #        h_geo = fct_relevel(h_geo, h_geos),
+  #        geo = fct_relevel(geo, rev(h_geos), after = Inf),
+  #        size = !(geo %in% h_geo)) %>% 
+  # translate(h_geo, geo_trans) %>% 
+  translate(vars, c(nulc_aper = "Indeksi", 
+                    nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  ggplot(aes(time, values, colour = nace0)) +
+  facet_wrap( ~ vars) +
+  geom_line() +
+  scale_size_manual(values = c(2,1), guide = "none") +
+  # scale_colour_manual(values = geo_col(length(h_geos) + 1)) +
+  the_title_blank(c("x", "l")) +
+  scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
+  labs(y = "indeksi, 2010 = 100")
+
+```
+
+### Nimellinen ja reaalinen yksikkötyökustannus Suomelle
+
+```{r a_dat_rnulc_groups_fi, fig.height=10}
+
+data_main_groups_a %>% 
+  filter(geo == "FI") %>% 
+  select(geo, time, nace0, nulc_hw_va, nulc_hw_va_rel_imf, rulc_hw_va, rulc_hw_va_rel_imf) %>% 
+  gather(vars, values, nulc_hw_va, nulc_hw_va_rel_imf, rulc_hw_va, rulc_hw_va_rel_imf) %>% 
+  mutate(vars2 = fct_recode(vars, taso = "nulc_hw_va", taso = "rulc_hw_va",
+                            suhteellinen = "nulc_hw_va_rel_imf", suhteellinen = "rulc_hw_va_rel_imf"),
+         vars3 = fct_recode(vars, nimellinen = "nulc_hw_va", reaalinen = "rulc_hw_va",
+                            nimellinen = "nulc_hw_va_rel_imf", reaalinen = "rulc_hw_va_rel_imf")) %>% 
+  # mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+  #        h_geo = fct_relevel(h_geo, h_geos),
+  #        geo = fct_relevel(geo, rev(h_geos), after = Inf),
+  #        size = !(geo %in% h_geo)) %>% 
+  # translate(h_geo, geo_trans) %>% 
+  translate(vars, c(nulc_aper = "Indeksi", 
+                    nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  ggplot(aes(time, values, colour = vars3)) +
+  facet_grid(nace0 ~ vars2) +
+  geom_line() +
+  scale_size_manual(values = c(2,1), guide = "none") +
+  # scale_colour_manual(values = geo_col(length(h_geos) + 1)) +
+  the_title_blank(c("x", "l")) +
+  scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
+  labs(y = "indeksi, 2010 = 100")
+
+```
+
+
+
+```{r a_dat, eval=FALSE}
+
+
+data_main_groups_a %>% 
+  select(-contains("__")) %>% 
+  filter(nace0 == "total") %>% 
+  select(-nace0) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+         geo = fct_relevel(geo, h_geos, after = Inf)) %>% 
+  ggplot(aes(time, values, group = geo, colour = h_geo)) +
+  geom_line() +
+  facet_wrap(~ vars, scales = "free") +
+  # scale_size_manual(values = c(2,1)) +
+  the_title_blank()
+
+```
+
