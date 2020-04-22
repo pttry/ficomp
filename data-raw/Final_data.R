@@ -96,17 +96,32 @@ var_labels_fi <- c(
   gdp_ind_rel15 = "GDP volume index related to other countries",
   exp_ind_rel15 = "Export volume index related to other countries, 2014-2016  double trade weights",
   nace_r2 = "Industry classification",
-  B1G__CLV15_MEUR = "Value added volume in euros",
+  B1GQ__CLV15_MNAC = "GDP volume in national currency",
+  B1GQ__CP_MNAC = "GDP in current prices in national currency",
+  B1GQ__CP_MEUR = "GDP in current prices in euros",
+  B1GQ__PYP_MNAC = "GDP in previous years prices in national currency",
   B1G__CLV15_MNAC = "Value added volume in national currency",
-  B1G__CP_MEUR = "Value added in current prices in euros",
-  D1__CP_MEUR = "Compensation of employees in euros",
   B1G__CP_MNAC = "Value added in current prices in national currency",
-  D1__CP_MNAC = "Compensation of employees in national currency",
+  B1G__CP_MEUR = "Value added in current prices in euros",
   B1G__PYP_MNAC = "Value added in previous years prices in national currency",
+  P6__CLV15_MNAC = "External balance of goods and services volume in national currency",
+  P6__CP_MNAC = "External balance of goods and services in current prices in national currency",
+  P6__CP_MEUR = "External balance of goods and services in current prices in euros",
+  P61__CLV15_MNAC = "External balance of goods volume in national currency",
+  P61__CP_MNAC = "External balance of goods in current prices in national currency",
+  P61__CP_MEUR = "External balance of goods in current prices in euros",
+  P62__CLV15_MNAC = "External balance of services volume in national currency",
+  P62__CP_MNAC = "External balance of services in current prices in national currency",
+  P62__CP_MEUR = "External balance of services in current prices in euros",
+  D1__CP_MNAC = "Compensation of employees in national currency",
+  D1__CP_MEUR = "Compensation of employees in euros",
+  B11__CP_MNAC = "External balance of goods and services in national currency",
+  B11__CP_MEUR = "External balance of goods and services in euros",
   EMP_DC__THS_HW = "Total hours of employed domestic concept, thousand",
   SAL_DC__THS_HW = "Total hours of employees domestic concept, thousand",
   EMP_DC__THS_PER = "Total employment domestic concept, thousand persons",
   SAL_DC__THS_PER = "Employees domestic concept, thousand persons",
+  nulc = "Nominal unit labour cost",
   nulc_aper_va = "Nominal unit labour cost, persons, value added",
   nulc_hw_va = "Nominal unit labour cost, hours, value added",
   nulc_hw_va_eur = "Nominal unit labour cost, hours, value added, in common currency (EUR)",
@@ -116,8 +131,8 @@ var_labels_fi <- c(
   rulc_hw_va_rel = "Relative real unit labour cost, hours, value added, related to other countries, rolling double trade weights",
   XPERF = "Export performance for goods and services, volume",
   XSHA = "Share of value exports of goods and services in world exports in USD",
-  XGSVD = "",
-  XMKT = ""
+  XGSVD = "Exports of goods and services, volume, USD, 2005 prices",
+  XMKT = "Export market for goods and services, volume, USD, 2005 prices"
 )
 
 usethis::use_data(var_labels, overwrite = TRUE)
@@ -197,7 +212,8 @@ q_dat <-
     nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year),
     nulc_hw_va_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = a_base_year),
     rulc_aper = rebase(nulc_aper / (B1GQ__CP_MNAC/B1GQ__CLV15_MNAC), time = time, baseyear = a_base_year),
-    rulc_hw_va = rebase(nulc_hw_va / (B1GQ__CP_MNAC/B1GQ__CLV15_MNAC), time = time, baseyear = a_base_year)) %>%
+    rulc_hw_va = rebase(nulc_hw_va / (B1GQ__CP_MNAC/B1GQ__CLV15_MNAC), time = time, baseyear = a_base_year)
+    ) %>%
   mutate(
     gdp_ind = rebase(B1GQ__CLV15_MNAC, time = time, baseyear = a_base_year),
     exp_ind = rebase(P6__CLV15_MNAC, time = time, baseyear = a_base_year),
