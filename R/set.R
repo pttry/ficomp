@@ -2,7 +2,7 @@
 #'
 #'
 
-set_proj_theme <- function(base_size = 14){
+set_proj_theme <- function(base_size = 12){
   ggptt::set_ptt(base_size, "sans")
   ggplot2::theme_update(
     legend.text = ggplot2::element_text(size = base_size),

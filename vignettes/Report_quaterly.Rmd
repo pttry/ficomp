@@ -175,7 +175,7 @@ eo_q_dat_large %>%
     scale_colour_manual(values = rev(geo_col(2)), guide = "none") +
     the_title_blank("y")
 
-
+save_fig("4_OECD_eo_geos")
 
 ```
 
@@ -204,6 +204,7 @@ q_dat %>%
     scale_colour_manual(values = rev(geo_col(2)), guide = "none") +
     the_title_blank("y")
 
+save_fig("5_Eurostat_OECD_geos")
 
 ```
 
@@ -228,6 +229,8 @@ q_dat %>%
   the_title_blank(c("x", "l")) +
   scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
   labs(y = "indeksi, 2010 = 100")
+
+save_fig("6_nulc_q_dat")
 
 ```
 
@@ -259,9 +262,10 @@ bind_rows("Eurostat ja OECD QNA" = q_dat,
   # scale_colour_manual(values = geo_col(length(h_geos) + 1)) +
   the_title_blank(c("x", "l")) +
   # scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
-  labs(y = "indeksi, 2010 = 100")
+  labs(y = "indeksi, 2010 = 100") +
+  the_legend_bot()
   
-
+save_fig("7_nulc_comparison")
 
 ```
 
@@ -308,6 +312,7 @@ data_main_groups_q %>%
   translate(h_geo, geo_trans) %>% 
   translate(vars, c(nulc_aper = "Indeksi", 
                     nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  translate(nace0, c(total = "Koko talous", manu = "Teollisuus")) %>% 
   ggplot(aes(time, values, group = geo, colour = h_geo, size = size)) +
   facet_grid(nace0 ~ vars) +
   geom_line() +
@@ -316,6 +321,8 @@ data_main_groups_q %>%
   the_title_blank(c("x", "l")) +
   scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
   labs(y = "indeksi, 2010 = 100")
+
+save_fig("8_nulc_q_total_manu")
 
 ```
 
@@ -376,13 +383,15 @@ q_dat %>%
   mutate(change = 100 * (values / lag(values, 4, order_by = time) - 1)) %>% 
   ungroup() %>% 
   gather(vars, values, values, change) %>% 
-  translate(vars, c(change = "Muutos", values = "Taso")) %>% 
+  translate(vars, c(change = "Muutos, %", values = "Taso, indeksi 2010 = 100")) %>% 
   ggplot(aes(time, values, colour = ind)) +
   facet_wrap(~ vars, scales = "free_y") +
   geom_line() +
   geom_hline(aes(yintercept = yint), 
-             data = data.frame(yint = 0, vars = "Muutos")) +
+             data = data.frame(yint = 0, vars = "Muutos, %")) +
   the_title_blank()
+
+save_fig("9_nulc_ind_comparison")
 
 ```
 

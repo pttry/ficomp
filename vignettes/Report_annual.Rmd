@@ -38,6 +38,7 @@ base_years <- 2000:2018
 geos <- c(Finland = "FI", Sweden = "SE", Germany = "DE", France = "FR")
 start_time <- "1996-01-01"
 geo_trans <- geo_fi
+nace0_trans <- nace0_fi
 h_geos <- c("FI", "SE", "DE", "US")
 
 
@@ -68,6 +69,7 @@ data_main_groups_a %>%
     scale_colour_manual(values = rev(geo_col(2)), guide = "none") +
     the_title_blank("y")
 
+save_fig("A1_Eurostat_OECD_na")
 
 ```
 
@@ -97,6 +99,8 @@ data_main_groups_a %>%
   scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
   labs(y = "indeksi, 2010 = 100")
 
+save_fig("A2_nulc")
+
 ```
 
 ### Nimellinen yksikkötyökustannus toimialaryhmittäin
@@ -114,8 +118,9 @@ data_main_groups_a %>%
          geo = fct_relevel(geo, rev(h_geos), after = Inf),
          size = !(geo %in% h_geo)) %>% 
   translate(h_geo, geo_trans) %>% 
-  translate(vars, c(nulc_aper = "Indeksi", 
-                    nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  translate(vars, c(nulc_hw_va = "Indeksi", 
+                    nulc_hw_va_rel_imf = "Suhteellinen indeksi")) %>% 
+  translate(nace0, nace0_trans) %>% 
   ggplot(aes(time, values, group = geo, colour = h_geo, size = size)) +
   facet_grid(nace0 ~ vars) +
   geom_line() +
@@ -124,6 +129,8 @@ data_main_groups_a %>%
   the_title_blank(c("x", "l")) +
   scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
   labs(y = "indeksi, 2010 = 100")
+
+save_fig("A3_nulc_nace0", height = 9)
 
 ```
 
@@ -140,8 +147,9 @@ data_main_groups_a %>%
   #        geo = fct_relevel(geo, rev(h_geos), after = Inf),
   #        size = !(geo %in% h_geo)) %>% 
   # translate(h_geo, geo_trans) %>% 
-  translate(vars, c(nulc_aper = "Indeksi", 
-                    nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  translate(vars, c(nulc_hw_va = "Indeksi", 
+                    nulc_hw_va_rel_imf = "Suhteellinen indeksi")) %>% 
+  translate(nace0, nace0_trans) %>% 
   ggplot(aes(time, values, colour = nace0)) +
   facet_wrap( ~ vars) +
   geom_line() +
@@ -150,6 +158,8 @@ data_main_groups_a %>%
   the_title_blank(c("x", "l")) +
   scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
   labs(y = "indeksi, 2010 = 100")
+
+save_fig("A4_nulc_nace0_fi")
 
 ```
 

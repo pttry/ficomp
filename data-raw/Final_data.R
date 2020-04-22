@@ -37,6 +37,13 @@ all_extra_geos <- c(eu_geo, other_eurostat_geo, c("AU", "CA", "US", "JP", "NO", 
 geo_fi <- setNames(countrycode::countrycode(all_extra_geos, "eurostat", "cldr.name.fi",
                                             custom_match = c(EA12 = "Euroalue-12")), all_extra_geos)
 
+nace0_fi <- c(total = "Koko talous",
+              manu = "Teollisuus",
+              private = "Yksityinen",
+              private_ex26 = "Yksityinen pl. 26",
+              manu_ex26 = "Teollisuus pl. 26",
+              service = "Palvelut")
+
 
 main_nace_sna <- c(VTOT = "TOTAL", VC = "C", V26 = "C26",  VF = "F", VG = "G", VH = "H",
                    VI = "I", VJ = "J", VM = "M", VN = "N")
@@ -50,7 +57,8 @@ main_nace_sna <- c(VTOT = "TOTAL", VC = "C", V26 = "C26",  VF = "F", VG = "G", V
 
 # oecd_geos %in% weights_bis_broad$geo
 
-usethis::use_data(eurostat_geos, oecd_geos_ulcq, oecd_geos, all_extra_geos, main_nace_sna, a_start_time, a_base_year, geo_fi, overwrite = TRUE)
+usethis::use_data(eurostat_geos, oecd_geos_ulcq, oecd_geos, all_extra_geos, main_nace_sna, a_start_time, a_base_year, overwrite = TRUE)
+usethis::use_data(nace0_fi, geo_fi, overwrite = TRUE)
 
 # Variables used
 
