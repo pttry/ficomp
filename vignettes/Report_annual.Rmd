@@ -208,6 +208,7 @@ data_main_groups_a %>%
   # translate(h_geo, geo_trans) %>% 
   translate(vars, c(nulc_aper = "Indeksi", 
                     nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  translate(nace0, nace0_trans) %>% 
   ggplot(aes(time, values, colour = vars3)) +
   facet_grid(nace0 ~ vars2) +
   geom_line() +
@@ -216,6 +217,8 @@ data_main_groups_a %>%
   the_title_blank(c("x", "l")) +
   scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
   labs(y = "indeksi, 2010 = 100")
+
+save_fig("A_nulc_rulc_fi", height = 9)
 
 ```
 

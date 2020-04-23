@@ -509,11 +509,17 @@ q_dat %>%
   gather(vars, values, -geo, -time) %>% 
   # mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
   #        geo = fct_relevel(geo, h_geos, after = Inf)) %>% 
+  translate(geo, geo_fi) %>% 
+  translate(vars, c(nulc_aper_rel15 = "BIS, kiinteä 2015", 
+                    nulc_aper_rel_bis = "BIS", 
+                    nulc_aper_rel_imf = "IMF")) %>% 
   ggplot(aes(time, values, colour = vars)) +
   geom_line() +
   facet_wrap(~ geo, scales = "free") +
   scale_size_manual(values = c(2,1)) +
   the_title_blank()
+
+save_fig("Q_weights")
 
 ```
 
@@ -526,18 +532,21 @@ q_dat %>%
 q_dat %>% 
   filter(geo %in% h_geos) %>% 
   select(geo, time, nulc_aper_rel_imf, gdp_ind_rel_imf, exp_ind_rel_imf, XPERF) %>% 
-  mutate(inv_nulc_aper_rel_imf = rebase(1/nulc_aper_rel_imf, time, base_year),
+  mutate(nulc_aper_rel_imf = rebase(1/nulc_aper_rel_imf, time, base_year),
          XPERF = 100* XPERF) %>% 
-  select(-nulc_aper_rel_imf) %>% 
   gather(vars, values, -geo, -time) %>% 
   # mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
   #        geo = fct_relevel(geo, h_geos, after = Inf)) %>% 
   translate(geo, geo_fi) %>% 
+  translate(vars, c(nulc_aper_rel_imf = "ULCy, käänteinen", gdp_ind_rel_imf = "BKT", 
+                    exp_ind_rel_imf = "Vienti", XPERF = "Vientimenestys")) %>% 
   ggplot(aes(time, values, colour = vars)) +
   geom_line() +
   facet_wrap(~ geo, scales = "free") +
   scale_size_manual(values = c(2,1)) +
   the_title_blank()
+
+save_fig("Q_ulc_gdp_comp")
 
 ```
 
