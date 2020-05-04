@@ -31,7 +31,7 @@ library(ggptt)
 
 set_proj_theme()
 
-data(ulc_oecd_dat, q_dat, a_dat, naq_eurostat_dat, eo_q_dat)
+data("data_main_total_a", "data_main_groups_a")
 
 base_year <- 2010
 base_years <- 2000:2018
@@ -222,7 +222,21 @@ save_fig("A_nulc_rulc_fi", height = 9)
 
 ```
 
+Samassa valuutassa volatiliteetti paljon suurempi.
 
+```{r nulc_eur}
+
+data_main_groups_a %>% 
+  filter(geo %in% c("SE"),
+         time >= start_time,
+         nace0 == "total") %>% 
+  select(geo, time, nulc_va_rel_imf, nulc_va_eur_rel_imf) %>% 
+  gather(ind, values, -geo, -time, factor_key = TRUE) %>% 
+  ggplot(aes(time, values, colour = ind)) +
+  geom_line() +
+  the_title_blank()
+
+```
 
 ```{r a_dat, eval=FALSE}
 
