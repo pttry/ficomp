@@ -6,6 +6,7 @@
 library(readr)
 library(dplyr)
 library(tidyr)
+library(forcats)
 
 ameco_lc_link <- "http://ec.europa.eu/economy_finance/db_indicators/ameco/documents/ameco7.zip"
 
@@ -15,7 +16,7 @@ download.file(ameco_lc_link, tempf)
 ameco_file <- unzip(tempf, "AMECO7.TXT")
 
 
-ameco_lc <- readr::read_delim(
+ameco_lc_0 <- readr::read_delim(
   ameco_file, delim = ";",
   col_types = cols(
     CODE = col_character(),
@@ -29,21 +30,30 @@ ameco_lc <- readr::read_delim(
   gather(time, values, starts_with("x")) %>%
   mutate(time = as.numeric(gsub("x", " ", time)))
 
+ameco_vars <- c(
+  nulc_aper = "Nominal unit labour costs: total economy (Ratio of compensation per employee to real GDP per person employed.)",
+  nulc_aper_rel_ameco  = "Nominal unit labour costs: total economy :- Performance relative to the rest of 24 industrial countries: double export weights (Ratio of compensation per employee to real GDP per person employed.)"
+)
+
+ameco_units <- c(
+  eur = "(EUR: 2015 = 100) ",
+  usd = "(USD: 2015 = 100) ",
+  nac = "(National currency: 2015 = 100) "
+)
+
+ameco_lc <- ameco_lc_0 %>%
+  filter(title %in% ameco_vars,
+         unit %in% ameco_units) %>%
+  separate(code, into = c("geo", NA, NA, NA, NA, "vars"), sep = "\\.") %>%
+  droplevels() %>%
+  transmute(time = time,
+            geo = geo,
+            vars = fct_recode(title, !!!ameco_vars),
+            unit = fct_recode(unit, !!!ameco_units),
+            values = values) %>%
+  unite(vars, vars, unit) %>%
+  mutate(vars = as_factor(vars),
+         vars = gsub("_nac", "", vars))
+
 usethis::use_data(ameco_lc, overwrite = TRUE)
 
-library(ggplot2)
-library(ggptt)
-
-ameco_lc %>%
-  filter(sub_chapter == "07 Nominal unit labour costs, total economy",
-         country == "Finland",
-         time >= 1995) %>%
-  ggplot(aes(time, values, colour = unit)) +
-  geom_line() +
-  facet_wrap(~ title)
-  the_legend_bot()
-
-
-
-  # distinct(title, unit)
-# %>% pull(title)

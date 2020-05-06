@@ -15,15 +15,18 @@ Imports:
     forcats,
     ggplot2,
     ggptt,
-    lubridate
-Suggests: 
+    lubridate,
     knitr,
     rmarkdown,
-    ameco,
     eurostat,
     readxl,
     pxweb,
     uljas,
     ecb,
-    stringr
+    stringr, 
+    OECD,
+    countrycode,
+    purrr
 VignetteBuilder: knitr
+Depends: 
+    R (>= 2.10)
