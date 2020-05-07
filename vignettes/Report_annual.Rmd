@@ -238,6 +238,40 @@ data_main_groups_a %>%
 
 ```
 
+```{r }
+
+data_main_groups_a %>% 
+    filter(nace0 == "total") %>% 
+  select(geo, time, nulc_va_rel_imf, nulc_va_eur_rel_imf) %>% 
+  left_join(select(ameco_lc, geo, time, nulc_aper_rel_ameco, nulc_aper_rel_ameco_usd,
+                   nulc_aper_rel37_ameco, nulc_aper_rel37_ameco_usd,
+                   nulc_aper_relEU_ameco, nulc_aper_relEU_ameco_usd), by = c("geo", "time")) %>% 
+    filter(geo %in% c("US", "FI", "SE", "DE"),
+         time >= start_time) %>% 
+  gather(ind, values, -geo, -time, factor_key = TRUE) %>% 
+  ggplot(aes(time, values, colour = ind)) +
+  geom_line() +
+  facet_wrap(~geo) +
+  the_title_blank()
+
+```
+
+```{r }
+
+data_main_groups_a %>% 
+    filter(nace0 == "total") %>% 
+  select(geo, time, nulc_va, nulc_va_eur) %>% 
+  left_join(select(ameco_lc, geo, time, nulc_aper, nulc_aper_eur), by = c("geo", "time")) %>% 
+    filter(geo %in% c("US", "FI", "SE", "DE"),
+         time >= start_time) %>% 
+  gather(ind, values, -geo, -time, factor_key = TRUE) %>% 
+  ggplot(aes(time, values, colour = ind)) +
+  geom_line() +
+  facet_wrap(~geo) +
+  the_title_blank()
+
+```
+
 ```{r a_dat, eval=FALSE}
 
 

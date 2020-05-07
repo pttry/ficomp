@@ -32,7 +32,9 @@ ameco_lc_0 <- readr::read_delim(
 
 ameco_vars <- c(
   nulc_aper = "Nominal unit labour costs: total economy (Ratio of compensation per employee to real GDP per person employed.)",
-  nulc_aper_rel_ameco  = "Nominal unit labour costs: total economy :- Performance relative to the rest of 24 industrial countries: double export weights (Ratio of compensation per employee to real GDP per person employed.)"
+  nulc_aper_rel_ameco  = "Nominal unit labour costs: total economy :- Performance relative to the rest of 24 industrial countries: double export weights (Ratio of compensation per employee to real GDP per person employed.)",
+  nulc_aper_relEU_ameco = "Nominal unit labour costs: total economy :- Performance relative to the rest of the former EU-15: double export weights (Ratio of compensation per employee to real GDP per person employed.)",
+  nulc_aper_rel37_ameco = "Nominal unit labour costs: total economy :- Performance relative to the rest of 37 industrial countries: double export weights (Ratio of compensation per employee to real GDP per person employed.)"
 )
 
 ameco_units <- c(
@@ -44,16 +46,22 @@ ameco_units <- c(
 ameco_lc <- ameco_lc_0 %>%
   filter(title %in% ameco_vars,
          unit %in% ameco_units) %>%
-  separate(code, into = c("geo", NA, NA, NA, NA, "vars"), sep = "\\.") %>%
+  separate(code, into = c("geo", NA, "desc", NA, NA, "vars"), sep = "\\.", remove = FALSE) %>%
+  filter(desc %in% c(0,1)) %>%  # Only current values weights, 2 is PPS weights (it seems)
   droplevels() %>%
   transmute(time = time,
-            geo = geo,
+            geo = countrycode::countrycode(geo, "iso3c", "eurostat", nomatch = NULL),
+            # code = code,
             vars = fct_recode(title, !!!ameco_vars),
             unit = fct_recode(unit, !!!ameco_units),
             values = values) %>%
-  unite(vars, vars, unit) %>%
-  mutate(vars = as_factor(vars),
-         vars = gsub("_nac", "", vars))
+  unite(ind, vars, unit) %>%
+  mutate(ind = as_factor(ind),
+         ind = gsub("_nac", "", ind)) %>%
+  group_by(geo, ind) %>%
+  mutate(values = rebase(values, time, baseyear = base_year)) %>%
+  ungroup() %>%
+  spread(ind, values)
 
 usethis::use_data(ameco_lc, overwrite = TRUE)
 

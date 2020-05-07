@@ -449,8 +449,10 @@ data_main_groups_a <-
     rulc_hw_va = rebase(nulc_hw_va / (B1G__CP_MNAC/B1G__CLV15_MNAC), time = time, baseyear = base_year)) %>%
   group_by(nace0, time) %>%
   mutate(
-    nulc_va_rel_imf = weight_index(nulc_hw_va, geo, time, weight_df = weights_imf),
-    nulc_va_eur_rel_imf = weight_index(nulc_hw_va_eur, geo, time, weight_df = weights_imf),
+    nulc_va_rel_imf = weight_index(nulc_va, geo, time, weight_df = weights_imf),
+    nulc_va_eur_rel_imf = weight_index(nulc_va_eur, geo, time, weight_df = weights_imf),
+    nulc_va_rel15_imf = weight_index(nulc_va, geo, 2015, weight_df = weights_imf),
+    nulc_va_eur_rel15_imf = weight_index(nulc_va_eur, geo, 2015, weight_df = weights_imf),
     nulc_hw_va_rel = weight_index(nulc_hw_va, geo, time, weight_df = weights_bis_broad),
     nulc_hw_va_eur_rel = weight_index(nulc_hw_va_eur, geo, time, weight_df = weights_bis_broad),
     rulc_hw_va_rel = weight_index(rulc_hw_va, geo, time, weight_df = weights_bis_broad),

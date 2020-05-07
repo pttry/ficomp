@@ -7,6 +7,10 @@ library(httr)
 library(lubridate)
 library(countrycode)
 
+
+ecb_custom_match <- c(B4 = "EU27", B5 = "EU28", B6 = "EU27b",
+                      I6 = "EA17", I7 = "EA18", I8 = "EA19")
+
 # ecb_stats <- get_dataflows()
 # ecb_stats %>%
 #   filter(flow_ref == "MNA")
@@ -27,8 +31,7 @@ ulc_ecb_dat <- ecb_ulc0 %>%
             geo = as_factor(countrycode(ref_area,
                                         origin = "ecb",
                                         destination = "eurostat",
-                                        custom_match = c(B4 = "EU27", B5 = "EU28", B6 = "EU27b",
-                                                         I6 = "EA17", I7 = "EA18", I8 = "EA19"))),
+                                        custom_match = ecb_custom_match)),
             na_item = factor(sto,
                              levels = c("ULC_HW", "ULC_PS"),
                              labels = c("NULC_HW", "NULC_PER")),
@@ -39,6 +42,11 @@ usethis::use_data(ulc_ecb_dat, overwrite = TRUE)
 
 
 # Trade weights
+
+# ECB has 31 different weights (probably), they are distinqued by TRADE_WEIGHT and CURRENCY_TRANS
+# colums. Trade weights are:
+ecb_weight_codes
+
 
 ecb_stats %>%
   filter(grepl("weight", title, ignore.case = "TRUE"))
@@ -52,6 +60,25 @@ kk <- wts_res %>%
          COUNT_AREA == "SE",
          TRADE_WEIGHT == "O") %>%
   droplevels()
+
+weights_ecb <- wts_res %>%
+  transmute(time = TIME_PERIOD,
+            geo_base = as_factor(countrycode(REF_AREA,
+                                        origin = "ecb",
+                                        destination = "eurostat",
+                                        custom_match = ecb_custom_match)),
+            geo = as_factor(countrycode(COUNT_AREA,
+                                             origin = "ecb",
+                                             destination = "eurostat",
+                                             custom_match = ecb_custom_match)),
+            ind = as_factor(stringr::str_c(TRADE_WEIGHT, CURRENCY_TRANS, sep = "__")),
+            values = OBS_VALUE)
+
+  filter(REF_AREA == "FI",
+         COUNT_AREA == "US",
+         TIME_PERIOD == 2010) %>% droplevels() %>%
+  distinct(TITLE_COMPL, TRADE_WEIGHT, CURRENCY_TRANS)
+  pull(TITLE_COMPL)
 
 # # Check also unit labour cost based competiveness indicators (also inflation and gdp deflators)
 #

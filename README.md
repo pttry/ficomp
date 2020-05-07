@@ -53,6 +53,8 @@ The goal of ficomp is to ...
   
 - ECB (data-raw/get_ECB.R)
   + based on eurostat data
+  
+- AMECO (data-raw/get_Ameco)
 
 ### EER data 
 
