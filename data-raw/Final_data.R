@@ -18,7 +18,7 @@ eu_geo <- eurostat::eu_countries$code
 other_eurostat_geo <- c("NO", "CH", "IS")
 agg_eurostat <- c("EA19", "EU28")
 
-eurostat_geos <- c("BE", "DK", "DE", "IE", "ES", "FR", "IT", "NL", "AT", "FI", "SE", "UK", "NO", "IS", "PT", "EL")
+eurostat_geos <- c("BE", "DK", "DE", "IE", "ES", "FR", "IT", "NL", "AT", "FI", "SE", "UK", "NO", "PT", "EL")
 
 #9 other industrial countries (Australia, Canada, United States, Japan, Norway, New Zealand, Mexico, Switzerland and Turkey)
 # IC37_other <- c("AU", "CA", "US", "JP", "NO", "NZ", "MX", "CH", "TR")
