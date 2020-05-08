@@ -18,7 +18,7 @@ eu_geo <- eurostat::eu_countries$code
 other_eurostat_geo <- c("NO", "CH", "IS")
 agg_eurostat <- c("EA19", "EU28")
 
-eurostat_geos <- c("BE", "DK", "DE", "IE", "ES", "FR", "IT", "NL", "AT", "FI", "SE", "UK")
+eurostat_geos <- c("BE", "DK", "DE", "IE", "ES", "FR", "IT", "NL", "AT", "FI", "SE", "UK", "NO", "IS", "PT", "EL")
 
 #9 other industrial countries (Australia, Canada, United States, Japan, Norway, New Zealand, Mexico, Switzerland and Turkey)
 # IC37_other <- c("AU", "CA", "US", "JP", "NO", "NZ", "MX", "CH", "TR")
@@ -57,7 +57,7 @@ main_nace_sna <- c(VTOT = "TOTAL", VC = "C", V26 = "C26",  VF = "F", VG = "G", V
 
 # oecd_geos %in% weights_bis_broad$geo
 
-usethis::use_data(eurostat_geos, oecd_geos_ulcq, oecd_geos, all_extra_geos, main_nace_sna, a_start_time, base_year, overwrite = TRUE)
+usethis::use_data(eurostat_geos, oecd_geos_ulcq, oecd_geos, all_geos, all_extra_geos, main_nace_sna, a_start_time, base_year, overwrite = TRUE)
 usethis::use_data(nace0_fi, geo_fi, overwrite = TRUE)
 
 # Variables used
@@ -447,7 +447,7 @@ data_main_groups_a <-
     nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = base_year),
     nulc_hw_va_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = base_year),
     rulc_hw_va = rebase(nulc_hw_va / (B1G__CP_MNAC/B1G__CLV15_MNAC), time = time, baseyear = base_year)) %>%
-  group_by(nace0, time) %>%
+  group_by(nace0, time) %>%  #filter(nace0 == "total", time == 2015) -> kk
   mutate(
     nulc_va_rel_imf = weight_index(nulc_va, geo, time, weight_df = weights_imf),
     nulc_va_eur_rel_imf = weight_index(nulc_va_eur, geo, time, weight_df = weights_imf),
@@ -464,7 +464,7 @@ data_main_groups_a <-
 data_main_total_a <-
   data_eurostat_nama_a %>%
   bind_rows(select(data_oecd_sna_a, all_of(names(.)))) %>%
-  # filter(time >= start_time_main,
+  # filter(time < 2020) %>%
   #        geo %in% countries) %>%
   mutate(geo = as_factor(geo)) %>%
   select(- nace_r2) %>%
@@ -478,7 +478,8 @@ data_main_total_a <-
     tbalance_gdp = B11__CP_MNAC / B1GQ__CP_MNAC) %>%
   ungroup() %>%
   group_by(time) %>%
-  mutate(gdp_ind_rel = weight_index(gdp_ind, geo, time, weight_df = weights_bis_broad),
+  mutate(
+    gdp_ind_rel = weight_index(gdp_ind, geo, time, weight_df = weights_bis_broad),
          exp_ind_rel = weight_index(exp_ind, geo, time, weight_df = weights_bis_broad),
          gdp_ind_rel_imf = weight_index(gdp_ind, geo, time, weight_df = weights_imf),
          exp_ind_rel_imf = weight_index(exp_ind, geo, time, weight_df = weights_imf),

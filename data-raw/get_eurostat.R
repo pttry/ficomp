@@ -60,8 +60,7 @@ ulc_eurostat_dat <- namq_10_lp_ulc %>%
   droplevels()
 
 
-# TODO: Open / private sector
-      # measurable sector: c("C", "F", "G-I", "J", "M_N")
+
 
 # compine data
 naq_eurostat_dat_raw <-
@@ -166,7 +165,7 @@ dat_eurostat_nace <-
   dat_nama_10_a64 %>%
   left_join(dat_nama_10_a64_e, by = c("nace_r2", "geo", "time")) %>%
   mutate_at(c("geo", "nace_r2"), as_factor) %>%
-  filter(nace_r2 %in% main_nace_sna, geo %in% eurostat_geos, time >= a_start_time) %>%
+  filter(nace_r2 %in% main_nace_sna, geo %in% c(eurostat_geos), time >= a_start_time) %>%
   droplevels() %>%
   complete(geo, time, nace_r2)
 
@@ -180,6 +179,10 @@ dat_eurostat_nace_imput <-
                      .))
 
 # visdat::vis_dat(dat_nama_10_a64)
+
+# dat_nama_10_a64 %>%
+#   filter(geo == "EL", is.na(B1G__CLV15_MNAC)) %>%
+#   distinct(geo, nace_r2)
 
 data_eurostat_nama_nace_a <-
   dat_eurostat_nace_imput

@@ -45,21 +45,19 @@ usethis::use_data(ulc_ecb_dat, overwrite = TRUE)
 
 # ECB has 31 different weights (probably), they are distinqued by TRADE_WEIGHT and CURRENCY_TRANS
 # colums. Trade weights are:
-ecb_weight_codes
+ecb_weight_codes <- c(T = "Double export weight",
+                      X = "Export weight",
+                      M = "Import weight",
+                      O = "Overall trade weigth")
 
 
-ecb_stats %>%
-  filter(grepl("weight", title, ignore.case = "TRUE"))
+# ecb_stats %>%
+#   filter(grepl("weight", title, ignore.case = "TRUE"))
 
 wts0 <- httr::GET("https://sdw-wsrest.ecb.europa.eu/service/data/WTS", accept("text/csv"))
 wts_res <- httr::content(wts0, "parsed") %>%
   mutate_if(is.character, as_factor)
 
-kk <- wts_res %>%
-  filter(REF_AREA == "FI",
-         COUNT_AREA == "SE",
-         TRADE_WEIGHT == "O") %>%
-  droplevels()
 
 weights_ecb <- wts_res %>%
   transmute(time = TIME_PERIOD,
@@ -72,13 +70,16 @@ weights_ecb <- wts_res %>%
                                              destination = "eurostat",
                                              custom_match = ecb_custom_match)),
             ind = as_factor(stringr::str_c(TRADE_WEIGHT, CURRENCY_TRANS, sep = "__")),
-            values = OBS_VALUE)
+            weight = OBS_VALUE) %>%
+  complete(geo_base, geo, time, ind)
 
-  filter(REF_AREA == "FI",
-         COUNT_AREA == "US",
-         TIME_PERIOD == 2010) %>% droplevels() %>%
-  distinct(TITLE_COMPL, TRADE_WEIGHT, CURRENCY_TRANS)
-  pull(TITLE_COMPL)
+usethis::use_data(weights_ecb, overwrite = TRUE)
+
+  # filter(REF_AREA == "FI",
+  #        COUNT_AREA == "US",
+  #        TIME_PERIOD == 2010) %>% droplevels() %>%
+  # distinct(TITLE_COMPL, TRADE_WEIGHT, CURRENCY_TRANS)
+  # pull(TITLE_COMPL)
 
 # # Check also unit labour cost based competiveness indicators (also inflation and gdp deflators)
 #
