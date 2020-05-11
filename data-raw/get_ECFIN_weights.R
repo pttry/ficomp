@@ -1,0 +1,23 @@
+
+library(dplyr)
+library(tidyr)
+
+ecfin_w_link <- "https://ec.europa.eu/economy_finance/db_indicators/competitiveness/documents/stat_csv.zip"
+tempf <- tempfile()
+download.file(ecfin_w_link, tempf)
+
+# weight files in zip-datafiles
+w_files <- unzip(tempf, list = TRUE)$Name %>%
+  grep("W", ., value = TRUE)
+# weight file prefixs
+w_inds <- unique(substr(w_files, 1, 3))
+
+
+weights_ecfin19 <- read_ecfin_weights(tempf, "A19W")
+weights_ecfin27 <- read_ecfin_weights(tempf, "A27W")
+weights_ecfin37 <- read_ecfin_weights(tempf, "A37W")
+weights_ecfin42 <- read_ecfin_weights(tempf, "A42W")
+
+unlink(tempf)
+
+usethis::use_data(weights_ecfin19, weights_ecfin27, weights_ecfin37, weights_ecfin42, overwrite = TRUE)
