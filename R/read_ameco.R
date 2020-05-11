@@ -13,7 +13,7 @@ read_ameco <- function(table_num){
   tempf <- tempfile(fileext = ".zip")
 
   download.file(link, tempf)
-  ameco_file <- unzip(tempf, paste0("AMECO", table_num,".TXT"))
+  ameco_file <- unzip(tempf, paste0("AMECO", table_num,".TXT"), junkpaths = TRUE, exdir = tempdir())
 
 
   ameco_0 <- readr::read_delim(
