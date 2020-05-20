@@ -43,9 +43,20 @@ h_geos <- c("FI", "SE", "DE", "US")
 
 ```
 
-# Data
+# Neljännesvuositiedot
 
-Data for unit labour cost index
+Neljännesvuositietoja on kolme erilaista tietokantaa:
+
+* q_dat_oecd_ulc. OECD:n ULC-tietokantaan perustuva, joka sisältää laajimman maavalikoiman 
+  vuodesta 1996 eteenpäin.
+  Alkuperäisissä tiedoissa on osalle maalle tietoja myös aiemmin. 
+* eo_q_dat. OECD:n Economic Outlook tietokantaan peruva, joka sisältää pisimmät
+  neljännesvuosittaiset sarjata. Saksan sarja alkaa 1991, joten tätä on käytetty aloitusvuonna.
+  Maavalikoima on suppeampi kuin ULC-tietokannan tiedoissa.
+* q_dat. Eurostatin ja OECD:n kansantalouden tilinpidon tiedoista yhdistetty tietokanta.
+  Aloitusvuosi 1996, sisältää Eurostat maiden ulkopuolelta vain Yhdysvaltojen ja Japanin tiedot. 
+  Tietokanta sisältää koko talouden lisäksi myös teollisuuden tiedot.
+
 
 ```{r}
 

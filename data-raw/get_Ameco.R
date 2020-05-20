@@ -20,6 +20,8 @@ ameco6_0 <- read_ameco(table_num = 6)
 ameco7_0 <- read_ameco(table_num = 7)
 # Exports and Imports of Goods And Services, National Accounts
 ameco9_0 <- read_ameco(table_num = 9)
+#  BALANCES WITH THE REST OF THE WORLD
+ameco10_0 <- read_ameco(table_num = 10)
 
 
 # Table 1
@@ -47,7 +49,7 @@ ameco1 <- ameco1_0 %>%
 # Table 6
 
 ameco6_vars <- c(
-  "UVGD", "OVGD", "OVGDA", "OVGDQ"
+  "UVGD", "OVGD", "OVGDA", "OVGDQ", "UVGE", "OVGE"
 )
 
 ameco6_vars_trans <- c(
@@ -55,6 +57,10 @@ ameco6_vars_trans <- c(
   B1GQ__CP_MEUR = "UVGD_99_0_0",
   B1GQ__CP_PPS = "UVGD_212_0_0",
   B1GQ__CLV15_MNAC = "OVGD_0_1_0",
+  B1G__CP_MNAC = "UVGE_0_0_0",
+  B1G__CP_MEUR = "UVGE_99_0_0",
+  B1G__CP_PPS = "UVGE_212_0_0",
+  B1G__CLV15_MNAC = "OVGE_0_1_0",
   gdp_ind_rel_ameco15 = "OVGDQ_0_0_415",
   gdp_ind_rel_ameco24 = "OVGDQ_0_0_424",
   gdp_ind_rel_ameco37 = "OVGDQ_0_0_437",
@@ -87,9 +93,9 @@ ameco7_vars_trans <- c(
   nulc_aper_rel_ameco15 = "PLCDQ_0_0_415",
   nulc_aper_rel_ameco24 = "PLCDQ_0_0_424",
   nulc_aper_rel_ameco37 = "PLCDQ_0_0_437",
-  nulc_aper_usd_rel_ameco15 = "PLCDQ_0_0_415",
-  nulc_aper_usd_rel_ameco24 = "PLCDQ_0_0_424",
-  nulc_aper_usd_rel_ameco37 = "PLCDQ_0_0_437",
+  nulc_aper_usd_rel_ameco15 = "PLCDQ_30_0_415",
+  nulc_aper_usd_rel_ameco24 = "PLCDQ_30_0_424",
+  nulc_aper_usd_rel_ameco37 = "PLCDQ_30_0_437",
   rulc_aper = "QLCD_0_1_0",
   rulc_aper_rel_ameco15 = "QLCDQ_0_0_415",
   rulc_aper_rel_ameco24 = "QLCDQ_0_0_424",
@@ -155,16 +161,35 @@ ameco9 <- ameco9_0 %>%
   mutate_if(is.character, as_factor) %>%
   droplevels() %>%
   unite(vars, vars, unit_code, desc, rel, sep = "_") %>%
-  filter(!vars %in% c("UXGS_0_1", "UXGN_0_1", "UXSN_0_1")) %>% # Remove other than standard aggregation for country groups
+  filter(!vars %in% c("UXGS_0_1_0", "UXGN_0_1_0", "UXSN_0_1_0")) %>% # Remove other than standard aggregation for country groups
   mutate(vars = fct_recode(vars, !!!ameco9_vars_trans),
          geo = as_factor(countrycode::countrycode(geo, "iso3c", "eurostat", nomatch = NULL)))
 
 # unique(ameco9$vars)
 
+# Table 10
+
+ameco10_vars <-
+  c("UBGS") # Net exports G & S
+
+ameco10_vars_trans <-
+  c(B11__CP_MNAC = "UBGS_0_0_0")
+
+ameco10 <- ameco10_0 %>%
+  separate(code, into = c("geo", NA, "desc", "unit_code", "rel", "vars"), sep = "\\.", remove = FALSE) %>%
+  filter(vars %in% ameco10_vars) %>%
+  filter(desc %in% c(0,1)) %>%  # Only current values weights, 2 is PPS weights (it seems)
+  mutate_if(is.character, as_factor) %>%
+  droplevels() %>%
+  unite(vars, vars, unit_code, desc, rel, sep = "_") %>%
+  filter(vars %in% ameco10_vars_trans) %>%
+  mutate(vars = fct_recode(vars, !!!ameco10_vars_trans),
+         geo = as_factor(countrycode::countrycode(geo, "iso3c", "eurostat", nomatch = NULL)))
+
 # All together
 
 data_ameco_raw <-
-  bind_rows(ameco1, ameco6, ameco7, ameco9)
+  bind_rows(ameco1, ameco6, ameco7, ameco9, ameco10)
 
 data_ameco <-
   data_ameco_raw %>%

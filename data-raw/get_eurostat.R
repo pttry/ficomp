@@ -133,6 +133,8 @@ usethis::use_data(ert_eff_ic_m, ert_eff_ic_q, overwrite = TRUE)
 
 
 dat_nama_10_gdp_0 <- eurostat::get_eurostat("nama_10_gdp", time_format = "num", cache = FALSE)
+dat_nama_10_a10_0 <- eurostat::get_eurostat("nama_10_a10", time_format = "num", cache = FALSE)
+dat_nama_10_a10_e_0 <- eurostat::get_eurostat("nama_10_a10_e", time_format = "num", cache = FALSE)
 dat_nama_10_a64_0 <- eurostat::get_eurostat("nama_10_a64", time_format = "num", cache = FALSE)
 dat_nama_10_a64_e_0 <- eurostat::get_eurostat("nama_10_a64_e", time_format = "num", cache = FALSE)
 
@@ -142,6 +144,20 @@ dat_nama_10_gdp <- dat_nama_10_gdp_0 %>%
   unite(vars, na_item, unit, sep = "__") %>%
   mutate(vars = as_factor(vars),
          nace_r2 = as_factor("TOTAL")) %>%
+  spread(vars, values)
+
+dat_nama_10_a10 <- dat_nama_10_a10_0 %>%
+  filter(unit %in% c("CLV15_MNAC", "CP_MNAC", "CP_MEUR", "PYP_MNAC"),
+         na_item %in% c("B1G", "D1")) %>%
+  unite(vars, na_item, unit, sep = "__") %>%
+  mutate(vars = as_factor(vars)) %>%
+  spread(vars, values)
+
+dat_nama_10_a10_e <- dat_nama_10_a10_e_0 %>%
+  filter(unit %in% c("THS_HW", "THS_PER"),
+         na_item %in% c("EMP_DC", "SAL_DC")) %>%
+  unite(vars, na_item, unit, sep = "__") %>%
+  mutate(vars = as_factor(vars)) %>%
   spread(vars, values)
 
 dat_nama_10_a64 <- dat_nama_10_a64_0 %>%
@@ -160,7 +176,7 @@ dat_nama_10_a64_e <- dat_nama_10_a64_e_0 %>%
   spread(vars, values)
 
 
-# Main nace
+# Main nace 64
 dat_eurostat_nace <-
   dat_nama_10_a64 %>%
   left_join(dat_nama_10_a64_e, by = c("nace_r2", "geo", "time")) %>%
@@ -178,21 +194,35 @@ dat_eurostat_nace_imput <-
                      mean(c(.[geo == "SE" & nace_r2 == "J" & time == 2014], .[geo == "SE" & nace_r2 == "J" & time == 2016])),
                      .))
 
-# visdat::vis_dat(dat_nama_10_a64)
+dat_eurostat_nace10 <-
+  dat_nama_10_a10 %>%
+  left_join(dat_nama_10_a10_e, by = c("nace_r2", "geo", "time")) %>%
+  mutate_at(c("geo", "nace_r2"), as_factor) %>%
+  filter(nace_r2 %in% main_nace10_sna, geo %in% c(eurostat_geos), time >= a_start_time) %>%
+  droplevels() %>%
+  complete(geo, time, nace_r2)
 
-# dat_nama_10_a64 %>%
-#   filter(geo == "EL", is.na(B1G__CLV15_MNAC)) %>%
-#   distinct(geo, nace_r2)
+# visdat::vis_dat(dat_eurostat_nace10)
 
+## Eurostat datasets
+
+# With industries based on a64
 data_eurostat_nama_nace_a <-
   dat_eurostat_nace_imput
 
+# With industries based on a10
+data_eurostat_nama_nace10_a <-
+  dat_eurostat_nace10
+
+# Total
 data_eurostat_nama_a <-
   dat_nama_10_gdp %>%
-  filter(geo %in% eurostat_geos, time >= a_start_time)
+  left_join(dat_eurostat_nace10, by = c("geo", "time", "nace_r2")) %>%
+  filter(geo %in% eurostat_geos, time >= a_start_time) %>%
+  mutate_if(is.character, as_factor)
 
 #
 # setdiff(names(data_eurostat_nama_a, ), names(data_oecd_sna_a))
 # setdiff(names(data_oecd_sna_a), names(data_eurostat_nama_a))
 
-usethis::use_data(data_eurostat_nama_nace_a, data_eurostat_nama_a, overwrite = TRUE)
+usethis::use_data(data_eurostat_nama_nace_a, data_eurostat_nama_nace10_a, data_eurostat_nama_a, overwrite = TRUE)
