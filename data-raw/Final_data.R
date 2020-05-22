@@ -322,11 +322,11 @@ data_main_groups_a <-
   group_by(geo, time, vars) %>%
   summarise(
     total = values[nace_r2 == "TOTAL"],
-            private = sum(values[!(nace_r2 %in% c("TOTAL", "C26"))]),
+            private = sum(values[nace_r2 %in% c("C", "G", "H", "I", "J", "M", "N")]),
             private_ex26 = private - values[nace_r2 == "C26"],
             manu = sum(values[nace_r2 == "C"]),
             manu_ex26 = manu - values[nace_r2 == "C26"],
-            service = sum(values[nace_r2 %in% c(c("G", "H", "I", "J", "M", "N"))])) %>%
+            service = sum(values[nace_r2 %in% c("G", "H", "I", "J", "M", "N")])) %>%
   ungroup() %>%
   gather(nace0, values, total, private, private_ex26, manu, manu_ex26, service) %>%
   mutate(nace0 = as_factor(nace0)) %>%
@@ -343,19 +343,10 @@ data_main_groups_a <-
     nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = base_year),
     nulc_hw_va_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = base_year),
     rulc_hw_va = rebase(nulc_hw_va / (B1G__CP_MNAC/B1G__CLV15_MNAC), time = time, baseyear = base_year)) %>%
-  group_by(nace0, time) %>%  #filter(nace0 == "total", time == 2015) -> kk
-  mutate(
-    nulc_va_rel_imf = weight_index(nulc_va, geo, time, weight_df = weights_imf),
-    nulc_va_eur_rel_imf = weight_index(nulc_va_eur, geo, time, weight_df = weights_imf),
-    nulc_va_rel15_imf = weight_index(nulc_va, geo, 2015, weight_df = weights_imf),
-    nulc_va_eur_rel15_imf = weight_index(nulc_va_eur, geo, 2015, weight_df = weights_imf),
-    nulc_hw_va_rel = weight_index(nulc_hw_va, geo, time, weight_df = weights_bis_broad),
-    nulc_hw_va_eur_rel = weight_index(nulc_hw_va_eur, geo, time, weight_df = weights_bis_broad),
-    rulc_hw_va_rel = weight_index(rulc_hw_va, geo, time, weight_df = weights_bis_broad),
-    nulc_hw_va_rel_imf = weight_index(nulc_hw_va, geo, time, weight_df = weights_imf),
-    nulc_hw_va_eur_rel_imf = weight_index(nulc_hw_va_eur, geo, time, weight_df = weights_imf),
-    rulc_hw_va_rel_imf = weight_index(rulc_hw_va, geo, time, weight_df = weights_imf)) %>%
+  group_by(nace0) %>%
+  weight_all(geo, time, except = c("geo", "time"), weight_df = weights_ecfin37) %>%
   ungroup()
+
 
 data("data_eurostat_nama_a")
 
@@ -415,7 +406,6 @@ data_main_annual <-
     exp_serv_ind = rebase(P62__CLV15_MNAC, time = time, baseyear = base_year),
     tbalance_gdp = B11__CP_MNAC / B1GQ__CP_MNAC) %>%
   ungroup() %>%
-  group_by(time) %>%
   weight_all(geo, time, except = c("geo", "time"), weight_df = weights_ecfin37) %>%
   left_join(select(filter(eo_a_dat, time >= a_start_time),
                    geo, time, XPERF, XSHA, XGSVD, XMKT, eci), by = c("geo", "time")) %>%
