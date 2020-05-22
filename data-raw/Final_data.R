@@ -54,7 +54,9 @@ main_nace_sna <- c(VTOT = "TOTAL", VC = "C", V26 = "C26",  VF = "F", VG = "G", V
 main_nace10_sna <- c(TOTAL = "TOTAL", C = "C", F = "F", G = "G-I", H = "G-I",
                      I = "G-I", J = "J", M = "M_N", N = "M_N")
 
-usethis::use_data(eurostat_geos, oecd_geos_ulcq, oecd_geos, all_geos, all_extra_geos, main_nace_sna,
+usethis::use_data(eurostat_geos, oecd_geos_ulcq, oecd_geos, all_geos,
+                  all_extra_geos, ameco_extra_geos,
+                  main_nace_sna,
                   main_nace10_sna, a_start_time, base_year, overwrite = TRUE)
 usethis::use_data(nace0_fi, geo_fi, overwrite = TRUE)
 
@@ -360,9 +362,10 @@ data("data_eurostat_nama_a")
 data_main_total_a <-
   data_eurostat_nama_a %>%
   # Following are missing from OECD
-  select( -B1G__CLV15_MNAC, -B1G__CP_MNAC, -B1G__PYP_MNAC,
+  select( -B1G__CLV15_MNAC, -B1G__CP_MNAC, -B1G__CP_MEUR, -B1G__PYP_MNAC,
           -EMP_DC__THS_HW, -SAL_DC__THS_HW,
-          -EMP_DC__THS_PER, -SAL_DC__THS_PER) %>%
+          -EMP_DC__THS_PER, -SAL_DC__THS_PER,
+          -P7__CLV15_MNAC, -P7__CP_MEUR, -P7__CP_MNAC) %>%
   bind_rows(select(data_oecd_sna_a, all_of(names(.)))) %>%
   select(- nace_r2) %>%
   mutate(geo = as_factor(geo)) %>%
@@ -393,14 +396,17 @@ data_main_annual <-
   # Ameco is missing following
   select(- nace_r2, - B11__CP_MEUR, -B1G__PYP_MNAC, -EMP_DC__THS_HW, -SAL_DC__THS_HW) %>%
   bind_rows(select(filter(data_ameco, geo %in% ameco_extra_geos), all_of(names(.)))) %>%
-  mutate(geo = as_factor(geo)) %>%
-  left_join(select(filter(eo_a_dat, time >= a_start_time), geo, time, XPERF, XSHA, XGSVD, XMKT, eci, nulc_eo = nulc), by = c("geo", "time")) %>%
   group_by(geo) %>%
   mutate(
+    # Term of trade adujusted GDP
+    B1GQA__CLV15_MNAC = 100 * (B1GQ__CLV15_MNAC + (P6__CP_MNAC / (P7__CP_MNAC / P7__CLV15_MNAC)) -
+                     P6__CLV15_MNAC) / B1GQ__CLV15_MNAC[time == 2015],
     nulc = ind_ulc(D1__CP_MNAC, B1GQ__CLV15_MNAC, time = time, baseyear = base_year),
     nulc_eur = ind_ulc(D1__CP_MEUR, B1GQ__CLV15_MNAC, time = time, baseyear = base_year),
     nulc_va = ind_ulc(D1__CP_MNAC, B1G__CLV15_MNAC, time = time, baseyear = base_year),
     nulc_aper = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1GQ__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
+    nulc_aper_atot = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1GQA__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
+    nulc_aper_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_PER, B1GQ__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
     nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
     rulc_aper = rebase(nulc_aper / (B1GQ__CP_MNAC/B1GQ__CLV15_MNAC), time = time, baseyear = base_year),
     gdp_ind = rebase(B1GQ__CLV15_MNAC, time = time, baseyear = base_year),
@@ -410,14 +416,11 @@ data_main_annual <-
     tbalance_gdp = B11__CP_MNAC / B1GQ__CP_MNAC) %>%
   ungroup() %>%
   group_by(time) %>%
-  mutate(
-    gdp_ind_rel = weight_index(gdp_ind, geo, time, weight_df = weights_bis_broad),
-    exp_ind_rel = weight_index(exp_ind, geo, time, weight_df = weights_bis_broad),
-    gdp_ind_rel_imf = weight_index(gdp_ind, geo, time, weight_df = weights_imf),
-    exp_ind_rel_imf = weight_index(exp_ind, geo, time, weight_df = weights_imf),
-    exp_goods_ind_rel_imf = weight_index(exp_goods_ind, geo, time, weight_df = weights_imf),
-    exp_serv_ind_rel_imf = weight_index(exp_serv_ind, geo, time, weight_df = weights_imf)) %>%
-  ungroup()
+  weight_all(geo, time, except = c("geo", "time"), weight_df = weights_ecfin37) %>%
+  left_join(select(filter(eo_a_dat, time >= a_start_time),
+                   geo, time, XPERF, XSHA, XGSVD, XMKT, eci), by = c("geo", "time")) %>%
+  mutate(geo = as_factor(geo))
+
 
 
 
@@ -427,4 +430,7 @@ saveRDS(data_main_groups_a, file = "data-out/data_main_groups_annual.rds")
 
 write.csv2(data_main_total_a, file = "data-out/data_main_total_annual.csv")
 saveRDS(data_main_total_a, file = "data-out/data_main_total_annual.rds")
+
+write.csv2(data_main_annual, file = "data-out/data_main_annual.csv")
+saveRDS(data_main_annual, file = "data-out/data_main_annual.rds")
 

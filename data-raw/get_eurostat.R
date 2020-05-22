@@ -140,7 +140,7 @@ dat_nama_10_a64_e_0 <- eurostat::get_eurostat("nama_10_a64_e", time_format = "nu
 
 dat_nama_10_gdp <- dat_nama_10_gdp_0 %>%
   filter(unit %in% c("CLV15_MNAC", "CP_MNAC", "CP_MEUR"),
-         na_item %in% c("B1GQ", "P6", "P61", "P62", "B11")) %>%
+         na_item %in% c("B1GQ", "P6", "P61", "P62", "P7", "B11")) %>%
   unite(vars, na_item, unit, sep = "__") %>%
   mutate(vars = as_factor(vars),
          nace_r2 = as_factor("TOTAL")) %>%

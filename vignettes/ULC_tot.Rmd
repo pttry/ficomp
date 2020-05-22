@@ -128,3 +128,21 @@ ameco2 %>%
 
 ```
 
+```{r ameco_dat}
+
+data_ameco %>% 
+  group_by(geo) %>% 
+  mutate(B1GA2 = 100 * (B1GQ__CLV15_MNAC + 
+                          (P6__CP_MNAC / (P7__CP_MNAC / P7__CLV15_MNAC)) - 
+                           P6__CLV15_MNAC) /
+                            B1GQ__CLV15_MNAC[time == 2015]) %>% 
+  ungroup() %>% 
+  filter(geo %in% c("FI", "US", "SE", "DE")) %>% 
+  select(geo, time, B1GQA__CLV15_MNAC, B1GA2) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line() +
+  facet_wrap(~geo)
+
+```
+

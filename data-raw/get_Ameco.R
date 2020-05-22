@@ -133,15 +133,19 @@ ameco7 <- ameco7_0 %>%
 # Table 9
 
 ameco9_vars <-
-  c("UXGS", "OXGS", "OXGSQ", # Goods and services
-    "VXGSP",        # Market performance
+  c("UXGS", "OXGS", "OXGSQ", # Export Goods and services
     "UXGN" , "OXGN",         # Goods
-    "UXSN", "OXSN")          # Services
+    "UXSN", "OXSN",         # Services
+    "UMGS", "OMGS", "OMGSQ", # Import of goods and services
+    "VXGSP")        # Market performance
 
 ameco9_vars_trans <-
-  c(P6__CP_MNAC = "UXGS_0_0_0",  # later is aggregation for country groups
+  c(P6__CP_MNAC = "UXGS_0_0_0",
     P6__CP_MEUR = "UXGS_99_0_0",
     P6__CLV15_MNAC = "OXGS_0_1_0",
+    P7__CP_MNAC = "UMGS_0_0_0",
+    P7__CP_MEUR = "UMGS_99_0_0",
+    P7__CLV15_MNAC = "OMGS_0_1_0",
     exp_ind_rel_ameco15 = "OXGSQ_0_0_415",
     exp_ind_rel_ameco24 = "OXGSQ_0_0_424",
     exp_ind_rel_ameco37 = "OXGSQ_0_0_437",

@@ -1,3 +1,33 @@
+#' Mass weighting
+#'
+#' Weight all variables except
+#'
+#' @param .data A tbl.
+#' @param geo,
+#' @param weitht_df A weigthing data.frame in long form. Should have time, geo_base and geo columns.
+#' @param geo A vector to indicate countries.
+#' @param time A year (or date which is converted to a year) for weights.
+#' @param weitht_df A weigthing data.frame in long form. Should have time, geo_base and geo columns.
+#'
+#' @export
+#' @import dplyr
+#'
+weight_all <- function(.data, geo, time, except, weight_df){
+  w_name <- deparse1(substitute(weight_df))
+  fun_name <- paste0("rel", gsub("weights", "", x = w_name))
+  fun_list <- list(rel = ~weight_index(., geo = geo, time = time, weight_df = weight_df))
+  names(fun_list) <- fun_name
+
+  y <- group_by(.data, time) %>%
+    mutate_at(vars(-matches(except)),
+              .funs = fun_list) %>%
+    ungroup()
+
+  y
+}
+
+
+
 #' Weighted geometric mean
 #'
 #' Calculate weighted geometric mean
