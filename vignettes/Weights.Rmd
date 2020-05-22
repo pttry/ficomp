@@ -25,10 +25,12 @@ library(ggptt)
 
 set_ptt()
 
-data("weights_bis_narrow", "weights_bis_broad", "fi_goods_trade_dat", "fi_service_trade_dat")
+data("weights_bis_narrow", "weights_bis_broad", "fi_goods_trade_dat", "fi_service_trade_dat", "data_main_annual")
 
 
 ```
+
+
 
 # BIS weights narrow
 
@@ -83,13 +85,16 @@ weights_bis_broad %>%
 ```{r trade_share}
 
 fi_goods_trade_dat %>% 
-  mutate(inc_narrow = geo %in% weights_bis_narrow$geo,
-         inc_broad = geo %in% weights_bis_broad$geo) %>% 
+  mutate(bis_narrow = geo %in% weights_bis_narrow$geo,
+         bis_broad = geo %in% weights_bis_broad$geo,
+         ec_fin19 = geo %in% weights_ecfin19$geo,
+         ec_fin27 = geo %in% weights_ecfin27$geo,
+         ec_fin37 = geo %in% weights_ecfin37$geo,
+         imf = geo %in% weights_imf$geo) %>% 
   group_by(flow, time) %>% 
-  summarise(share_narrow = 100 * sum(values * inc_narrow, na.rm = TRUE) / values[geo == "TOTAL"],
-            share_broad = 100 * sum(values * inc_broad, na.rm = TRUE) / values[geo == "TOTAL"]) %>% 
+  summarise_at(vars(-geo, -values), ~(100 * sum(values * ., na.rm = TRUE) / values[geo == "TOTAL"])) %>% 
   ungroup() %>% 
-  gather(share_ind, shares, share_narrow, share_broad) %>% 
+  gather(share_ind, shares, -flow, -time) %>% 
   ggplot(aes(time, shares, colour = share_ind)) +
   facet_wrap(~flow) +
   geom_line() +
@@ -115,3 +120,31 @@ fi_service_trade_dat %>%
   geom_h0()
 
 ```
+```{r nulc_impact}
+
+list_weight_funs <- function(...){
+  y <- purrr::map(list(...), ~substitute(weight_index(gdp_ind, geo, time, weight_df = .), parent.frame(2)) )
+  y}
+
+list_weight_funs(weights_bis_broad)
+  
+
+data_main_annual %>% 
+  select(geo, time, nulc_aper) %>% 
+  group_by(time) %>% 
+  mutate(bis_broad = weight_index(nulc_aper, geo, time, weight_df = weights_bis_broad),
+         bis_narrow = weight_index(nulc_aper, geo, time, weight_df = weights_bis_narrow),
+         ecfin19 = weight_index(nulc_aper, geo, time, weight_df = weights_ecfin19, check_geos = FALSE),
+         ecfin27 = weight_index(nulc_aper, geo, time, weight_df = weights_ecfin27, check_geos = FALSE),
+         ecfin37 = weight_index(nulc_aper, geo, time, weight_df = weights_ecfin37, check_geos = FALSE),
+         imf = weight_index(nulc_aper, geo, time, weight_df = weights_imf)) %>% 
+  select(-nulc_aper) %>% 
+  filter(geo == "FI") %>% 
+  gather(vars, values, -geo , -time) %>% 
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line()
+
+  
+
+```
+

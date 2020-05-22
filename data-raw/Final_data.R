@@ -337,6 +337,10 @@ data_main_groups_a <-
   ungroup() %>%
   group_by(geo, nace0) %>%
   mutate(
+    va_ind = rebase(B1G__CLV15_MNAC, time = time, baseyear = base_year),
+    emp_ind = rebase(EMP_DC__THS_HW, time = time, baseyear = base_year),
+    lp_hw_va = rebase(B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = base_year),
+    d1_hw = rebase(D1__CP_MNAC / SAL_DC__THS_HW, time = time, baseyear = base_year),
     nulc_va = ind_ulc(D1__CP_MNAC, B1G__CLV15_MNAC, time = time, baseyear = base_year),
     nulc_va_eur = ind_ulc(D1__CP_MEUR, B1G__CLV15_MNAC, time = time, baseyear = base_year),
     nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),

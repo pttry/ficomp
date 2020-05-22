@@ -1,0 +1,69 @@
+---
+title: "Kilpailukykymuuttujat vuositiedot"
+output: rmarkdown::html_document
+vignette: >
+  %\VignetteIndexEntry{Labour_cost}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", 
+  fig.height = 6,
+  fig.width = 8,
+  fig.path = "Groups_annual/", 
+  echo = FALSE, message = FALSE, warning = FALSE
+)
+
+
+# library(ficomp)
+
+devtools::load_all()
+
+library(dplyr)
+library(forcats)
+library(ggplot2)
+library(eurostat)
+library(tidyr)
+library(ggptt)
+library(stringr)
+
+set_proj_theme()
+
+data("data_main_total_a", "data_main_groups_a", "data_ameco")
+
+base_year <- 2010
+base_years <- 2000:2018
+geos <- c(Finland = "FI", Sweden = "SE", Germany = "DE", France = "FR")
+start_time <- "1996-01-01"
+geo_trans <- geo_fi
+nace0_trans <- nace0_fi
+h_geos <- c("FI", "SE", "DE", "US")
+
+
+```
+
+```{r}
+
+data_main_groups_a %>% 
+  filter(nace0 == "private", geo != "IE") %>% 
+  select(geo, time, contains(c("lp_hw_va", "va_ind", "emp_ind"))) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  separate(vars, c("var1", "var2"), sep = "_rel_", fill = "right") %>% 
+  replace_na(list(vars2 = "suhteellinen")) %>% 
+    mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+         h_geo = fct_relevel(h_geo, h_geos),
+         geo = fct_relevel(geo, rev(h_geos), after = Inf),
+         size = !(geo %in% h_geo)) %>% 
+  translate(h_geo, geo_trans) %>% 
+  ggplot(aes(time, values, group = geo, colour = h_geo, size = size)) +
+  facet_grid(var2 ~ var1, scales = "free") +
+  geom_line() +
+  scale_size_manual(values = c(2,1), guide = "none") +
+  scale_colour_manual(values = geo_col(length(h_geos) + 1)) +
+  the_title_blank(c("x", "l"))
+
+```
+

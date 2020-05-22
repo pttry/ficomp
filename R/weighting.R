@@ -55,10 +55,12 @@ weighted_gmean <- function(x, w, na.rm = FALSE) {
 #' @param x A vector to weight.
 #' @param geo A vector to indicate countries.
 #' @param time A year (or date which is converted to a year) for weights.
-#' @param weitht_df A weigthing data.frame in long form. Should have time, geo_base and geo columns.
+#' @param weight_df A weigthing data.frame in long form. Should have time, geo_base and geo columns.
 #' @param nearest A logical whether to use nearest year for weight table.
 #' @param na.rm A logical. Should missing values be removed? With FALSE (default) any NA will
 #'        return NA.
+#' @param check_geos A logical. If TRUE (default) gives an error if \code{weight_df} does
+#'        not have all countries of \code{geo}.
 #'
 #' @return A weighted vector or vector of NA if any value in x is NA.
 #'
@@ -74,7 +76,8 @@ weighted_gmean <- function(x, w, na.rm = FALSE) {
 #' weight_index(x, geo, 2015, w_df,na.rm = TRUE)
 #' weight_index(x, geo, 2015, weight_df = weights_ecb, na.rm = TRUE)
 weight_index <- function(x, geo, time, weight_df,
-                         nearest = TRUE, na_zero = TRUE, na.rm = FALSE) {
+                         nearest = TRUE, na_zero = TRUE, na.rm = FALSE,
+                         check_geos = TRUE) {
 
   if (lubridate::is.Date(time)) time <- lubridate::year(time)
   if (!all(time == mean(time))) stop("Time should be unique")
@@ -90,11 +93,13 @@ weight_index <- function(x, geo, time, weight_df,
 
   if (nearest) time <- weight_df$time[which.min(abs(weight_df$time-time))]
 
-  in_base <- geo %in% weight_df$geo_base
-  if (any(!in_base)) stop("Missing geo(s) in weight_df geo_base: ", paste0(geo[!in_base], collapse = ", "))
+  if (check_geos) {
+    in_base <- geo %in% weight_df$geo_base
+    if (any(!in_base)) stop("Missing geo(s) in weight_df geo_base: ", paste0(geo[!in_base], collapse = ", "))
 
-  in_geo <- geo %in% weight_df$geo
-  if (any(!in_geo)) stop("Missing geo(s) in weight_df geo: ", paste0(geo[!in_geo], collapse = ", "))
+    in_geo <- geo %in% weight_df$geo
+    if (any(!in_geo)) stop("Missing geo(s) in weight_df geo: ", paste0(geo[!in_geo], collapse = ", "))
+  }
 
   w_df <- weight_df[weight_df$time == time, ]
 
@@ -102,21 +107,27 @@ weight_index <- function(x, geo, time, weight_df,
   # w <- w[order(match(w$geo, geo)),]
   if (na_zero) w_df$weight[is.na(w_df$weight)] <- 0
 
-  weighted_other <- purrr::map_dbl(geo, ~ weight_function(.x, x, geo, w_df))
+  weighted_other <- purrr::map_dbl(geo, ~ weight_function(.x, x, geo, w_df, check_geos = check_geos))
   y <- 100 * x / weighted_other
 }
 
 
 #' Weight function for weight_index
 
-weight_function <- function(one_geo, x, geo, w_df){
+weight_function <- function(one_geo, x, geo, w_df, check_geos){
 
   w_df2 <- w_df[w_df$geo_base == one_geo, ]
-  w <- w_df2[match(geo, w_df2$geo),]
+  # w <- w_df2[match(geo, w_df2$geo),]
+  w <- suppressWarnings(left_join(tibble(geo = geo), w_df2, by = "geo"))
+  w$weight[is.na(w$weight)] <- 0
   # check for weights
-  if (any(is.na(w$weight) & w$geo != one_geo)) stop("Weights missing in ", one_geo, " for: ",
-                                                    paste0(geo[is.na(w$weight) & w$geo != one_geo],
-                                                           collapse = ", "))
+  if (check_geos){
+    if (any(is.na(w$weight) & w$geo != one_geo)) stop("Weights missing in ", one_geo, " for: ",
+                                                         paste0(geo[is.na(w$weight) & w$geo != one_geo],
+                                                                collapse = ", "))
+  }
+
+  # If own weight missing also value is set to missing
   if (is.na(w$weight[w$geo == one_geo])) x[w$geo == one_geo] <- NA
   weighted_gmean(x, w$weight, na.rm = TRUE)
 }
