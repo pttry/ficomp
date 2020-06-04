@@ -1,0 +1,125 @@
+---
+title: "Finnish indicators"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", 
+  fig.height = 6,
+  fig.width = 8,
+  fig.path = "Finnish_ind/", 
+  echo = FALSE, message = FALSE, warning = FALSE
+)
+
+
+# library(ficomp)
+
+devtools::load_all()
+
+library(dplyr)
+library(forcats)
+library(ggplot2)
+library(eurostat)
+library(tidyr)
+library(ggptt)
+library(glue)
+
+set_proj_theme()
+
+data("data_ilc", data_main_groups_a, ert_eff_ic_q)
+
+tukuseto_data <- read.csv2(here::here("data-raw/tukuseto_data.csv")) %>% 
+  mutate_at(vars(-time), ~rebase(1/., time, base_year)) %>% 
+  gather(nace0, tukuseto, -time)
+
+```
+
+# Tukuseto
+
+# Tehdasteollisuuden kilpailukykyindikaattori
+
+Tukuseton kuvio 8 sisältää tehdasteollisuuden nimeliset yksikkötyökustannukset samassa valuutassa 
+suhteutettuna BIS:n painoilla. Laskennassa näyttäisi olevan kuitenkin virheitä sekä painoissa
+että varsinkin euroaikaa edeltävissä valuuttakursseissa.
+ 
+Tukuseton tiedot perustuvat Conference Boardin 
+[https://www.conference-board.org/ilcprogram/index.cfm?id=30139] ILC-tietokannan tietoihin. 
+Alkuperäisillä tiedoilla sarjat poikkeavat Tukuseton julkaisun tiedoista. Alla itse lasketut 
+verrattuna tukuseton sarjoihin perusvuodella 2010 ja käänteisesti kuin tukuseton julkaisussa.
+
+
+```{r tukuseto_manu}
+
+pdat_tuku <- 
+  data_ilc %>% 
+  filter(geo == "FI") %>% 
+  select(geo, time, nace0, ilc = nulc_va_eur_rel_bis_narrow) %>% 
+  left_join(tukuseto_data, by = c("time", "nace0"))
+  
+pdat_tuku %>% 
+  gather(vars, values, -geo, -time, -nace0) %>% 
+  ggplot(aes(time, values, color = vars)) +
+  facet_wrap(~nace0) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  labs(y = glue("Indeksi, {base_year} = 100"))
+  
+  
+
+```
+
+ILC, tukuseto ja data_main_groups_a sarjat teollisuudelle.
+
+```{r tuku_manu_comp_main}
+
+data_main_groups_a %>% 
+  select(geo, time, nace0, data_main = nulc_va_eur_rel_ecfin37) %>% 
+  mutate(nace0 = recode(nace0, manu_ex26 = "namu_ex26_27")) %>% 
+  right_join(pdat_tuku, by = c("time", "geo", "nace0")) %>% 
+  filter(nace0 == "manu") %>% 
+  gather(vars, values, -geo, -time, -nace0) %>% 
+  ggplot(aes(time, values, color = vars)) +
+  facet_wrap(~nace0) +
+  geom_line()
+
+```
+
+## Koko talouden kilpailukykyindikaattori
+
+```{r}
+
+pdata_ulc_reer <- ert_eff_ic_q %>% 
+  select(geo, time, exch_rt, values) %>% 
+  filter(geo == "FI", exch_rt %in% c("NEER_IC37", "REER_IC37_ULCT")) %>% 
+  spread(exch_rt, values) %>% 
+  mutate(ulct = 100 * REER_IC37_ULCT / NEER_IC37) %>% 
+  gather(vars, values, -geo, -time)
+
+pdata_ulc_reer %>% 
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line() +
+  the_legend_bot() +
+  the_title_blank(c("x", "l")) 
+
+```
+
+```{r}
+
+pdata_ulc_reer_change <- pdata_ulc_reer %>% 
+  group_by(geo, vars) %>% 
+  mutate(change = 100 * (values / lag(values, 4, order_by = time) -1))
+
+ggplot(data = filter(pdata_ulc_reer_change, vars != "REER_IC37_ULCT"),
+       aes(time, change, fill = vars)) +
+  geom_col()+
+  geom_line(data = filter(pdata_ulc_reer_change, vars == "REER_IC37_ULCT"),
+            aes(color = vars)) +
+  the_legend_bot() +
+  scale_color_manual(values = "grey20") +
+  the_title_blank(c("x", "l")) 
+  
+
+```
+
