@@ -93,7 +93,8 @@ data_ilc <- dat_ilc %>%
 
 usethis::use_data(data_ilc, overwrite = TRUE)
 
-
+write.csv2(data_ilc, file = "data-out/data_ilc.csv")
+saveRDS(data_ilc, file = "data-out/data_ilc.rds")
 
 
 # old
