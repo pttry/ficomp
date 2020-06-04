@@ -37,12 +37,12 @@ weight_at <- function(.data, geo, time, at, weight_df){
   names(fun_list) <- fun_name
 
   y <- group_by(.data, time, add = TRUE) %>%
-    mutate_at(vars(matches(at)),
-              .funs = fun_list) %>%
+    mutate_at(tidyselect::all_of(setNames(at, at)), .funs = fun_list) %>%
     ungroup()
 
   y
 }
+
 
 
 
@@ -79,6 +79,7 @@ weighted_gmean <- function(x, w, na.rm = FALSE) {
 #'        return NA.
 #' @param check_geos A logical. If TRUE (default) gives an error if \code{weight_df} does
 #'        not have all countries of \code{geo}.
+#' @param mean_type A meant type to calculate "geom" for geometric and "arit" for arithmetic.
 #'
 #' @return A weighted vector or vector of NA if any value in x is NA.
 #'
@@ -95,7 +96,8 @@ weighted_gmean <- function(x, w, na.rm = FALSE) {
 #' weight_index(x, geo, 2015, weight_df = weights_ecb, na.rm = TRUE)
 weight_index <- function(x, geo, time, weight_df,
                          nearest = TRUE, na_zero = TRUE, na.rm = FALSE,
-                         check_geos = TRUE) {
+                         check_geos = TRUE,
+                         mean_type = "geom") {
 
   if (lubridate::is.Date(time)) time <- lubridate::year(time)
   if (!all(time == mean(time))) stop("Time should be unique")
@@ -125,14 +127,23 @@ weight_index <- function(x, geo, time, weight_df,
   # w <- w[order(match(w$geo, geo)),]
   if (na_zero) w_df$weight[is.na(w_df$weight)] <- 0
 
-  weighted_other <- purrr::map_dbl(geo, ~ weight_function(.x, x, geo, w_df, check_geos = check_geos))
+  weighted_other <- purrr::map_dbl(geo, ~ weight_function(.x, x, geo, w_df,
+                                                          check_geos = check_geos,
+                                                          mean_type = mean_type))
   y <- 100 * x / weighted_other
 }
 
 
 #' Weight function for weight_index
+#'
+#' @param one_geo A character of base geo
+#' @param x A variable to weight
+#' @param geo A vector of ids to weights
+#' @param w_df A weigth data.frame
+#' @param check_geos A locigal to check if all geos are in w_df
+#' @param mean_type A meant type to calculate "geom" for geometric and "arit" for arithmetic
 
-weight_function <- function(one_geo, x, geo, w_df, check_geos){
+weight_function <- function(one_geo, x, geo, w_df, check_geos, mean_type){
 
   w_df2 <- w_df[w_df$geo_base == one_geo, ]
   # w <- w_df2[match(geo, w_df2$geo),]
@@ -147,5 +158,13 @@ weight_function <- function(one_geo, x, geo, w_df, check_geos){
 
   # If own weight missing also value is set to missing
   if (is.na(w$weight[w$geo == one_geo])) x[w$geo == one_geo] <- NA
-  weighted_gmean(x, w$weight, na.rm = TRUE)
+  if (mean_type == "geom"){
+    y <- weighted_gmean(x, w$weight, na.rm = TRUE)
+  } else if (mean_type == "arit"){
+    y <- weighted.mean(x, w$weight, na.rm = TRUE)
+  } else {
+    stop("A wrong mean type.")
+  }
+  y
+
 }

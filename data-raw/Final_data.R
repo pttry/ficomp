@@ -23,7 +23,7 @@ agg_eurostat <- c("EA19", "EU28")
 
 eurostat_geos <- c("BE", "DK", "DE", "IE", "ES", "FR", "IT", "NL", "AT", "FI", "SE", "UK", "NO", "PT", "EL")
 
-tuku15 <- c("BE", "DK", "DE", "ES", "FR", "IT", "NL", "AT", "FI", "SE", "UK", "NO", "US", "JP", "KR")
+tuku15 <- c("BE", "DK", "DE", "ES", "FR", "IT", "NL", "AT", "FI", "SE", "UK", "NO", "US", "JP", "KR", "CA")
 
 #9 other industrial countries (Australia, Canada, United States, Japan, Norway, New Zealand, Mexico, Switzerland and Turkey)
 # IC37_other <- c("AU", "CA", "US", "JP", "NO", "NZ", "MX", "CH", "TR")
