@@ -165,7 +165,7 @@ ameco9 <- ameco9_0 %>%
   mutate_if(is.character, as_factor) %>%
   droplevels() %>%
   unite(vars, vars, unit_code, desc, rel, sep = "_") %>%
-  filter(!vars %in% c("UXGS_0_1_0", "UXGN_0_1_0", "UXSN_0_1_0")) %>% # Remove other than standard aggregation for country groups
+  filter(!vars %in% c("UXGS_0_1_0", "UMGS_0_1_0", "UXGN_0_1_0", "UXSN_0_1_0")) %>% # Remove other than standard aggregation for country groups
   mutate(vars = fct_recode(vars, !!!ameco9_vars_trans),
          geo = as_factor(countrycode::countrycode(geo, "iso3c", "eurostat", nomatch = NULL)))
 

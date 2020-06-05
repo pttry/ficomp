@@ -28,7 +28,7 @@ library(glue)
 
 set_proj_theme()
 
-data("data_ilc", data_main_groups_a, ert_eff_ic_q)
+data("data_ilc", data_main_groups_a, ert_eff_ic_q, q_dat_oecd_ulc)
 
 tukuseto_data <- read.csv2(here::here("data-raw/tukuseto_data.csv")) %>% 
   mutate_at(vars(-time), ~rebase(1/., time, base_year)) %>% 
@@ -88,6 +88,19 @@ data_main_groups_a %>%
 
 ## Koko talouden kilpailukykyindikaattori
 
+Koko talouden kilpailukykyindikaattori on Komission hinta- ja kilpailukykyindikaattoreista 
+reaalinen efektiivinen valuuttakurssi yksikkötyökustannuksilla eli nimellinen efektiivinen
+valuuttakurssi deflatoituna suhteellisilla yksikkötyökustannuksilla.
+
+(https://ec.europa.eu/info/business-economy-euro/indicators-statistics/economic-databases/price-and-cost-competitiveness_en)
+
+Komission indikaattoreissa on nimellinen ja reaalinen efektiivinen valuuttakurssi. 
+Niistä on laskettu suhtelliset yksikkötyökustannukset, jotka ovat AMECOn vuositiedoista
+spline-metodilla estimoidut neljännesvuositiedot.
+
+Indikaattorina käytetään 37 teollisuusmaan kauppapainoilla painotettuja tietoja.
+
+
 ```{r}
 
 pdata_ulc_reer <- ert_eff_ic_q %>% 
@@ -100,10 +113,14 @@ pdata_ulc_reer <- ert_eff_ic_q %>%
 pdata_ulc_reer %>% 
   ggplot(aes(time, values, colour = vars)) +
   geom_line() +
+  # geom_point(aes(x = time_a), data = filter(pdata_ulc_reer, vars == "nulc_aper_rel_ameco37")) +
   the_legend_bot() +
-  the_title_blank(c("x", "l")) 
+  the_title_blank(c("x", "l")) +
+  labs(y = glue("Indeksi"))
 
 ```
+
+Sama muutoksina. Vastaa Tukuseton kuviota 10 neljännesvuosimuutoksina.
 
 ```{r}
 
@@ -117,9 +134,105 @@ ggplot(data = filter(pdata_ulc_reer_change, vars != "REER_IC37_ULCT"),
   geom_line(data = filter(pdata_ulc_reer_change, vars == "REER_IC37_ULCT"),
             aes(color = vars)) +
   the_legend_bot() +
-  scale_color_manual(values = "grey20") +
+  scale_color_manual(values = ptt_pal(2)[2], guide = "none") +
   the_title_blank(c("x", "l")) 
   
+
+```
+
+Neljännesvuosittainen yksikkötyökustannus on siis interpoloitu spline-menetelmällä vuositiedosta. 
+Estimointiin on nähtävästi käytetty myös komission ennustetta. Alla estimointi ilman ennustetta.
+Myös vuoden 1994 on vähän arvoitus, koska vuositiedossa ei 37-indikaattorissa ole tietoja. 
+
+Mukana myös aito neljännesvuosi sarja OECD:n ULC-tietokannasta. Siinä tosin ei ihan kaikkia maita.
+
+```{r}
+
+dat_oecd_ulc37 <- ulc_oecd_dat %>%
+  filter(time >= "1996-01-01", geo %in% setdiff(unique(weights_ecfin37$geo), c("CH", "TR", "PL"))) %>%
+  spread(na_item, values) %>%
+  group_by(geo) %>%
+  transmute(
+    time = time,
+    nulc_aper = rebase(NULC_APER, time = time, baseyear = base_year)
+  ) %>%
+  group_by(time) %>%
+  mutate(nulc_aper_rel_ecfin37 = weight_index(nulc_aper, geo, lubridate::year(time), weight_df = weights_ecfin37)) %>%
+  ungroup()
+
+pdat_ameco_q <- data_ameco %>% 
+  filter(geo == "FI", time >= 1995) %>% 
+  mutate(time = lubridate::ymd(paste0(time, "-07-01")),
+         time_a = time) %>%
+  select(geo, time, time_a, nulc_aper_rel_ameco37) %>% 
+  mutate(nulc_aper_rel_ameco37 = rebase(nulc_aper_rel_ameco37, time, base_year)) %>% 
+  right_join(distinct(filter(ert_eff_ic_q, geo == "FI"), geo, time)) %>% 
+  filter(time <= max(time_a, na.rm = TRUE) + months(0),
+         time >= min(time_a, na.rm = TRUE) - months(0)) %>% 
+  mutate(nulc_aper_rel_ameco37_s = stats::spline(time, nulc_aper_rel_ameco37, 
+                   xout = time)$y)
+
+
+pdata_ulc_smooth <- ert_eff_ic_q %>% 
+  select(geo, time, exch_rt, values) %>% 
+  filter(geo == "FI", exch_rt %in% c("NEER_IC37", "REER_IC37_ULCT")) %>% 
+  spread(exch_rt, values) %>% 
+  mutate(ulct = 100 * REER_IC37_ULCT / NEER_IC37) %>% 
+  select(-REER_IC37_ULCT, - NEER_IC37) %>% 
+  left_join(select(dat_oecd_ulc37, geo, time, oecd_ulc = nulc_aper_rel_ecfin37), by = c("geo", "time")) %>%
+  left_join(select(pdat_ameco_q, geo, time, time_a, 
+                   "ilman ennustetta" = nulc_aper_rel_ameco37_s), by = c("geo", "time")) %>% 
+  gather(vars, values, -geo, -time, -time_a)
+
+pdata_ulc_smooth %>% 
+  mutate(vars = fct_relevel(vars, "ulct")) %>% 
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line() +
+  # geom_point(aes(x = time_a), data = filter(pdata_ulc_reer, vars == "nulc_aper_rel_ameco37")) +
+  the_legend_bot() +
+  the_title_blank(c("x", "l")) 
+
+```
+
+Komission vaihtoehtoiset kilpailukykyindikaattorit eri maaryhmillä, 37 sisältää ainoana EU:n
+ulkopuolisia maita. Sen takia sen vaihtelut suuremmat.
+
+```{r}
+
+ert_eff_ic_q %>% 
+  filter(geo == "FI", grepl("REER.*ULCT", exch_rt)) %>% 
+  ggplot(aes(time, values, colour = exch_rt)) +
+  geom_line() +
+  # geom_point(aes(x = time_a), data = filter(pdata_ulc_reer, vars == "nulc_aper_rel_ameco37")) +
+  the_legend_bot() +
+  the_title_blank(c("x", "l")) +
+  labs(y = glue("Indeksi"))
+  
+
+```
+
+```{r}
+
+pdat_ameco_q_rel <- data_ameco %>% 
+  filter(geo == "FI", time >= 1995) %>% 
+  mutate(time = lubridate::ymd(paste0(time, "-07-01"))) %>%
+  select(geo, time, time_a, nulc_aper_usd_rel_ameco37) %>% 
+  mutate(nulc_aper_usd_rel_ameco37 = rebase(nulc_aper_usd_rel_ameco37, time, base_year)) %>% 
+  right_join(distinct(filter(ert_eff_ic_q, geo == "FI"), geo, time)) %>% 
+  filter(time <= max(time_a, na.rm = TRUE) + months(0),
+         time >= min(time_a, na.rm = TRUE) - months(0)) %>% 
+  mutate(nulc_aper_usd_rel_ameco37_s = stats::spline(time, nulc_aper_usd_rel_ameco37, 
+                   xout = time)$y)
+
+ert_eff_ic_q %>% 
+  filter(geo == "FI", grepl("REER.*ULCT", exch_rt)) %>% 
+  ggplot(aes(time, values, colour = exch_rt)) +
+  geom_line() +
+  geom_line(data = pdat_ameco_q_rel, aes(y = nulc_aper_usd_rel_ameco37_s, colour = "red"))+
+  # geom_point(aes(x = time_a), data = filter(pdata_ulc_reer, vars == "nulc_aper_rel_ameco37")) +
+  the_legend_bot() +
+  the_title_blank(c("x", "l")) +
+  labs(y = glue("Indeksi"))
 
 ```
 

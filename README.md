@@ -57,6 +57,8 @@ The goal of ficomp is to ...
   + based on eurostat data
   
 - AMECO (data-raw/get_Ameco)
+  + yearly
+  + data_ameco, data_ameco_long
 
 - The Conference Board International Labor Comparisons Program (ILC) (data-raw/get_ILC.R).
   + (https://www.conference-board.org/ilcprogram/index.cfm?id=30139)
