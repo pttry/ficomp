@@ -38,7 +38,64 @@ tukuseto_data <- read.csv2(here::here("data-raw/tukuseto_data.csv")) %>%
 
 # Tukuseto
 
-# Tehdasteollisuuden kilpailukykyindikaattori
+## Koko talouden nimelliset yksikkötyökustannukset
+
+```{r}
+
+data_main_annual %>% 
+  filter(geo == "FI") %>% 
+  select(geo, time, nulc_aper, lp_ind, d1_per_ind) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  labs(y = glue("Indeksi, {base_year} = 100"))
+
+```
+
+```{r}
+
+pdata_nulc <- 
+  data_main_annual %>% 
+  filter(geo == "FI") %>% 
+  select(geo, time, nulc_aper, lp_ind, d1_per_ind) %>% 
+  mutate(lp_ind = 1/lp_ind) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(change = 100 * (values / lag(values, 1, order_by = time) -1))
+
+ggplot(data = filter(pdata_nulc, vars != "nulc_aper"),
+       aes(time, change, fill = vars)) +
+  geom_col()+
+  geom_line(data = filter(pdata_nulc, vars == "nulc_aper"),
+            aes(color = vars)) +
+  the_legend_bot() +
+  scale_color_manual(values = ptt_pal(3)[3], guide = "none") +
+  the_title_blank(c("x", "l")) 
+
+```
+
+
+```{r}
+
+data_main_annual %>% 
+  filter(geo == "FI") %>% 
+  select(geo, time, nulc_aper_rel_ecfin37, lp_ind_rel_ecfin37, d1_per_ind_rel_ecfin37) %>%
+  mutate_at(vars(lp_ind_rel_ecfin37),  ~(100 + 100 - .)) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  labs(y = glue("Indeksi, {base_year} = 100"))
+
+```
+
+
+
+
+  
+
+## Tehdasteollisuuden kilpailukykyindikaattori
 
 Tukuseton kuvio 8 sisältää tehdasteollisuuden nimeliset yksikkötyökustannukset samassa valuutassa 
 suhteutettuna BIS:n painoilla. Laskennassa näyttäisi olevan kuitenkin virheitä sekä painoissa
@@ -142,7 +199,7 @@ ggplot(data = filter(pdata_ulc_reer_change, vars != "REER_IC37_ULCT"),
 
 Neljännesvuosittainen yksikkötyökustannus on siis interpoloitu spline-menetelmällä vuositiedosta. 
 Estimointiin on nähtävästi käytetty myös komission ennustetta. Alla estimointi ilman ennustetta.
-Myös vuoden 1994 on vähän arvoitus, koska vuositiedossa ei 37-indikaattorissa ole tietoja. 
+Myös vuoden 1994 on vähän arvoitus, koska vuositiedossa ei 37-indikaattorissa ole tietoja vuodelle. 
 
 Mukana myös aito neljännesvuosi sarja OECD:n ULC-tietokannasta. Siinä tosin ei ihan kaikkia maita.
 
@@ -201,6 +258,7 @@ ulkopuolisia maita. Sen takia sen vaihtelut suuremmat.
 
 ert_eff_ic_q %>% 
   filter(geo == "FI", grepl("REER.*ULCT", exch_rt)) %>% 
+  mutate(exch_rt = gsub("_ULCT", "", exch_rt)) %>% 
   ggplot(aes(time, values, colour = exch_rt)) +
   geom_line() +
   # geom_point(aes(x = time_a), data = filter(pdata_ulc_reer, vars == "nulc_aper_rel_ameco37")) +
@@ -211,28 +269,135 @@ ert_eff_ic_q %>%
 
 ```
 
+EU:n kilpailukykyindikaattori eli reaalinen efektiivinen valuuttakurssi, jossa deflaattorina on 
+käytetty
+nimellisiä yksikkötyökustannuksia omassa valuutassa on sama asia kuin suhteelliset
+yksikkötyökustannukset samassa valuutassa. Kuviossa ero tulee siitä, että siinä vuosi
+nulc_aper_usd_rel_ameco37 on muunnettu suoraan neljännesvuositiedoksi ja REER on laskettu
+muunnetun yksikkötyökustannuksen ja valuuttakurssin kautta.
+
 ```{r}
 
 pdat_ameco_q_rel <- data_ameco %>% 
   filter(geo == "FI", time >= 1995) %>% 
-  mutate(time = lubridate::ymd(paste0(time, "-07-01"))) %>%
+  mutate(time = lubridate::ymd(paste0(time, "-07-01")),
+         time_a = time) %>%
   select(geo, time, time_a, nulc_aper_usd_rel_ameco37) %>% 
   mutate(nulc_aper_usd_rel_ameco37 = rebase(nulc_aper_usd_rel_ameco37, time, base_year)) %>% 
   right_join(distinct(filter(ert_eff_ic_q, geo == "FI"), geo, time)) %>% 
   filter(time <= max(time_a, na.rm = TRUE) + months(0),
          time >= min(time_a, na.rm = TRUE) - months(0)) %>% 
   mutate(nulc_aper_usd_rel_ameco37_s = stats::spline(time, nulc_aper_usd_rel_ameco37, 
-                   xout = time)$y)
+                   xout = time)$y) %>% 
+  select(geo, time, nulc_aper_usd_rel_ameco37_s)
 
 ert_eff_ic_q %>% 
-  filter(geo == "FI", grepl("REER.*ULCT", exch_rt)) %>% 
-  ggplot(aes(time, values, colour = exch_rt)) +
+  filter(geo == "FI", grepl("REER_IC37.*ULCT", exch_rt)) %>% 
+  select(geo, time, exch_rt, values) %>% 
+  spread(exch_rt, values) %>% 
+  left_join(pdat_ameco_q_rel, by = c("geo", "time")) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  ggplot(aes(time, values, colour = vars)) +
   geom_line() +
-  geom_line(data = pdat_ameco_q_rel, aes(y = nulc_aper_usd_rel_ameco37_s, colour = "red"))+
-  # geom_point(aes(x = time_a), data = filter(pdata_ulc_reer, vars == "nulc_aper_rel_ameco37")) +
   the_legend_bot() +
   the_title_blank(c("x", "l")) +
   labs(y = glue("Indeksi"))
 
 ```
 
+# Suomen pankki
+
+## Koko talouden vaihtosuhdekorjatut yksikkötyökustannukset
+
+Vaihtosuhdekorjautut yksikkötyökustannukset ovat kehittyneet viime vuosina saman suuntaisesti kuin 
+yksikkötyökustannukset ylipäätään. Koska vaihtosuhde ei ole juuri muuttunut.
+Nokia aikaan korjauksella oli jonkin verran merkitystä.
+
+#### Taso
+
+
+```{r}
+
+trans_vars <- c(nulc_aper = "normaali",
+                nulc_aper_atot = "vaihtosuhdekorjattu")
+
+data_main_annual %>% 
+  select(geo, time, nulc_aper_atot, nulc_aper) %>%
+  filter(geo == "FI") %>% 
+  # mutate_at(vars(nulc_aper_atot, nulc_aper), ~rebase(., time, baseyear = 2005)) %>% 
+  gather(vars, values, -time, - geo) %>% 
+  translate(vars, trans_vars) %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  labs(y = glue("indeksi, {base_year} = 100"))
+
+
+
+```
+
+#### Muutos
+
+```{r}
+
+data_main_annual %>% 
+  select(geo, time, nulc_aper_atot, nulc_aper) %>%
+  filter(geo == "FI") %>% 
+  gather(vars, taso, -time, - geo) %>% 
+  group_by(vars, geo) %>% 
+  mutate(muutos = 100 * (taso / lag(taso, 1, order_by = time) - 1)) %>% 
+  ungroup() %>% 
+  translate(vars, trans_vars) %>% 
+  ggplot(aes(time, muutos, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  labs(y = "%") +
+  geom_h0()
+
+
+```
+
+#### Suhteessa
+
+Suhteelliset yksikkötyökustannukset omassa valuutassa, `r length(unique(data_main_groups_a$geo))` 
+kilpailijamaata.
+
+```{r}
+
+data_main_annual %>% 
+  select(geo, time, nulc_aper_atot_rel_ecfin37, nulc_aper_rel_ecfin37) %>%
+  filter(geo == "FI") %>% 
+  # mutate_at(vars(nulc_aper_atot_rel_ecfin37, nulc_aper_rel_ecfin37), ~rebase(., time, baseyear = 2005)) %>% 
+  gather(vars, values, -time, - geo) %>% 
+  mutate(vars = gsub("_rel_ecfin37", "", vars)) %>% 
+  translate(vars, trans_vars) %>% 
+  ggplot(aes(time, values, color = vars)) +
+
+  geom_line()
+
+
+```
+
+#### Suhteellisen indikaattorin muutos
+
+```{r}
+
+data_main_annual %>% 
+  select(geo, time,nulc_aper_atot_rel_ecfin37, nulc_aper_rel_ecfin37) %>%
+  filter(geo == "FI") %>% 
+  gather(vars, taso, -time, - geo) %>% 
+  group_by(vars, geo) %>% 
+  mutate(muutos = 100 * (taso / lag(taso, 1, order_by = time) - 1)) %>% 
+  ungroup() %>% 
+  mutate(vars = gsub("_rel_ecfin37", "", vars)) %>% 
+  translate(vars, trans_vars) %>% 
+  ggplot(aes(time, muutos, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  labs(y = "%") +
+  geom_h0()
+
+
+```
+
+## Kotimarkkinatoimialojen yksikkötyökustan-nukset tai yksikkötyökustannukset tehdas-teollisuudelle välituotteita tuottavilla toi-mialoilla. 
