@@ -198,7 +198,7 @@ Yhdistelmä Eurostatin ja OECD:n Quarterly National Accounts datasta
 ```{r q_dat_stat}
 
 q_dat %>% 
-  select(geo, time, values = nulc_aper) %>% 
+  select(geo, time, values = B1GQ__CLV15_MNAC) %>% 
   group_by(geo) %>% 
   mutate(tmin = min(time[!is.na(values)]), 
          tmax = max(time[!is.na(values)])) %>% 
@@ -247,7 +247,7 @@ save_fig("6_nulc_q_dat")
 
 ## Vertailu OECD ULC ja yhdistelmä
 
-Economic outlook antaa alkupäässä ja lopussa (?) hieman erilaisia arvoja. Tätyy tarkistaa miksi.
+Economic outlook antaa alkupäässä ja lopussa hieman erilaisia arvoja.
 
 ```{r comb_fi}
 max_time_q <- max(q_dat$time)
@@ -256,7 +256,9 @@ bind_rows("Eurostat ja OECD QNA" = q_dat,
           "OECD ULC" = q_dat_oecd_ulc,
           "OECD EO" = rename(eo_q_dat, nulc_aper = nulc, nulc_aper_rel_imf = nulc_rel_imf),
           .id = "source") %>% 
-  filter(geo == "FI", time >= start_time, time <= max_time_q) %>% 
+  filter(geo == "FI", 
+         # time >= start_time, 
+         time <= max_time_q) %>% 
   select(source, time, nulc_aper, nulc_aper_rel_imf) %>% 
   gather(vars, values, nulc_aper, nulc_aper_rel_imf) %>% 
   # mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
@@ -279,6 +281,30 @@ bind_rows("Eurostat ja OECD QNA" = q_dat,
 save_fig("7_nulc_comparison")
 
 ```
+
+OECD EO:n ero tulee siitä, että siinä ei ole laskettu yrittäjäkorjausta.
+
+```{r comp_fi_nulc_nulc_aper}
+
+bind_rows("Eurostat ja OECD QNA" = q_dat,
+          "OECD EO" = eo_q_dat,
+          .id = "source") %>% 
+  filter(geo == "FI", 
+         time <= max_time_q) %>% 
+  select(source, time, nulc_aper,  nulc) %>% 
+  gather(vars, values, -source, - time) %>% 
+  filter(!is.na(values)) %>% 
+  unite(vars, vars, source, sep = ", ") %>% 
+
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  labs(y = "indeksi, 2010 = 100") +
+  guides(color = guide_legend(nrow = 2)) +
+  the_legend_bot()
+
+```
+
 
 ```{r comb_all, fig.height=15, eval=FALSE}
 

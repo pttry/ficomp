@@ -83,7 +83,9 @@ naq_eurostat_dat <- naq_eurostat_dat_raw %>%
 
 naq_eurostat_nace_dat <- naq_eurostat_dat_raw %>%
   filter(s_adj %in% c("SA","SCA")) %>%
-  filter(nace_r2 %in% main_nace_sna_q, geo %in% eurostat_geos, time >= q_start_time) %>%
+  filter(nace_r2 %in% main_nace_sna_q,
+         geo %in% eurostat_geos,
+         time >= q_start_time) %>%
   # remove na_item without nace data
   filter(!(na_item %in% c("B1GQ", "P6", "P61", "P62", "B11"))) %>%
   spread(s_adj, values) %>%
@@ -91,7 +93,16 @@ naq_eurostat_nace_dat <- naq_eurostat_dat_raw %>%
   select(-SA, -SCA) %>%
   droplevels()
 
-
+# naq_eurostat_nace_dat_long <- naq_eurostat_dat_raw %>%
+#   filter(s_adj %in% c("SA","SCA")) %>%
+#   filter(nace_r2 %in% main_nace_sna_q,
+#          geo %in% eurostat_geos) %>%
+#   # remove na_item without nace data
+#   filter(!(na_item %in% c("B1GQ", "P6", "P61", "P62", "B11"))) %>%
+#   spread(s_adj, values) %>%
+#   mutate(values = coalesce(SCA, SA)) %>%
+#   select(-SA, -SCA) %>%
+#   droplevels()
 
 
 # Save final data

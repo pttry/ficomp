@@ -60,7 +60,8 @@ usethis::use_data(eurostat_geos, oecd_geos_ulcq, oecd_geos, all_geos,
                   tuku15,
                   all_extra_geos, ameco_extra_geos,
                   main_nace_sna,
-                  main_nace10_sna, a_start_time, base_year, overwrite = TRUE)
+                  main_nace10_sna,
+                  a_start_time, q_start_time, base_year, overwrite = TRUE)
 
 usethis::use_data(nace0_fi, geo_fi, overwrite = TRUE)
 
@@ -149,6 +150,7 @@ var_labels_fi <- c(
 
 usethis::use_data(var_labels, overwrite = TRUE)
 
+## Update raw data
 
 
 
@@ -176,7 +178,9 @@ q_dat_oecd_ulc <- ulc_oecd_dat %>%
 
 q_dat_oecd <- oecd_dat_Q %>%
   unite(vars, na_item, unit, sep = "__") %>%
-  filter(time >= q_start_time, geo %in% oecd_geos) %>%
+  filter(
+    time >= q_start_time,
+    geo %in% oecd_geos) %>%
   mutate(nace_r2 = "TOTAL") %>%
   spread(vars, values) %>%
   # To same base year as eurostat
@@ -199,7 +203,9 @@ data("naq_eurostat_dat")
 
 q_dat_eurostat <- naq_eurostat_dat %>%
   unite(vars, na_item, unit, sep = "__") %>%
-  filter(nace_r2 == "TOTAL", time >= q_start_time) %>%
+  filter(nace_r2 == "TOTAL" ,
+         time >= q_start_time
+         ) %>%
   spread(vars, values)
 
 
@@ -313,8 +319,8 @@ data("data_eurostat_nama_nace_a", "data_oecd_sna_nace_a")
 data_main_nace_a <-
   data_eurostat_nama_nace_a %>%
   bind_rows(select(data_oecd_sna_nace_a, all_of(names(.)))) %>%
-  # filter(time >= start_time_main,
-  #        geo %in% countries) %>%
+  filter(time >= start_time_main,
+         geo %in% countries) %>%
   mutate(geo = as_factor(geo))
 
 
