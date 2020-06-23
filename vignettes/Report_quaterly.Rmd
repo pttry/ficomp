@@ -198,7 +198,7 @@ Yhdistelmä Eurostatin ja OECD:n Quarterly National Accounts datasta
 ```{r q_dat_stat}
 
 q_dat %>% 
-  select(geo, time, values = B1GQ__CLV15_MNAC) %>% 
+  select(geo, time, values = nulc_aper) %>% 
   group_by(geo) %>% 
   mutate(tmin = min(time[!is.na(values)]), 
          tmax = max(time[!is.na(values)])) %>% 
@@ -218,6 +218,28 @@ q_dat %>%
 save_fig("5_Eurostat_OECD_geos")
 
 ```
+
+```{r}
+data_quartely_est %>% 
+  select(geo, time, values = nulc_aper) %>% 
+  group_by(geo) %>% 
+  mutate(tmin = min(time[!is.na(values)]), 
+         tmax = max(time[!is.na(values)])) %>% 
+  ungroup() %>% 
+  mutate(selected = geo %in% c(eurostat_geos, oecd_geos_ulcq)) %>% 
+  translate(geo, geo_trans) %>% 
+  ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = selected)) +
+    geom_linerange(size = 2, colour = geo_col(2)[1]) +
+    coord_flip() +
+    geom_hline(yintercept = as.numeric(as.Date("1996-01-01"))) +
+    scale_y_date(breaks = as.Date(c("1996-01-01", "2000-01-01",
+                                    "2020-01-01")),
+    date_labels = "%Y") +
+    scale_colour_manual(values = rev(geo_col(2)), guide = "none") +
+    the_title_blank("y")
+
+```
+
 
 ```{r q_dat_nulc}
 

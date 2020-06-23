@@ -41,6 +41,7 @@ The goal of ficomp is to ...
     - Only total economy. Industry data available only mainly EU countries.
     - Transformed to same base year as Eurostat 2015
     - Calculated euros for current price series
+    - Employment series are missing for USA and Japan
   + Annual national accounts
   + Economic outlook data
   

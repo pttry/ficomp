@@ -28,7 +28,7 @@ naq0_eurostat_dat <- naq_eurostat %>%
   # "Gross domestic product at market prices", "Exports of goods and services", "Exports of goods", "Exports of services", "External balance of goods and services"
   filter(unit %in% c("CP_MNAC", "CP_MEUR", "CLV15_MNAC"),
          s_adj %in% c("NSA", "SA","SCA"),
-         na_item %in% c("B1GQ", "P6", "P61", "P62", "B11")
+         na_item %in% c("B1GQ", "P6", "P61", "P62", "P7", "B11")
   ) %>%
   mutate(nace_r2 = "TOTAL") %>%
   droplevels()
@@ -87,7 +87,7 @@ naq_eurostat_nace_dat <- naq_eurostat_dat_raw %>%
          geo %in% eurostat_geos,
          time >= q_start_time) %>%
   # remove na_item without nace data
-  filter(!(na_item %in% c("B1GQ", "P6", "P61", "P62", "B11"))) %>%
+  filter(!(na_item %in% c("B1GQ", "P6", "P61", "P62", "P7", "B11"))) %>%
   spread(s_adj, values) %>%
   mutate(values = coalesce(SCA, SA)) %>%
   select(-SA, -SCA) %>%

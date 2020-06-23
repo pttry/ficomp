@@ -75,18 +75,19 @@ save_fig("A1_Eurostat_OECD_na")
 
 ```{r a_dat_ameco_stat}
 
+
 data_ameco %>% 
   select(geo, time, values = nulc_aper) %>% 
   group_by(geo) %>% 
-  mutate(tmin = min(time[!is.na(values)]), 
-         tmax = max(time[!is.na(values)])) %>% 
+  mutate(is_value = !is.na(values)) %>% 
   ungroup() %>% 
   mutate(selected = geo %in% c(eurostat_geos, oecd_geos_ulcq)) %>% 
   translate(geo, geo_trans) %>% 
-  ggplot(aes(geo, ymin = tmin, ymax = tmax, colour = selected)) +
-    geom_linerange(size = 2, colour = geo_col(2)[1]) +
+  ggplot(aes(geo, time, alpha = is_value)) +
+    geom_line(size = 2) +
     coord_flip() +
-    scale_colour_manual(values = rev(geo_col(2)), guide = "none") +
+    scale_alpha_manual(values = c(0,1), guide = "none") +
+    # scale_colour_manual(values = rev(geo_col(2)), guide = "none") +
     the_title_blank("y")
 
 save_fig("A1_ameco_na")
