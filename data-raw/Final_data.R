@@ -266,6 +266,36 @@ saveRDS(q_dat, file = "data-out/data_main_total_quarterly.rds")
 
 ## Estimation Q data
 
+calculate_ind <- function(.data, .keep = "all"){
+  .data %>%
+  group_by(geo) %>%
+    mutate(
+      .keep = .keep,
+      geo = geo,
+      time = time,
+      # Term of trade adujusted GDP
+      B1GQA__CLV15_MNAC = rebase(100 * (B1GQ__CLV15_MNAC + (P6__CP_MNAC / (P7__CP_MNAC / P7__CLV15_MNAC)) -
+                                          P6__CLV15_MNAC), time = time, baseyear = base_year),
+      nulc = ind_ulc(D1__CP_MNAC, B1GQ__CLV15_MNAC, time = time, baseyear = base_year),
+      nulc_eur = ind_ulc(D1__CP_MEUR, B1GQ__CLV15_MNAC, time = time, baseyear = base_year),
+      nulc_va = ind_ulc(D1__CP_MNAC, B1G__CLV15_MNAC, time = time, baseyear = base_year),
+      nulc_aper = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1GQ__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
+      nulc_aper_atot = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1GQA__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
+      nulc_aper_eur_atot = ind_ulc(D1__CP_MEUR / SAL_DC__THS_PER, B1GQA__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
+      nulc_aper_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_PER, B1GQ__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
+      nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
+      rulc_aper = rebase(nulc_aper / (B1GQ__CP_MNAC/B1GQ__CLV15_MNAC), time = time, baseyear = base_year),
+      emp_ind = rebase(EMP_DC__THS_PER, time = time, baseyear = base_year),
+      lp_ind = rebase(B1GQ__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
+      d1_per_ind = rebase(D1__CP_MNAC / SAL_DC__THS_PER, time = time, baseyear = base_year),
+      gdp_ind = rebase(B1GQ__CLV15_MNAC, time = time, baseyear = base_year),
+      exp_ind = rebase(P6__CLV15_MNAC, time = time, baseyear = base_year),
+      exp_goods_ind = rebase(P61__CLV15_MNAC, time = time, baseyear = base_year),
+      exp_serv_ind = rebase(P62__CLV15_MNAC, time = time, baseyear = base_year),
+      tbalance_gdp = B11__CP_MNAC / B1GQ__CP_MNAC) %>%
+    ungroup()
+}
+
 # not used yet TODO
 dat_ulc_oecd_est <- ulc_oecd_dat %>%
   filter(geo %in% c(eurostat_geos, oecd_geos_ulcq)) %>%
@@ -278,32 +308,37 @@ dat_ulc_oecd_est <- ulc_oecd_dat %>%
     d1_per_ind = rebase(NULC_APER, time = time, baseyear = base_year),
   )
 
+safe_spline <- function(x, time){
+
+}
+
+check_ameco <- function(.data){
+  .data %>%
+  group_by(geo) %>%
+  summarise(across(!all_of(c("time")), ~all(is.na(.x)))) %>%
+    ungroup() %>%
+    gather(vars, values, -geo) %>%
+    filter(values) %>%
+    print()
+  .data
+}
+
 # Use splines to make quarterly data from annual AMECO data
 dat_ameco_q_est <-
   data_ameco %>%
   filter(geo %in% c(eurostat_geos, oecd_geos)) %>%
-  group_by(geo) %>%
-  transmute(
-    geo = geo,
-    time = time,
-    nulc_aper = nulc_aper,
-    nulc_aper_eur = nulc_aper_eur,
-    rulc_aper = rulc_aper,
-    gdp_ind = rebase(B1GQ__CLV15_MNAC, time = time, baseyear = base_year),
-         exp_ind = rebase(P6__CLV15_MNAC, time = time, baseyear = base_year),
-         emp_ind = rebase(EMP_DC__THS_PER, time = time, baseyear = base_year),
-         lp_ind = rebase(B1GQ__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
-         d1_per_ind = rebase(D1__CP_MNAC / SAL_DC__THS_PER, time = time, baseyear = base_year),
-         B1GQA__CLV15_MNAC = 100 * (B1GQ__CLV15_MNAC + (P6__CP_MNAC / (P7__CP_MNAC / P7__CLV15_MNAC)) -
-                                      P6__CLV15_MNAC) / B1GQ__CLV15_MNAC[time == 2015],
-    nulc_aper_atot = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1GQA__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year)) %>%
-  ungroup() %>%
+  calculate_ind(.keep = "none") %>%
   select(-B1GQA__CLV15_MNAC) %>%
   mutate(time = lubridate::ymd(paste0(time, "-07-01"))) %>%
   right_join(tibble(time = seq.Date(as.Date("1991-01-01"), as.Date("2019-10-01"), by = "quarter")),
              by = "time") %>%
+  droplevels() %>%
   complete(time, geo) %>%
   filter(!is.na(geo)) %>%
+  # Delete variables with missing data, check_ameco should print empty tibble
+  select(-nulc_va, -nulc_aper_va) %>%
+  check_ameco() %>%
+  # Estimate quarterly based on spline
   group_by(geo) %>%
   mutate(across(where(is.numeric), ~stats::spline(time, .x, xout = time)$y)) %>%
   mutate(across(where(is.numeric), ~rebase(.x, time, base_year))) %>%
@@ -320,36 +355,14 @@ data_quartely_est <-
   # left_join(select(q_dat_oecd_ulc, geo, time, nulc_aper_oecd = nulc_aper),
   #           by = c("geo", "time")) %>%
   filter(time >= "1991-01-01") %>%
+  droplevels() %>%
   complete(geo, time) %>%
-  group_by(geo) %>%
-  transmute(
-    geo = geo,
-    time = time,
-    # Term of trade adujusted GDP
-    B1GQA__CLV15_MNAC = 100 * (B1GQ__CLV15_MNAC + (P6__CP_MNAC / (P7__CP_MNAC / P7__CLV15_MNAC)) -
-                                 P6__CLV15_MNAC) / B1GQ__CLV15_MNAC[time == "2015-01-01"],
-    nulc = ind_ulc(D1__CP_MNAC, B1GQ__CLV15_MNAC, time = time, baseyear = base_year),
-    nulc_eur = ind_ulc(D1__CP_MEUR, B1GQ__CLV15_MNAC, time = time, baseyear = base_year),
-    nulc_va = ind_ulc(D1__CP_MNAC, B1G__CLV15_MNAC, time = time, baseyear = base_year),
-    nulc_aper = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1GQ__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
-    nulc_aper_atot = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1GQA__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
-    nulc_aper_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_PER, B1GQ__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
-    nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
-    rulc_aper = rebase(nulc_aper / (B1GQ__CP_MNAC/B1GQ__CLV15_MNAC), time = time, baseyear = base_year),
-    emp_ind = rebase(EMP_DC__THS_PER, time = time, baseyear = base_year),
-    lp_ind = rebase(B1GQ__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
-    d1_per_ind = rebase(D1__CP_MNAC / SAL_DC__THS_PER, time = time, baseyear = base_year),
-    gdp_ind = rebase(B1GQ__CLV15_MNAC, time = time, baseyear = base_year),
-    exp_ind = rebase(P6__CLV15_MNAC, time = time, baseyear = base_year),
-    exp_goods_ind = rebase(P61__CLV15_MNAC, time = time, baseyear = base_year),
-    exp_serv_ind = rebase(P62__CLV15_MNAC, time = time, baseyear = base_year),
-    tbalance_gdp = B11__CP_MNAC / B1GQ__CP_MNAC) %>%
-  ungroup() %>%
+  calculate_ind() %>%
   # Replace NAs with quarterlylized annual data from ameco
-  left_join(dat_ameco_q_est, by = c("geo", "time"), suffix = c("", "_s")) %>%
-  mutate(across(ends_with("_s"), ~coalesce(cur_data()[[gsub("_s", "", cur_column())]], .x))) %>%
+  left_join(dat_ameco_q_est, by = c("geo", "time"), suffix = c("", "_long")) %>%
+  mutate(across(ends_with("_long"), ~coalesce(cur_data()[[gsub("_long", "", cur_column())]], .x))) %>%
   # Weight all
-  weight_all(geo, time, except = c("geo", "time"), weight_df = weights_ecfin37) %>%
+  weight_all(geo, time, except = c("geo", "time", grep("^[A-Z]", names(.), value = TRUE)), weight_df = weights_ecfin37) %>%
   # Extra data from Economic Outlook
   left_join(select(filter(eo_q_dat),
                    geo, time, XPERF, XGSVD, XMKT, eci), by = c("geo", "time")) %>%
