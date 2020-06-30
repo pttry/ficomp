@@ -120,7 +120,7 @@ currencies <- c(AU = "AUD", CA = "CAD", US = "USD", JP = "JPY", NZ = "NZD", CH =
 exh_eur_a <- get_eurostat("ert_bil_eur_a", filters = list(statinfo = "AVG", currency = currencies), time_format = "num") %>%
   select(time, currency, values)
 
-exh_eur_q<- get_eurostat("ert_bil_eur_q", filters = list(statinfo = "AVG", currency = currencies)) %>%
+exh_eur_q <- get_eurostat("ert_bil_eur_q", filters = list(statinfo = "AVG", currency = currencies)) %>%
   select(time, currency, values)
 
 usethis::use_data(exh_eur_a, exh_eur_q, overwrite = TRUE)

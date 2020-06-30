@@ -313,20 +313,21 @@ safe_spline <- function(x, time){
 }
 
 check_ameco <- function(.data){
-  .data %>%
+  y <- .data %>%
   group_by(geo) %>%
-  summarise(across(!all_of(c("time")), ~all(is.na(.x)))) %>%
+  summarise(across(!all_of(c("time")), ~all(is.na(.x))), .groups = "drop_last") %>%
     ungroup() %>%
     gather(vars, values, -geo) %>%
-    filter(values) %>%
-    print()
+    filter(values)
+
+  if(nrow(y)>0) print()
   .data
 }
 
 # Use splines to make quarterly data from annual AMECO data
 dat_ameco_q_est <-
   data_ameco %>%
-  filter(geo %in% c(eurostat_geos, oecd_geos)) %>%
+  filter(geo %in% c(eurostat_geos, ameco_extra_geos)) %>%
   calculate_ind(.keep = "none") %>%
   select(-B1GQA__CLV15_MNAC) %>%
   mutate(time = lubridate::ymd(paste0(time, "-07-01"))) %>%
@@ -361,8 +362,17 @@ data_quartely_est <-
   # Replace NAs with quarterlylized annual data from ameco
   left_join(dat_ameco_q_est, by = c("geo", "time"), suffix = c("", "_long")) %>%
   mutate(across(ends_with("_long"), ~coalesce(cur_data()[[gsub("_long", "", cur_column())]], .x))) %>%
+  # Exchange rate, from data
+  mutate(exch_eur = nulc_long / nulc_eur_long) %>%
   # Weight all
-  weight_all(geo, time, except = c("geo", "time", grep("^[A-Z]", names(.), value = TRUE)), weight_df = weights_ecfin37) %>%
+  group_by(time) %>%
+  mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE)),
+                ~weight_index(.x, geo, time, weight_df = weights_ecfin27, check_geos = FALSE),
+                .names = paste0("{col}_rel_ecfin13"))) %>%
+  mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE), contains("_rel_")),
+              ~weight_index(.x, geo, time, weight_df = weights_ecfin37, check_geos = FALSE),
+              .names = paste0("{col}_rel_ecfin21"))) %>%
+  ungroup() %>%
   # Extra data from Economic Outlook
   left_join(select(filter(eo_q_dat),
                    geo, time, XPERF, XGSVD, XMKT, eci), by = c("geo", "time")) %>%

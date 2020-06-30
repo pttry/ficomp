@@ -28,6 +28,20 @@ weight_all <- function(.data, geo, time, except, weight_df){
   y
 }
 
+weight_all2 <- function(.data, .geo, .time, ..., .except, .weight_df){
+  w_name <- deparse1(substitute(.weight_df))
+  fun_name <- paste0("rel", gsub("weights", "", x = w_name))
+  args <-  rlang::quos(geo = .geo, time = .time, weight_df = .weight_df, ..., .named = TRUE)
+
+  y <- group_by(.data, time, .add = TRUE) %>%
+    mutate(across(-matches(.except),
+                  weight_index, !!! args,
+                  .names = paste0("{col}_rel_", fun_name))) %>%
+    ungroup()
+
+  y
+}
+
 #' @describeIn weight_all
 
 weight_at <- function(.data, geo, time, at, weight_df){
@@ -112,7 +126,6 @@ weight_index <- function(x, geo, time, weight_df,
     }
 
   if (nearest) time <- weight_df$time[which.min(abs(weight_df$time-time))]
-
   if (check_geos) {
     in_base <- geo %in% weight_df$geo_base
     if (any(!in_base)) stop("Missing geo(s) in weight_df geo_base: ", paste0(geo[!in_base], collapse = ", "))
