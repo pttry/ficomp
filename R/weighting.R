@@ -50,7 +50,7 @@ weight_at <- function(.data, geo, time, at, weight_df){
   fun_list <- list(rel = ~weight_index(., geo = geo, time = time, weight_df = weight_df))
   names(fun_list) <- fun_name
 
-  y <- group_by(.data, time, add = TRUE) %>%
+  y <- group_by(.data, time, .add = TRUE) %>%
     mutate_at(tidyselect::all_of(setNames(at, at)), .funs = fun_list) %>%
     ungroup()
 
