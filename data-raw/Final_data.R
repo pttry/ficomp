@@ -39,6 +39,9 @@ all_geos <- c(eurostat_geos, oecd_geos)
 
 all_extra_geos <- c(eu_geo, other_eurostat_geo, c("AU", "CA", "US", "JP", "NO", "NZ", "MX", "CH", "TR", "IL", "KR"))
 
+geo21 <- c(eurostat_geos, ameco_extra_geos)
+geo20 <- c(eurostat_geos, c("AU", "CA", "US", "JP", "CH"))
+
 geo_fi <- setNames(countrycode::countrycode(all_extra_geos, "eurostat", "cldr.name.fi",
                                             custom_match = c(EA12 = "Euroalue-12")), all_extra_geos)
 
@@ -57,7 +60,7 @@ main_nace10_sna <- c(TOTAL = "TOTAL", C = "C", F = "F", G = "G-I", H = "G-I",
                      I = "G-I", J = "J", M = "M_N", N = "M_N")
 
 usethis::use_data(eurostat_geos, oecd_geos_ulcq, oecd_geos, all_geos,
-                  tuku15,
+                  tuku15, geo20,
                   all_extra_geos, ameco_extra_geos,
                   main_nace_sna,
                   main_nace10_sna,
@@ -266,9 +269,9 @@ saveRDS(q_dat, file = "data-out/data_main_total_quarterly.rds")
 
 ## Estimation Q data
 
-calculate_ind <- function(.data, .keep = "all"){
+calculate_ind <- function(.data, ..., .keep = "all"){
   .data %>%
-  group_by(geo) %>%
+  group_by(...) %>%
     mutate(
       .keep = .keep,
       geo = geo,
@@ -296,6 +299,29 @@ calculate_ind <- function(.data, .keep = "all"){
     ungroup()
 }
 
+calculate_ind_nace <- function(.data, ..., .keep = "all"){
+  .data %>%
+    group_by(...) %>%
+    mutate(
+      .keep = .keep,
+      geo = geo,
+      time = time,
+      nulc_va = ind_ulc(D1__CP_MNAC, B1G__CLV15_MNAC, time = time, baseyear = base_year),
+      nulc_va_eur = ind_ulc(D1__CP_MEUR, B1G__CLV15_MNAC, time = time, baseyear = base_year),
+      nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
+      nulc_aper_va_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_PER, B1G__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
+      nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = base_year),
+      nulc_hw_va_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = base_year),
+      rulc_aper_va = rebase(nulc_aper_va / (B1G__CP_MNAC/B1G__CLV15_MNAC), time = time, baseyear = base_year),
+      rulc_hw_va = rebase(nulc_hw_va / (B1G__CP_MNAC/B1G__CLV15_MNAC), time = time, baseyear = base_year),
+      emp_ind = rebase(EMP_DC__THS_PER, time = time, baseyear = base_year),
+      lp_ind = rebase(B1G__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
+      d1_per_ind = rebase(D1__CP_MNAC / SAL_DC__THS_PER, time = time, baseyear = base_year),
+      va_ind = rebase(B1G__CLV15_MNAC, time = time, baseyear = base_year)) %>%
+    ungroup()
+}
+
+
 # not used yet TODO
 dat_ulc_oecd_est <- ulc_oecd_dat %>%
   filter(geo %in% c(eurostat_geos, oecd_geos_ulcq)) %>%
@@ -308,9 +334,7 @@ dat_ulc_oecd_est <- ulc_oecd_dat %>%
     d1_per_ind = rebase(NULC_APER, time = time, baseyear = base_year),
   )
 
-safe_spline <- function(x, time){
 
-}
 
 check_ameco <- function(.data){
   y <- .data %>%
@@ -328,7 +352,7 @@ check_ameco <- function(.data){
 dat_ameco_q_est <-
   data_ameco %>%
   filter(geo %in% c(eurostat_geos, ameco_extra_geos)) %>%
-  calculate_ind(.keep = "none") %>%
+  calculate_ind(geo, .keep = "none") %>%
   select(-B1GQA__CLV15_MNAC) %>%
   mutate(time = lubridate::ymd(paste0(time, "-07-01"))) %>%
   right_join(tibble(time = seq.Date(as.Date("1991-01-01"), as.Date("2019-10-01"), by = "quarter")),
@@ -358,7 +382,7 @@ data_quartely_est <-
   filter(time >= "1991-01-01") %>%
   droplevels() %>%
   complete(geo, time) %>%
-  calculate_ind() %>%
+  calculate_ind(geo) %>%
   # Replace NAs with quarterlylized annual data from ameco
   left_join(dat_ameco_q_est, by = c("geo", "time"), suffix = c("", "_long")) %>%
   mutate(across(ends_with("_long"), ~coalesce(cur_data()[[gsub("_long", "", cur_column())]], .x))) %>%
@@ -397,7 +421,7 @@ data_eurostat_nace_q <- naq_eurostat_nace_dat %>%
 
 data_main_nace_q <-
   data_eurostat_nace_q %>%
-  filter(geo != "BE") %>%
+  # filter(geo != "BE") %>%
   # bind_rows(select(data_oecd_sna_nace_q, all_of(names(.)))) %>%
   # filter(time >= start_time_main,
   #        geo %in% countries) %>%
@@ -410,19 +434,14 @@ data_main_groups_q <-
   filter(nace_r2 %in% c("TOTAL", "C")) %>%
   mutate(nace0 = fct_recode(nace_r2, total = "TOTAL", manu = "C")) %>%
   select(-nace_r2) %>%
-  group_by(geo, nace0) %>%
-  mutate(nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
-         nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = base_year),
-         nulc_hw_va_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = base_year),
-         rulc_hw_va = rebase(nulc_hw_va / (B1G__CP_MNAC/B1G__CLV15_MNAC), time = time, baseyear = base_year)) %>%
+  calculate_ind_nace(geo, nace0) %>%
   group_by(nace0, time) %>%
-  mutate(nulc_hw_va_rel = weight_index(nulc_hw_va, geo, time, weight_df = weights_bis_broad),
-         nulc_hw_va_eur_rel = weight_index(nulc_hw_va_eur, geo, time, weight_df = weights_bis_broad),
-         rulc_hw_va_rel = weight_index(rulc_hw_va, geo, time, weight_df = weights_bis_broad),
-         nulc_aper_va_rel_imf = weight_index(nulc_aper_va, geo, time, weight_df = weights_imf),
-         nulc_hw_va_eur_rel_imf = weight_index(nulc_hw_va_eur, geo, time, weight_df = weights_imf),
-         rulc_hw_va_rel_imf = weight_index(rulc_hw_va, geo, time, weight_df = weights_imf)) %>%
+  mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE)),
+                ~weight_index(.x, geo, time, weight_df = weights_ecfin27, check_geos = FALSE),
+                .names = paste0("{col}_rel_ecfin13"))) %>%
   ungroup()
+
+
 
 
 
@@ -431,8 +450,72 @@ write.csv2(data_main_groups_q, file = "data-out/data_main_groups_quarterly.csv")
 saveRDS(data_main_groups_q, file = "data-out/data_main_groups_quarterly.rds")
 
 
+## Quarterly series extended with annual data
+
+# Use splines to make quarterly data from annual ILC data
+dat_ilc_q_est <-
+  data_ilc %>%
+  mutate(time = lubridate::ymd(paste0(time, "-07-01"))) %>%
+  filter(geo %in% c(eurostat_geos, ameco_extra_geos)) %>%
+  filter(nace0 %in% "manu") %>%
+  # only non relative indeces
+  select(c(!matches("_rel_") & matches("[a-z]", ignore.case = FALSE))) %>%
+  select(-cpi10, -nac_usd) %>%
+  droplevels() %>%
+  # add quarters
+  right_join(
+    expand.grid(time = seq.Date(min(.$time) - months(6),
+                                max(.$time) + months(3),
+                                by = "quarter"),
+                geo = unique(.$geo),
+                nace0 = unique(.$nace0)),
+    by = c("geo", "time", "nace0") ) %>%
+  complete(time, geo, nace0) %>%
+  filter(!is.na(geo), !is.na(nace0)) %>%
+  # Estimate quarterly based on spline
+  group_by(geo, nace0) %>%
+  mutate(across(where(is.numeric), ~stats::spline(time, .x, xout = time)$y)) %>%
+  mutate(across(where(is.numeric), ~rebase(.x, time, base_year))) %>%
+  ungroup()
 
 
+
+data_quartely_manu_est <-
+  data_main_groups_q %>%
+  filter(geo %in% c(eurostat_geos, ameco_extra_geos)) %>%
+  filter(nace0 %in% "manu") %>%
+  select(!matches("_rel_")) %>%
+  droplevels() %>%
+  right_join(
+    expand.grid(
+      time = seq.Date(
+        min(dat_ilc_q_est$time),
+        max(.$time),
+        by = "quarter"),
+      geo = unique(dat_ilc_q_est$geo),
+      nace0 = unique(.$nace0)),
+    by = c("geo", "time", "nace0") ) %>%
+  complete(geo, time, nace0) %>%
+  # Replace NAs with quarterlylized annual data from ameco
+  left_join(filter(dat_ilc_q_est, nace0 == "manu"),
+            by = c("geo", "time", "nace0"), suffix = c("", "_long")) %>%
+  mutate(across(ends_with("_long"), ~coalesce(cur_data()[[gsub("_long", "", cur_column())]], .x))) %>%
+  # Weight all
+  group_by(time, nace0) %>%
+  mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE)),
+                ~weight_index2(.x, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),
+                .names = paste0("{col}_rel_ecfin15"))) %>%
+  mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE), contains("_rel_")),
+                ~weight_index2(.x, geo, time, geos = geo20, weight_df = weights_ecfin37),
+                .names = paste0("{col}_rel_ecfin20"))) %>%
+  ungroup() %>%
+  mutate(geo = as_factor(geo))
+
+
+
+usethis::use_data(data_quartely_manu_est, overwrite = TRUE)
+write.csv2(data_quartely_manu_est, file = "data-out/data_quartely_manu_est.csv")
+saveRDS(data_quartely_manu_est, file = "data-out/data_quartely_manu_est.rds")
 
 
 ## Final annual data

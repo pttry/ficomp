@@ -55,9 +55,10 @@ dat_ilc <- ilc_flat0 %>%
   rename_at(vars(contains("MNAC_EUR")), list(~gsub("NAC_", "", .)))
 
 data_ilc <- dat_ilc %>%
-  filter(geo %in% tuku15,
-         nace %in% c("C", "26-27"),
-         time >= 1990) %>%
+  filter(
+    # geo %in% tuku15,
+    nace %in% c("C", "26-27"),
+    time >= 1990) %>%
   group_by(geo, nace) %>%
   mutate(B1G__PYP_MNAC = statfitools::pp(cp = B1G__CP_MNAC, fp = B1G__CLV15_MNAC, time = time)) %>%
   ungroup() %>%
@@ -73,21 +74,22 @@ data_ilc <- dat_ilc %>%
   group_by(geo, nace0) %>%
   # volyymia ei voi laskea yhteen, täytyy laske cp ja pp sarjoista
   mutate(B1G__CLV15_MNAC = statfitools::fp(cp = B1G__CP_MNAC, pp = B1G__PYP_MNAC, time = time, year = 2015)) %>%
-  ungroup() %>%
-  group_by(geo, nace0) %>%
   mutate(
-    va_ind = rebase(B1G__CLV15_MNAC, time = time, baseyear = base_year),
-    emp_ind = rebase(EMP_DC__THS_HW, time = time, baseyear = base_year),
     nulc_va = ind_ulc(D1__CP_MNAC, B1G__CLV15_MNAC, time = time, baseyear = base_year),
     nulc_va_eur = ind_ulc(D1__CP_MEUR, B1G__CLV15_MNAC, time = time, baseyear = base_year),
-    rulc_va = rebase(nulc_va / (B1G__CP_MNAC/B1G__CLV15_MNAC), time = time, baseyear = base_year)) %>%
-  # group_by(time, nace0) %>%
-  # mutate(
-  #   nulc_va_rel = weight_index(nulc_va, geo, time, weight_df = weights_bis_broad)) %>%
-  group_by(nace0) %>%
-  weight_at(geo, time, at = c("nulc_va", "nulc_va_eur"), weight_df = weights_ecfin42) %>%
-  group_by(nace0) %>%
-  weight_at(geo, time, at = c("nulc_va", "nulc_va_eur"), weight_df = weights_bis_narrow)
+    rulc_va = rebase(nulc_va / (B1G__CP_MNAC/B1G__CLV15_MNAC), time = time, baseyear = base_year),
+    emp_ind = rebase(EMP_DC__THS_PER, time = time, baseyear = base_year),
+    lp_ind = rebase(B1G__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
+    va_ind = rebase(B1G__CLV15_MNAC, time = time, baseyear = base_year)) %>%
+  group_by(time, nace0) %>%
+  mutate(across(c("nulc_va", "nulc_va_eur"),
+                ~weight_index2(.x, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),
+                .names = paste0("{col}_rel_ecfin15"))) %>%
+  # group_by(nace0) %>%
+  # weight_at(geo, time, at = c("nulc_va", "nulc_va_eur"), weight_df = weights_ecfin42) %>%
+  # group_by(nace0) %>%
+  # weight_at(geo, time, at = c("nulc_va", "nulc_va_eur"), weight_df = weights_bis_narrow) %>%
+  ungroup()
 
 
 

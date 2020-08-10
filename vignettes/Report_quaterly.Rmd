@@ -385,6 +385,53 @@ save_fig("8_nulc_q_total_manu")
 
 ```
 
+```{r manu_comp}
+
+bind_rows(annual = mutate(data_main_groups_a, time = as.Date(paste0(time, "-07-01"))), 
+            quarterly = data_main_groups_q,
+            ilc = mutate(data_ilc, time = as.Date(paste0(time, "-07-01"))), 
+            .id = "source") %>% 
+  select(geo, time, nace0, source, nulc_va_eur) %>% 
+  mutate(nace0 = recode(nace0, manu_ex26 = "manu_ex26_27")) %>% 
+  filter(nace0 == "manu") %>%
+  group_by(source) %>% 
+  weight_at(geo, time, at = c("nulc_va_eur"), weight_df = weights_ecfin42) %>% 
+  ungroup() %>% 
+  gather(vars, values, -geo, -time, -source,-nace0) %>% 
+  filter(geo == "FI") %>% 
+  ggplot(aes(time, values, color = source)) +
+  geom_line() +
+  facet_wrap(~ vars)
+
+```
+
+```{r manu_components}
+
+bind_rows(annual = mutate(data_main_groups_a, time = as.Date(paste0(time, "-07-01"))), 
+            quarterly = data_main_groups_q,
+            ilc = mutate(data_ilc, time = as.Date(paste0(time, "-07-01"))), 
+            .id = "source") %>% 
+  select(geo, time, nace0, source, nulc_va, lp_ind, d1_per_ind) %>% 
+  filter(nace0 == "manu") %>%
+  gather(vars, values, -geo, -time, -source,-nace0) %>% 
+  filter(geo == "FI") %>% 
+  ggplot(aes(time, values, color = source)) +
+  geom_line() +
+  facet_wrap(~ vars)
+
+```
+
+```{r manu_long}
+
+data_quartely_manu_est %>% 
+  select(geo, time, nace0, nulc_va_eur, nulc_va_eur_long, nulc_va_eur_rel_ecfin21, nulc_va_eur_long_rel_ecfin21) %>% 
+  filter(nace0 == "manu") %>% 
+  gather(vars, values, -geo, -time, -nace0) %>% 
+  filter(geo == "FI") %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() 
+
+```
 
 ## Different measures quarterly
 

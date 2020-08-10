@@ -72,7 +72,7 @@ weight_at <- function(.data, geo, time, at, weight_df){
 #' @examples
 #' x <- c(1,2,3, NA)
 #' w <- c(0.25,0.5,0.25, NA)
-#' weighted_gmean(x, w, na.rm = FALSE)
+#' weighted_gmean(x, w, na.rm = TRUE)
 weighted_gmean <- function(x, w, na.rm = FALSE) {
   if (na.rm) w[is.na(x)] <- 0
   y <- prod(x^prop.table(w))
@@ -87,6 +87,7 @@ weighted_gmean <- function(x, w, na.rm = FALSE) {
 #' @param x A vector to weight.
 #' @param geo A vector to indicate countries.
 #' @param time A year (or date which is converted to a year) for weights.
+#' @param geos A string vector of geos to weight over.
 #' @param weight_df A weigthing data.frame in long form. Should have time, geo_base and geo columns.
 #' @param nearest A logical whether to use nearest year for weight table.
 #' @param na.rm A logical. Should missing values be removed? With FALSE (default) any NA will
@@ -145,6 +146,64 @@ weight_index <- function(x, geo, time, weight_df,
                                                           mean_type = mean_type))
   y <- 100 * x / weighted_other
 }
+
+#' @describeIn weight_index
+
+weight_index2 <- function(x, geo, time, geos, weight_df,
+                         nearest = TRUE, na_zero = TRUE, na.rm = FALSE,
+                         mean_type = "geom") {
+  x <<- x
+  geo <<- geo
+
+  # Check time
+  if (lubridate::is.Date(time)) time <- lubridate::year(time)
+  if (!all(time == mean(time))) stop("Time should be unique")
+  time <- time[1]
+
+  # check geos in weight_df and stop if missing
+  geos_in_df <- weight_df %>%
+    summarise(across(c(geo, geo_base), ~(geos %in% .x))) %>%
+    apply(1, all)
+  if (!all(geos_in_df)) stop(paste0(geos[!geos_in_df], collapse = " "), " are not present in weight_df")
+
+  # check geos in geo and return NA if any missing
+  geos_in_geo <- geos %in% geo
+  if (!all(geos_in_geo)) {
+    warning(paste0(geos[!geos_in_geo], collapse = " "), " are not present in geo at year ", time,
+            ". NA is returned")
+    return(x[NA])
+  }
+
+  # Values to weigth over based on geos
+  sel_obs <- geo %in% geos
+  z <- x[sel_obs]
+  z_geo <- geo[sel_obs]
+
+  # If missing in selected return NA
+  missing_geos <- is.na(z)
+  if (any(missing_geos)){
+    warning(paste0(z_geo[missing_geos], collapse = " "), " are missing at year ", time,
+            ". NA is returned")
+    return(x[NA])
+  }
+
+  if (nearest) time <- weight_df$time[which.min(abs(weight_df$time-time))]
+
+  w_df <- weight_df[weight_df$time == time, ]
+
+
+  if (na_zero) w_df$weight[is.na(w_df$weight)] <- 0
+
+  weighted_other <- purrr::map_dbl(z_geo, ~ weight_function(.x, x, geo, w_df,
+                                                          check_geos = FALSE,
+                                                          mean_type = mean_type))
+  y <- x[NA]
+  y[sel_obs] <- 100 * z / weighted_other
+  y
+
+}
+
+
 
 
 #' Weight function for weight_index
