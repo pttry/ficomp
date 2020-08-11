@@ -63,6 +63,8 @@ The goal of ficomp is to ...
 
 - The Conference Board International Labor Comparisons Program (ILC) (data-raw/get_ILC.R).
   + (https://www.conference-board.org/ilcprogram/index.cfm?id=30139)
+  + Yearly
+  + industry 
 
 ### EER data 
 
@@ -114,6 +116,11 @@ Note:
 * Goods export
   + [UN Comtrade Database](https://comtrade.un.org/) - [comtradr](https://cran.r-project.org/web/packages/comtradr/)
   + Custums Finland
+  
+#### Country groups
+  
+  * geo21
+  * geo20 for ilc as nz missing.
 
 ## Indicator functions
 

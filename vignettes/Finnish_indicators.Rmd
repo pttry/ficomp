@@ -112,7 +112,7 @@ verrattuna tukuseton sarjoihin perusvuodella 2010 ja käänteisesti kuin tukuset
 pdat_tuku <- 
   data_ilc %>% 
   filter(geo == "FI") %>% 
-  select(geo, time, nace0, ilc = nulc_va_eur_rel_bis_narrow) %>% 
+  select(geo, time, nace0, ilc = nulc_va_eur_rel_tuku16) %>% 
   left_join(tukuseto_data, by = c("time", "nace0"))
   
 pdat_tuku %>% 

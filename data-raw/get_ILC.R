@@ -56,7 +56,7 @@ dat_ilc <- ilc_flat0 %>%
 
 data_ilc <- dat_ilc %>%
   filter(
-    # geo %in% tuku15,
+    # geo %in% tuku16,
     nace %in% c("C", "26-27"),
     time >= 1990) %>%
   group_by(geo, nace) %>%
@@ -84,7 +84,10 @@ data_ilc <- dat_ilc %>%
   group_by(time, nace0) %>%
   mutate(across(c("nulc_va", "nulc_va_eur"),
                 ~weight_index2(.x, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),
-                .names = paste0("{col}_rel_ecfin15"))) %>%
+                .names = paste0("{col}_rel_ecfin15")),
+         across(c("nulc_va", "nulc_va_eur"),
+                ~weight_index2(.x, geo, time, geos = tuku16, weight_df = weights_ecfin42),
+                .names = paste0("{col}_rel_tuku16"))) %>%
   # group_by(nace0) %>%
   # weight_at(geo, time, at = c("nulc_va", "nulc_va_eur"), weight_df = weights_ecfin42) %>%
   # group_by(nace0) %>%
