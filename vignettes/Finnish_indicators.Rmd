@@ -34,11 +34,50 @@ tukuseto_data <- read.csv2(here::here("data-raw/tukuseto_data.csv")) %>%
   mutate_at(vars(-time), ~rebase(1/., time, base_year)) %>% 
   gather(nace0, tukuseto, -time)
 
+geos <- c(Suomi = "FI", Ruotsi = "SE", Saksa = "DE", Ranska = "FR", 
+          euroalue = "EA19", "Itävalta" = "AT", Espanja = "ES")
+
 ```
 
 # Tukuseto
 
 ## Koko talouden nimelliset yksikkötyökustannukset
+
+```{r}
+
+data_main_groups_a %>% 
+  filter(nace0 == "total") %>% 
+  left_join(data_ameco, by = c("geo", "time"), suffix = c("", "_ameco")) %>% 
+  filter(geo == "FI") %>% 
+  select(geo, time, nulc_aper, nulc_hw_va) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, 2010)) %>% 
+  ungroup() %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  labs(y = glue("Indeksi, {base_year} = 100"))
+
+```
+
+```{r}
+
+data_ameco %>% 
+  filter(geo %in% geos, time >= 1998) %>%
+  select(geo, time, nulc_aper) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, 2010)) %>% 
+  ungroup() %>% 
+  translate(geo, setNames(names(geos), geos)) %>% 
+  ggplot(aes(time, values, color = geo)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  labs(y = glue("Indeksi, {base_year} = 100"))
+
+```
+
 
 ```{r}
 
