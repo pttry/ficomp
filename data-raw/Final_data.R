@@ -137,8 +137,11 @@ var_labels_fi <- c(
   SAL_DC__THS_HW = "Total hours of employees domestic concept, thousand",
   EMP_DC__THS_PER = "Total employment domestic concept, thousand persons",
   SAL_DC__THS_PER = "Employees domestic concept, thousand persons",
-  nulc = "Nominal unit labour cost",
-  nulc_aper_va = "Nominal unit labour cost, persons, value added",
+  lp_ind = "Työn tuottavuus, indeksi",
+  d1_per_ind = "Palkansaajakorvaukset, työntekijää kohden, indeksi",
+  nulc = "Yksikkötyökustannus",
+  nulc_aper = "Yksikkötyökustannus, yrittäjäkorjattu, henkilöä kohden",
+  nulc_aper_va = "Yksikkötyökustannus, yrittäjäkorjattu, henkilöä kohden, arvonlisästä",
   nulc_hw_va = "Nominal unit labour cost, hours, value added",
   nulc_hw_va_eur = "Nominal unit labour cost, hours, value added, in common currency (EUR)",
   rulc_hw_va = "Real unit labour cost, hours, value added",
@@ -151,8 +154,14 @@ var_labels_fi <- c(
   XMKT = "Export market for goods and services, volume, USD, 2005 prices"
 )
 
-usethis::use_data(var_labels, overwrite = TRUE)
+nace_labels_fi <- c(
+  TOTAL = "Koko talous",
+  manu = "Teollisuus",
+  manu_ex26_27 = "Teollisuus pl. 26-27"
+)
 
+usethis::use_data(var_labels, var_labels_fi, overwrite = TRUE)
+usethis::use_data(nace_labels_fi, overwrite = TRUE)
 ## Update raw data
 
 

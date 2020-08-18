@@ -68,7 +68,7 @@ data_ameco %>%
   select(geo, time, nulc_aper) %>% 
   gather(vars, values, -geo, -time) %>% 
   group_by(geo, vars) %>% 
-  mutate(values = rebase(values, time, 2010)) %>% 
+  mutate(values = rebase(values, time, base_year)) %>% 
   ungroup() %>% 
   translate(geo, setNames(names(geos), geos)) %>% 
   ggplot(aes(time, values, color = geo)) +
@@ -76,8 +76,30 @@ data_ameco %>%
   the_title_blank(c("x", "l")) +
   labs(y = glue("Indeksi, {base_year} = 100"))
 
-```
+save_fig("nulc_tuku")
 
+```
+```{r}
+
+vars_rel <- c(nulc_aper_rel_ameco24 = "omassa valuutassa", nulc_aper_usd_rel_ameco24 = "samassa valuutassa")
+
+data_ameco %>% 
+  filter(geo == "FI", time >= 1998) %>%
+  select(geo, time, names(vars_rel)) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, base_year)) %>% 
+  ungroup() %>% 
+  translate(vars, vars_rel) %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  labs(y = glue("Indeksi, {base_year} = 100")) +
+  the_legend_bot()
+
+save_fig("nulc_rel_tuku")
+
+```
 
 ```{r}
 
@@ -101,7 +123,7 @@ pdata_nulc <-
   mutate(lp_ind = 1/lp_ind) %>% 
   gather(vars, values, -geo, -time) %>% 
   group_by(geo, vars) %>% 
-  mutate(change = 100 * (values / lag(values, 1, order_by = time) -1))
+  mutate(change = 100 * (values / lag(values, 1, order_by = time) -1)) 
 
 ggplot(data = filter(pdata_nulc, vars != "nulc_aper"),
        aes(time, change, fill = vars)) +
@@ -110,7 +132,11 @@ ggplot(data = filter(pdata_nulc, vars != "nulc_aper"),
             aes(color = vars)) +
   the_legend_bot() +
   scale_color_manual(values = ptt_pal(3)[3], guide = "none") +
-  the_title_blank(c("x", "l")) 
+  the_title_blank(c("x", "l")) +
+  scale_fill_discrete(labels = simple_lab(var_labels_fi)) +
+  labs(y = "%, muutos")
+
+save_fig("nulc_change")
 
 ```
 
@@ -156,13 +182,16 @@ pdat_tuku <-
   
 pdat_tuku %>% 
   gather(vars, values, -geo, -time, -nace0) %>% 
+  translate(nace0, nace_labels_fi) %>% 
+  translate(vars, c(ilc = "laskettu", tukuseto = "TUKUSETO")) %>% 
   ggplot(aes(time, values, color = vars)) +
   facet_wrap(~nace0) +
   geom_line() +
   the_title_blank(c("x", "l")) +
-  labs(y = glue("Indeksi, {base_year} = 100"))
+  labs(y = glue("Indeksi, {base_year} = 100")) +
+  the_legend_bot()
   
-  
+save_fig("tukuseto_ilc")  
 
 ```
 
@@ -199,7 +228,8 @@ Indikaattorina käytetään 37 teollisuusmaan kauppapainoilla painotettuja tieto
 
 ```{r}
 
-pdata_ulc_reer <- ert_eff_ic_q %>% 
+pdata_ulc_reer <- 
+  ert_eff_ic_q %>% 
   select(geo, time, exch_rt, values) %>% 
   filter(geo == "FI", exch_rt %in% c("NEER_IC37", "REER_IC37_ULCT")) %>% 
   spread(exch_rt, values) %>% 
@@ -221,18 +251,31 @@ Sama muutoksina. Vastaa Tukuseton kuviota 10 neljännesvuosimuutoksina.
 ```{r}
 
 pdata_ulc_reer_change <- pdata_ulc_reer %>% 
+  filter(time >= "2004-01-01") %>%
   group_by(geo, vars) %>% 
   mutate(change = 100 * (values / lag(values, 4, order_by = time) -1))
 
-ggplot(data = filter(pdata_ulc_reer_change, vars != "REER_IC37_ULCT"),
+ggplot(data = 
+         filter(pdata_ulc_reer_change, 
+                vars != "REER_IC37_ULCT"),
        aes(time, change, fill = vars)) +
-  geom_col()+
-  geom_line(data = filter(pdata_ulc_reer_change, vars == "REER_IC37_ULCT"),
+  geom_col() +
+  geom_line(data = 
+              filter(pdata_ulc_reer_change, 
+                     vars == "REER_IC37_ULCT"),
             aes(color = vars)) +
   the_legend_bot() +
   scale_color_manual(values = ptt_pal(2)[2], guide = "none") +
-  the_title_blank(c("x", "l")) 
-  
+  scale_fill_discrete(
+    labels = c(ulct = "Suhteellinen yksikkötyökustannus",
+               NEER_IC37 = "Nimellinen efektiivinen valuuttakurssi",
+               REER_IC37_ULCT = "Reaalinen efektiivinen valuuttakurssi")) +
+  lims(x = c(as.Date("2005-01-01"), NA)) +
+  the_title_blank(c("x", "l")) +
+  guides(fill = guide_legend(nrow = 2)) +
+  labs(y = "%, muutos vuoden takaa")
+
+save_fig("reer_ulc")
 
 ```
 
@@ -297,13 +340,15 @@ ulkopuolisia maita. Sen takia sen vaihtelut suuremmat.
 
 ert_eff_ic_q %>% 
   filter(geo == "FI", grepl("REER.*ULCT", exch_rt)) %>% 
-  mutate(exch_rt = gsub("_ULCT", "", exch_rt)) %>% 
+  mutate(exch_rt = simple_lab(exch_rt, 2, "_")) %>% 
   ggplot(aes(time, values, colour = exch_rt)) +
   geom_line() +
   # geom_point(aes(x = time_a), data = filter(pdata_ulc_reer, vars == "nulc_aper_rel_ameco37")) +
   the_legend_bot() +
   the_title_blank(c("x", "l")) +
-  labs(y = glue("Indeksi"))
+  labs(y = glue("Indeksi, 2010 = 100"))
+
+save_fig("REER_comp")
   
 
 ```
@@ -361,17 +406,22 @@ trans_vars <- c(nulc_aper = "normaali",
                 nulc_aper_atot = "vaihtosuhdekorjattu")
 
 data_main_annual %>% 
-  select(geo, time, nulc_aper_atot, nulc_aper) %>%
+  select(geo, time, nulc_aper_atot, nulc_aper, nulc_aper_atot_rel_ecfin37, nulc_aper_rel_ecfin37) %>%
   filter(geo == "FI") %>% 
   # mutate_at(vars(nulc_aper_atot, nulc_aper), ~rebase(., time, baseyear = 2005)) %>% 
   gather(vars, values, -time, - geo) %>% 
+  separate(vars, into = c("vars", "rel"), sep = "_rel_") %>% 
+  mutate(rel = if_else(is.na(rel), "indeksi", "suhteessa")) %>% 
   translate(vars, trans_vars) %>% 
   ggplot(aes(time, values, color = vars)) +
   geom_line() +
+  facet_wrap(~ rel) +
+  scale_x_continuous(labels = no_century) +
   the_title_blank(c("x", "l")) +
+  the_legend_bot() +
   labs(y = glue("indeksi, {base_year} = 100"))
 
-
+save_fig("nulc_atot_pan")
 
 ```
 
@@ -438,5 +488,37 @@ data_main_annual %>%
 
 
 ```
+
+### Tehdasteollisuuden reaaliset yksikötyökustannukset
+
+```{r}
+
+data_main_groups_a %>% str()
+  filter(geo == "FI") %>% 
+  select(geo, time, nace0, nulc_hw_va, nulc_hw_va_rel_imf, rulc_hw_va, rulc_hw_va_rel_imf) %>% 
+  gather(vars, values, nulc_hw_va, nulc_hw_va_rel_imf, rulc_hw_va, rulc_hw_va_rel_imf) %>% 
+  mutate(vars2 = fct_recode(vars, taso = "nulc_hw_va", taso = "rulc_hw_va",
+                            suhteellinen = "nulc_hw_va_rel_imf", suhteellinen = "rulc_hw_va_rel_imf"),
+         vars3 = fct_recode(vars, nimellinen = "nulc_hw_va", reaalinen = "rulc_hw_va",
+                            nimellinen = "nulc_hw_va_rel_imf", reaalinen = "rulc_hw_va_rel_imf")) %>% 
+  # mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+  #        h_geo = fct_relevel(h_geo, h_geos),
+  #        geo = fct_relevel(geo, rev(h_geos), after = Inf),
+  #        size = !(geo %in% h_geo)) %>% 
+  # translate(h_geo, geo_trans) %>% 
+  translate(vars, c(nulc_aper = "Indeksi", 
+                    nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  translate(nace0, nace0_trans) %>% 
+  ggplot(aes(time, values, colour = vars3)) +
+  facet_grid(nace0 ~ vars2) +
+  geom_line() +
+  scale_size_manual(values = c(2,1), guide = "none") +
+  # scale_colour_manual(values = geo_col(length(h_geos) + 1)) +
+  the_title_blank(c("x", "l")) +
+  scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
+  labs(y = "indeksi, 2010 = 100")
+
+```
+
 
 ## Kotimarkkinatoimialojen yksikkötyökustan-nukset tai yksikkötyökustannukset tehdas-teollisuudelle välituotteita tuottavilla toi-mialoilla. 

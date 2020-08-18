@@ -29,6 +29,7 @@ save_fig <- function(filename,
                      plot = last_plot(),
                      width = 5.8,
                      height = 3.9){
+  plot <- plot + theme(legend.text = element_text(size = 9))
   ggplot2::ggsave(filename = file.path("~/../Pellervon Taloustutkimus PTT ry/KT172 Kilpailukyvyn arviointi - General/Raportointi/Kuviot",
                                        paste0(filename, ".png")), plot = plot, width = width, height = height)
 }
