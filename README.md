@@ -7,7 +7,19 @@ The goal of ficomp is to ...
 
 ## Data collection
 
-- Country codes: eurostat, euroarea EA
+data-raw/data_meta.R
+
+- Country groups, dates, labels and other metadata
+
+data-raw/data_annual.R
+
+ - Final annual data 
+ 
+data-raw/data_quartely.R
+
+ - Final quartely data 
+
+
 
 ### National account data 
 
