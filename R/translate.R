@@ -4,7 +4,9 @@
 #' @param .tbl A tbl object.
 #' @param .var A unquoted column name to translate.
 #' @param trans_vec A named tranlation vector. Codes as names.
-#' @param simple if TRUE only first part of the name is takeny, split by ","
+#' @param simple if TRUE simplyfied by \code{\link{simple_lab}}.
+#'        By default only first part of the name is taken, split by ",".
+#' @param ... further arguments to \code{\link{simple_lab}}.
 #'
 #' @import rlang
 #' @export
@@ -14,10 +16,10 @@
 #'   t_geo <- c(FI = "Suomi", SE = "Ruotsi")
 #'   translate(tbl, geo, t_geo)
 #'
-translate <- function(.tbl, .var, trans_vec, simple = FALSE){
+translate <- function(.tbl, .var, trans_vec, simple = FALSE, ...){
 
   if (simple) {
-    trans_vec <- simple_lab(trans_vec)
+    trans_vec <- simple_lab(trans_vec, ...)
   }
 
   var <- enquo(.var)
@@ -36,10 +38,15 @@ translate <- function(.tbl, .var, trans_vec, simple = FALSE){
 #'
 #' @export
 #'
+#' @examples
+#' simple_lab(c(nulc = "unit labour cost, nominal"), parts = 1)
+#' simple_lab(x = c(nulc = "unit labour cost, nominal", nulc_va = "unit labour cost, nominal, value added"), parts = c(2,3))
+#'
 simple_lab <- function(x, parts = 1, pattern = ", "){
-  y <- purrr::map_chr(x, ~paste0(stringr::str_split(.x, pattern = pattern, simplify = TRUE)[, parts], collapse = ", "))
+  # y <- purrr::map_chr(x, ~paste0(stringr::str_split(.x, pattern = pattern, simplify = TRUE)[[1]][parts], collapse = ", "))
+  y <- strsplit(x, split = pattern)
+  y <- purrr::map_chr(y, ~paste0(na.omit(.x[parts]), collapse = ", "))
+  y
 }
-
-
 
 
