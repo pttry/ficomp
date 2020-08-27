@@ -493,32 +493,46 @@ data_main_annual %>%
 
 ```{r}
 
-data_main_groups_a %>% str()
-  filter(geo == "FI") %>% 
-  select(geo, time, nace0, nulc_hw_va, nulc_hw_va_rel_imf, rulc_hw_va, rulc_hw_va_rel_imf) %>% 
-  gather(vars, values, nulc_hw_va, nulc_hw_va_rel_imf, rulc_hw_va, rulc_hw_va_rel_imf) %>% 
-  mutate(vars2 = fct_recode(vars, taso = "nulc_hw_va", taso = "rulc_hw_va",
-                            suhteellinen = "nulc_hw_va_rel_imf", suhteellinen = "rulc_hw_va_rel_imf"),
-         vars3 = fct_recode(vars, nimellinen = "nulc_hw_va", reaalinen = "rulc_hw_va",
-                            nimellinen = "nulc_hw_va_rel_imf", reaalinen = "rulc_hw_va_rel_imf")) %>% 
-  # mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
-  #        h_geo = fct_relevel(h_geo, h_geos),
-  #        geo = fct_relevel(geo, rev(h_geos), after = Inf),
-  #        size = !(geo %in% h_geo)) %>% 
-  # translate(h_geo, geo_trans) %>% 
-  translate(vars, c(nulc_aper = "Indeksi", 
-                    nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
-  translate(nace0, nace0_trans) %>% 
-  ggplot(aes(time, values, colour = vars3)) +
-  facet_grid(nace0 ~ vars2) +
+data_main_groups_a %>%
+  filter(geo == "FI",
+         nace0 == "manu") %>% 
+  select(geo, time, nace0, nulc_hw_va, nulc_hw_va_rel_ecfin37,  rulc_hw_va, rulc_hw_va_rel_ecfin37) %>% 
+  gather(vars, values, nulc_hw_va, nulc_hw_va_rel_ecfin37,  rulc_hw_va, rulc_hw_va_rel_ecfin37) %>% 
+  separate(vars, into = c("vars", "rel"), sep = "_rel_") %>% 
+  mutate(rel = if_else(is.na(rel), "indeksi", "suhteessa")) %>% 
+  translate(vars, var_labels_fi, simple = TRUE, parts = 2) %>%
+  ggplot(aes(time, values, colour = vars)) +
+
   geom_line() +
-  scale_size_manual(values = c(2,1), guide = "none") +
-  # scale_colour_manual(values = geo_col(length(h_geos) + 1)) +
+  facet_wrap(~ rel) +
   the_title_blank(c("x", "l")) +
-  scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
-  labs(y = "indeksi, 2010 = 100")
+  labs(y = "indeksi, 2010 = 100") +
+  the_legend_bot()
+
+save_fig("rulc_comp_manu")
 
 ```
 
+
+```{r}
+
+data_main_groups_a %>%
+  filter(geo == "FI",
+         nace0 == "total") %>% 
+  select(geo, time, nace0, nulc_hw_va, nulc_hw_va_rel_ecfin37,  rulc_hw_va, rulc_hw_va_rel_ecfin37) %>% 
+  gather(vars, values, nulc_hw_va, nulc_hw_va_rel_ecfin37,  rulc_hw_va, rulc_hw_va_rel_ecfin37) %>% 
+  separate(vars, into = c("vars", "rel"), sep = "_rel_") %>% 
+  mutate(rel = if_else(is.na(rel), "indeksi", "suhteessa")) %>% 
+  translate(vars, var_labels_fi, simple = TRUE, parts = 2) %>%
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line() +
+  facet_wrap(~ rel) +
+  the_title_blank(c("x", "l")) +
+  labs(y = "indeksi, 2010 = 100") +
+  the_legend_bot()
+
+save_fig("rulc_comp_total")
+
+```
 
 ## Kotimarkkinatoimialojen yksikkötyökustan-nukset tai yksikkötyökustannukset tehdas-teollisuudelle välituotteita tuottavilla toi-mialoilla. 
