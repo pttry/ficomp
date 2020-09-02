@@ -15,6 +15,8 @@
 #'   tbl <- tibble::tibble(geo = c("FI", "SE"))
 #'   t_geo <- c(FI = "Suomi", SE = "Ruotsi")
 #'   translate(tbl, geo, t_geo)
+#'   translate(tibble::tibble(vars = c("nulc", "nulc_va", "nulc_hw", "nulc_hw_va", "nulc_aper", "nulc_aper_va")),
+#'             vars, var_labels_fi, simple = TRUE, parts = c(3, 4))
 #'
 translate <- function(.tbl, .var, trans_vec, simple = FALSE, ...){
 
@@ -41,6 +43,7 @@ translate <- function(.tbl, .var, trans_vec, simple = FALSE, ...){
 #' @examples
 #' simple_lab(c(nulc = "unit labour cost, nominal"), parts = 1)
 #' simple_lab(x = c(nulc = "unit labour cost, nominal", nulc_va = "unit labour cost, nominal, value added"), parts = c(2,3))
+#' simple_lab(var_labels_fi[c(36:41)], parts = c(3,4))
 #'
 simple_lab <- function(x, parts = 1, pattern = ", "){
   # y <- purrr::map_chr(x, ~paste0(stringr::str_split(.x, pattern = pattern, simplify = TRUE)[[1]][parts], collapse = ", "))

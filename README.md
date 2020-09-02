@@ -7,17 +7,88 @@ The goal of ficomp is to ...
 
 ## Data collection
 
-data-raw/data_meta.R
+Data files are in data-raw -folder:
 
-- Country groups, dates, labels and other metadata
+Final data is parsed togerther in files:
 
-data-raw/data_annual.R
+### data_meta.R  - Country groups, dates, labels and other metadata
 
- - Final annual data 
+### data-raw/data_annual.R  - Final annual data 
  
-data-raw/data_quartely.R
+### data-raw/data_quartely.R  - Final quartely data 
+  
+data.frames:
 
- - Final quartely data 
+q_dat 
+- Eurostat and OECD QNA data added with OECD ULC and EO indicators from eo_q_dat.
+- Countries: eurostat_geo and oecd_geo
+
+q_dat_oecd_ulc  
+- OECD ULC data
+- eurostat_geos, oecd_geos_ulcq
+
+data_quartely_est
+- As q_dat but added countries / year from estimated quaterly data based on AMECO annual data (data_ameco).
+
+data_main_groups_q
+- Industries: TOTAL and C
+- Only Eurostat data
+
+data_quartely_manu_est
+
+
+
+### Data source files
+
+- Eurostat (data-raw/get_eurostat.R)
+  + Quaterly national accounts: 
+    + data.frames:
+      + naq_eurostat_dat Total and C
+      + naq_eurostat_nace_dat 6 industries
+      + naq_eruostat_dat_raw (internal use)
+      + ulc_eurostat_dat unit labour cost data
+    + Seasonal adjusted (SCA or SA)
+    + Source tables: namq_10_gdp, namq_10_a10, namq_10_a10_e, namq_10_lp_ulc
+      - unit
+        + Current prices, million units of national currency
+        + Chain linked volumes (2010), million units of national currency
+      - na_item
+        + Gross domestic product at market prices, 
+        + "Value added, gross", 
+        + "Compensation of employees"
+        + "Wages and salaries" 
+        + "Employers' social contributions" 
+  + Annual national accounts
+    + data.frames:
+      + data_eurostat_nama_nace_a,
+      + data_eurostat_nama_nace10_a,
+      + data_eurostat_nama_a      + 
+    + Source tables: nama_10_gdp, nama_10_a10, nama_10_a10_e, nama_10_a64, nama_10_a64_e
+
+
+- OECD (data-raw/get_OECD.R)
+  + [Unit labour costs and labour productivity database](https://stats.oecd.org/Index.aspx?DataSetCode=ULC_EEQ)
+  + Quartely data only per persons
+  + OECD countries + some other
+  
+- OECD Economic Outlook (data-raw/get_OECD_EO.R)
+  + IS NOT UPDATED as latest does not include all variables (due to COVID ?)
+
+- OECD STAN (data-raw/get_OECD_STAN.R)
+  + not used
+
+- ECB (data-raw/get_ECB.R)
+  + based on eurostat data
+  
+- AMECO (data-raw/get_Ameco)
+  + yearly
+  + data_ameco, data_ameco_long
+
+- The Conference Board International Labor Comparisons Program (ILC) (data-raw/get_ILC.R).
+  + (https://www.conference-board.org/ilcprogram/index.cfm?id=30139)
+  + Yearly
+  + industry 
+
 
 
 
@@ -28,25 +99,7 @@ data-raw/data_quartely.R
 - Trade and service balance
 
 
-- Eurostat (data-raw/get_eurostat.R)
-  + Data: naq_eurostat_dat
-  + Eu data
-  + Selected international quarterly/annual data. Whole economy.
-  + namq_10_gdp, namq_10_a10
-    - unit
-      + Current prices, million units of national currency
-      + Chain linked volumes (2010), million units of national currency
-    -  Seasonally and calendar adjusted, except some data seasonally adjusted (DE, FR compensation data)
-    - na_item
-      + Gross domestic product at market prices, 
-      + "Value added, gross", 
-      + "Compensation of employees"
-      + "Wages and salaries" 
-      + "Employers' social contributions" 
-    - nace_r2
-      + Total
-      + Manufacturing
-      + TODO: Open / private sector
+
       
 - OECD 
   + Quaterly nationanl accounts (QNA)

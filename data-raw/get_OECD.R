@@ -100,25 +100,7 @@ qna_geo <- countrycode(oecd_geos, "eurostat", "iso3c", nomatch = NULL)
 oecd_dat_Q_0 <- get_dataset(dataset = qna_id,
                           filter = list(qna_geo, qna_subjects, qna_measures, "Q"))
 
-oecd_dat_Q_0 <- get_dataset(dataset = qna_id,
-                            filter = list(qna_geo, "B1GD"))
 
-# kk <- get_dataset(dataset = qna_id,
-#                   filter = list("USA", "B1_GS1"), start_time = 2017) %>%
-#   mutate_if(is.character, as_factor)
-# #
-# # qna_str$SUBJECT %>%
-# #   filter(id %in% unique(kk$SUBJECT)) %>% # View()
-# #   filter(grepl("alue" , label))
-# #
-# mm <- kk %>%
-#   filter(FREQUENCY == "Q") %>% distinct(MEASURE) %>% pull()
-#
-# qna_str$MEASURE %>%
-#   filter(id %in% mm) %>% View()
-                #
-# k <- get_dataset(dataset = dataset_id,
-#                  filter = list("USA", "GDP", "CQRSA", "Q"))
 
 oecd_dat_Q <- oecd_dat_Q_0 %>%
   transmute(

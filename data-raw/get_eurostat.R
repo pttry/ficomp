@@ -9,8 +9,11 @@ devtools::load_all()
 
 main_nace_sna_q <- c("TOTAL", "C", "F", "G-I", "J", "M_N")
 
-## Quaterly national accounts
 
+
+### Quaterly national accounts
+
+## Get tables
 # Total national accounts
 naq_eurostat <- get_eurostat("namq_10_gdp", cache = FALSE)
 # national accounts 10 industies
@@ -21,7 +24,7 @@ naq10e_eurostat<- get_eurostat("namq_10_a10_e", cache = FALSE)
 namq_10_lp_ulc <- get_eurostat("namq_10_lp_ulc", cache = FALSE)
 
 
-# preprosessing
+## Preprosessing tables
 naq0_eurostat_dat <- naq_eurostat %>%
   # 	Current prices, million units of national currency ,  Chain linked volumes (2010), million units of national currency
   #  	Seasonally and calendar adjusted data
@@ -32,8 +35,6 @@ naq0_eurostat_dat <- naq_eurostat %>%
   ) %>%
   mutate(nace_r2 = "TOTAL") %>%
   droplevels()
-
-
 
 naq10_eurostat_dat <- naq10_eurostat %>%
   # 	Current prices, million units of national currency ,  Chain linked volumes (2010), million units of national currency
@@ -61,8 +62,7 @@ ulc_eurostat_dat <- namq_10_lp_ulc %>%
 
 
 
-
-# compine data
+## compine data
 naq_eurostat_dat_raw <-
   naq0_eurostat_dat %>%
   bind_rows(naq10_eurostat_dat) %>%
@@ -79,7 +79,8 @@ naq_eurostat_dat <- naq_eurostat_dat_raw %>%
   filter(s_adj %in% c("SA","SCA")) %>%
   spread(s_adj, values) %>%
   mutate(values = coalesce(SCA, SA)) %>%
-  select(-SA, -SCA)
+  select(-SA, -SCA) %>%
+  droplevels()
 
 naq_eurostat_nace_dat <- naq_eurostat_dat_raw %>%
   filter(s_adj %in% c("SA","SCA")) %>%
@@ -112,7 +113,7 @@ usethis::use_data(naq_eurostat_dat_raw, overwrite = TRUE)
 usethis::use_data(ulc_eurostat_dat, overwrite = TRUE)
 
 
-# Exchange rates
+### Exchange rates
 
 
 currencies <- c(AU = "AUD", CA = "CAD", US = "USD", JP = "JPY", NZ = "NZD", CH = "CHF")
@@ -126,7 +127,7 @@ exh_eur_q <- get_eurostat("ert_bil_eur_q", filters = list(statinfo = "AVG", curr
 usethis::use_data(exh_eur_a, exh_eur_q, overwrite = TRUE)
 
 
-# Effective exchange rates
+### Effective exchange rates
 
 ert_eff_ic_m0 <- get_eurostat("ert_eff_ic_m", cache = FALSE)
 ert_eff_ic_q0 <- get_eurostat("ert_eff_ic_q", cache = FALSE)
@@ -239,4 +240,8 @@ data_eurostat_nama_a <-
 # setdiff(names(data_eurostat_nama_a, ), names(data_oecd_sna_a))
 # setdiff(names(data_oecd_sna_a), names(data_eurostat_nama_a))
 
-usethis::use_data(data_eurostat_nama_nace_a, data_eurostat_nama_nace10_a, data_eurostat_nama_a, overwrite = TRUE)
+usethis::use_data(
+  data_eurostat_nama_nace_a,
+  data_eurostat_nama_nace10_a,
+  data_eurostat_nama_a,
+  overwrite = TRUE)

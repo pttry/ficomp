@@ -89,6 +89,9 @@ q_dat <-
     rulc_hw_va = rebase(nulc_hw_va / (B1GQ__CP_MNAC/B1GQ__CLV15_MNAC), time = time, baseyear = base_year)
   ) %>%
   mutate(
+    emp_ind = rebase(EMP_DC__THS_PER, time = time, baseyear = base_year),
+    lp_ind = rebase(B1GQ__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
+    d1_per_ind = rebase(D1__CP_MNAC / SAL_DC__THS_PER, time = time, baseyear = base_year),
     gdp_ind = rebase(B1GQ__CLV15_MNAC, time = time, baseyear = base_year),
     exp_ind = rebase(P6__CLV15_MNAC, time = time, baseyear = base_year),
     exp_goods_ind = rebase(P61__CLV15_MNAC, time = time, baseyear = base_year),

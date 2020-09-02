@@ -490,18 +490,45 @@ q_dat %>%
   ungroup() %>% 
   gather(vars, values, values, change) %>% 
   translate(vars, c(change = "Muutos, %", values = "Taso, indeksi 2010 = 100")) %>% 
+  translate(ind, var_labels_fi, simple = TRUE, parts = c(4,5)) %>%
   ggplot(aes(time, values, colour = ind)) +
   facet_wrap(~ vars, scales = "free_y") +
   geom_line() +
   geom_hline(aes(yintercept = yint), 
              data = data.frame(yint = 0, vars = "Muutos, %")) +
-  the_title_blank()
+  the_title_blank() +
+  the_legend_bot() +
+  guides(colour = guide_legend(nrow = 3))
 
 save_fig("9_nulc_ind_comparison")
 
 ```
 
+```{r nulc_fi_est}
 
+data_quartely_est %>% 
+  filter(geo == "FI",
+         time >= start_time) %>% 
+  select(geo, time, nulc_aper, nulc_aper_long) %>% 
+  gather(ind, values, -geo, -time) %>% 
+  group_by(geo, ind) %>% 
+  mutate(change = 100 * (values / lag(values, 4, order_by = time) - 1)) %>% 
+  ungroup() %>% 
+  gather(vars, values, values, change) %>% 
+  translate(vars, c(change = "Muutos, %", values = "Taso, indeksi 2010 = 100")) %>% 
+  mutate(ind = fct_rev(ind)) %>%
+  ggplot(aes(time, values, colour = ind)) +
+  facet_grid(ind ~ vars, scales = "free") +
+  geom_line() +
+  geom_hline(aes(yintercept = yint), 
+             data = data.frame(yint = 0, vars = "Muutos, %")) +
+  the_title_blank() +
+  the_legend_bot() +
+  guides(colour = guide_legend(nrow = 3))
+
+# save_fig("9_nulc_ind_comparison")
+
+```
 
 
 ### Omassa ja samassa valuutassa
