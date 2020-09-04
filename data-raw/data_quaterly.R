@@ -31,11 +31,8 @@ q_dat_oecd_ulc <- ulc_oecd_dat %>%
 
 # OECD QNA
 
-q_dat_oecd <- oecd_dat_Q %>%
+q_dat_oecd_large <- oecd_dat_Q %>%
   unite(vars, na_item, unit, sep = "__") %>%
-  filter(
-    # time >= q_start_time,
-    geo %in% oecd_geos) %>%
   mutate(nace_r2 = "TOTAL") %>%
   spread(vars, values) %>%
   # To same base year as eurostat
@@ -48,6 +45,9 @@ q_dat_oecd <- oecd_dat_Q %>%
             .funs = list(EUR = ~EUR(., time, currency, exh_eur_q))) %>%
   rename_at(vars(contains("MNAC_EUR")), list(~gsub("NAC_", "", .)))%>%
   select(-currency)
+
+q_dat_oecd <- q_dat_oecd_large %>%
+  filter(geo %in% oecd_geos)
 
 
 # Eurostat QNA
@@ -179,15 +179,20 @@ calculate_ind_nace <- function(.data, ..., .keep = "all"){
 
 # not used yet TODO
 dat_ulc_oecd_est <- ulc_oecd_dat %>%
-  filter(geo %in% c(eurostat_geos, oecd_geos_ulcq)) %>%
+  filter(geo %in% c(ameco_extra_geos)) %>%
   spread(na_item, values) %>%
+  left_join(select(exh_eur_q, geo, time, exch_eur = values), by = c("geo", "time")) %>%
   group_by(geo) %>%
   transmute(
     time = time,
+    nace_r2 = "TOTAL",
     nulc_aper = rebase(NULC_APER, time = time, baseyear = base_year),
+    nulc_aper_eur = rebase(NULC_APER/exch_eur, time = time, baseyear = base_year),
     lp_ind = rebase(GDP_EMP_PER, time = time, baseyear = base_year),
     d1_per_ind = rebase(NULC_APER, time = time, baseyear = base_year),
-  )
+  ) %>%
+  ungroup() %>%
+  droplevels()
 
 
 
@@ -228,16 +233,18 @@ dat_ameco_q_est <-
 data_quartely_est <-
   q_dat_eurostat %>%
   filter(geo %in% eurostat_geos) %>%
-  bind_rows(filter(q_dat_oecd, geo %in% oecd_geos)) %>%
   filter(nace_r2 == "TOTAL") %>%
   select(-nace_r2) %>%
   # # join nulc_aper from OECD ulc and replace nulc if missing (in mutate)
   # left_join(select(q_dat_oecd_ulc, geo, time, nulc_aper_oecd = nulc_aper),
   #           by = c("geo", "time")) %>%
-  filter(time >= "1991-01-01") %>%
   droplevels() %>%
   complete(geo, time) %>%
   calculate_ind(geo) %>%
+  # Add OECD for more countries with some data
+  bind_rows(dat_ulc_oecd_est) %>%
+  filter(time >= "1991-01-01") %>%
+  complete(geo, time) %>%
   # Replace NAs with quarterlylized annual data from ameco
   left_join(dat_ameco_q_est, by = c("geo", "time"), suffix = c("", "_long")) %>%
   mutate(across(ends_with("_long"), ~coalesce(cur_data()[[gsub("_long", "", cur_column())]], .x))) %>%
@@ -246,11 +253,11 @@ data_quartely_est <-
   # Weight all
   group_by(time) %>%
   mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE)),
-                ~weight_index(.x, geo, time, weight_df = weights_ecfin27, check_geos = FALSE),
-                .names = paste0("{col}_rel_ecfin13"))) %>%
+                ~weight_index2(.x, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),
+                .names = paste0("{col}_rel_ecfin15"))) %>%
   mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE), contains("_rel_")),
-                ~weight_index(.x, geo, time, weight_df = weights_ecfin37, check_geos = FALSE),
-                .names = paste0("{col}_rel_ecfin21"))) %>%
+                ~weight_index2(.x, geo, time, geos = geo20, weight_df = weights_ecfin37),
+                .names = paste0("{col}_rel_ecfin20"))) %>%
   ungroup() %>%
   # Extra data from Economic Outlook
   left_join(select(filter(eo_q_dat),

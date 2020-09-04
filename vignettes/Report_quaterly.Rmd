@@ -506,29 +506,39 @@ save_fig("9_nulc_ind_comparison")
 
 ```{r nulc_fi_est}
 
+dat_eff <- 
+  ert_eff_ic_q %>% 
+  select(geo, time, exch_rt, values) %>% 
+  spread(exch_rt, values)
+
 data_quartely_est %>% 
+  left_join(dat_eff, by = c("geo", "time")) %>% 
+  # left_join(data_quartely_manu_est, by = c("geo", "time"), suffix = c("", "_manu")) %>% 
+  # group_by(time, nace0) %>% 
+  # mutate(nulc_va_eur_long_rel_ecfin14_extra = weight_index2(nulc_va_eur_long, geo, time, 
+  #                                                           geos = setdiff(eurostat_geos, "NL"), weight_df = weights_ecfin37)) %>% 
+  # ungroup() %>% 
+  select(geo, time, nulc_aper_eur_long_rel_ecfin20, REER_IC37_ULCT) %>% 
   filter(geo == "FI",
          time >= start_time) %>% 
-  select(geo, time, nulc_aper, nulc_aper_long) %>% 
   gather(ind, values, -geo, -time) %>% 
-  group_by(geo, ind) %>% 
-  mutate(change = 100 * (values / lag(values, 4, order_by = time) - 1)) %>% 
-  ungroup() %>% 
-  gather(vars, values, values, change) %>% 
-  translate(vars, c(change = "Muutos, %", values = "Taso, indeksi 2010 = 100")) %>% 
   mutate(ind = fct_rev(ind)) %>%
   ggplot(aes(time, values, colour = ind)) +
-  facet_grid(ind ~ vars, scales = "free") +
   geom_line() +
-  geom_hline(aes(yintercept = yint), 
-             data = data.frame(yint = 0, vars = "Muutos, %")) +
   the_title_blank() +
   the_legend_bot() +
   guides(colour = guide_legend(nrow = 3))
 
-# save_fig("9_nulc_ind_comparison")
+
+
+data_quartely_est %>%
+  select(geo, time, nulc_aper_eur_long) %>% 
+  spread(geo, nulc_aper_eur_long) %>%
+  View()
 
 ```
+
+
 
 
 ### Omassa ja samassa valuutassa

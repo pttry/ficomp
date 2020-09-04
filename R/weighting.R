@@ -152,8 +152,6 @@ weight_index <- function(x, geo, time, weight_df,
 weight_index2 <- function(x, geo, time, geos, weight_df,
                          nearest = TRUE, na_zero = TRUE, na.rm = FALSE,
                          mean_type = "geom") {
-  x <<- x
-  geo <<- geo
 
   # Check time
   if (lubridate::is.Date(time)) time <- lubridate::year(time)
@@ -175,6 +173,7 @@ weight_index2 <- function(x, geo, time, geos, weight_df,
   }
 
   # Values to weigth over based on geos
+  geo <- as.character(geo)
   sel_obs <- geo %in% geos
   z <- x[sel_obs]
   z_geo <- geo[sel_obs]
@@ -194,7 +193,7 @@ weight_index2 <- function(x, geo, time, geos, weight_df,
 
   if (na_zero) w_df$weight[is.na(w_df$weight)] <- 0
 
-  weighted_other <- purrr::map_dbl(z_geo, ~ weight_function(.x, x, geo, w_df,
+  weighted_other <- purrr::map_dbl(z_geo, ~ weight_function(.x, z, z_geo, w_df,
                                                           check_geos = FALSE,
                                                           mean_type = mean_type))
   y <- x[NA]
