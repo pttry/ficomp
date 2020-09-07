@@ -42,8 +42,7 @@ ameco1 <- ameco1_0 %>%
   unite(vars, vars, unit_code, desc, rel, sep = "_") %>%
   mutate_if(is.character, as_factor) %>%
   droplevels()%>%
-  mutate(vars = fct_recode(vars, !!!ameco1_vars_trans),
-         geo = as_factor(countrycode::countrycode(geo, "iso3c", "eurostat", nomatch = NULL)))
+  mutate(vars = fct_recode(vars, !!!ameco1_vars_trans))
 
 
 # Table 6
@@ -74,8 +73,7 @@ ameco6 <- ameco6_0 %>%
   filter(vars != "UVGD_0_1_0")  %>%       # Remove country groups weighted mean (only standard aggregation)
   mutate_if(is.character, as_factor) %>%
   droplevels() %>%
-  mutate(vars = fct_recode(vars, !!!ameco6_vars_trans),
-         geo = as_factor(countrycode::countrycode(geo, "iso3c", "eurostat", nomatch = NULL)))
+  mutate(vars = fct_recode(vars, !!!ameco6_vars_trans))
 
 
 # Table 7
@@ -112,8 +110,7 @@ ameco7 <- ameco7_0 %>%
   filter(vars != "UWCD_0_1_0")  %>%       # Remove country groups weighted mean (only standard aggregation)
   mutate_if(is.character, as_factor) %>%
   droplevels() %>%
-  mutate(vars = fct_recode(vars, !!!ameco7_vars_trans),
-         geo = as_factor(countrycode::countrycode(geo, "iso3c", "eurostat", nomatch = NULL)))
+  mutate(vars = fct_recode(vars, !!!ameco7_vars_trans))
 
   # transmute(time = time,
   #           geo = countrycode::countrycode(geo, "iso3c", "eurostat", nomatch = NULL),
@@ -166,8 +163,7 @@ ameco9 <- ameco9_0 %>%
   droplevels() %>%
   unite(vars, vars, unit_code, desc, rel, sep = "_") %>%
   filter(!vars %in% c("UXGS_0_1_0", "UMGS_0_1_0", "UXGN_0_1_0", "UXSN_0_1_0")) %>% # Remove other than standard aggregation for country groups
-  mutate(vars = fct_recode(vars, !!!ameco9_vars_trans),
-         geo = as_factor(countrycode::countrycode(geo, "iso3c", "eurostat", nomatch = NULL)))
+  mutate(vars = fct_recode(vars, !!!ameco9_vars_trans))
 
 # unique(ameco9$vars)
 
@@ -187,13 +183,15 @@ ameco10 <- ameco10_0 %>%
   droplevels() %>%
   unite(vars, vars, unit_code, desc, rel, sep = "_") %>%
   filter(vars %in% ameco10_vars_trans) %>%
-  mutate(vars = fct_recode(vars, !!!ameco10_vars_trans),
-         geo = as_factor(countrycode::countrycode(geo, "iso3c", "eurostat", nomatch = NULL)))
+  mutate(vars = fct_recode(vars, !!!ameco10_vars_trans))
 
 # All together
 
 data_ameco_raw <-
-  bind_rows(ameco1, ameco6, ameco7, ameco9, ameco10)
+  bind_rows(ameco1, ameco6, ameco7, ameco9, ameco10) %>%
+  mutate(geo = as_factor(countrycode::countrycode(geo, "iso3c", "eurostat",
+                                                  nomatch = NULL,
+                                                  custom_match = c(ROM = "RO"))))
 
 data_ameco <-
   data_ameco_raw %>%

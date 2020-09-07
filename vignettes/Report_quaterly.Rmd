@@ -519,16 +519,20 @@ data_quartely_est %>%
            weight_index2(nulc_aper_eur_long, geo, time,
                          geos = setdiff(eurostat_geos, c("NL", "EL", "IE")), weight_df = weights_ecfin37)) %>%
   ungroup() %>%
-  select(geo, time, nulc_aper_eur_long_rel_ecfin14_extra, nulc_aper_eur_long_rel_ecfin20, REER_IC37_ULCT) %>% 
+  select(geo, time, 
+         "14 maata" = nulc_aper_eur_long_rel_ecfin14_extra, 
+         "20 maata" = nulc_aper_eur_long_rel_ecfin20, 
+         "EU komission" = REER_IC37_ULCT) %>% 
   filter(geo == "FI",
          time >= start_time) %>% 
   gather(ind, values, -geo, -time) %>% 
   mutate(ind = fct_rev(ind)) %>%
+  mutate(time = halfq_shift(time)) %>% 
   ggplot(aes(time, values, colour = ind)) +
   geom_line() +
   the_title_blank() +
   the_legend_bot() +
-  guides(colour = guide_legend(nrow = 3))
+  guides(colour = guide_legend())
 
 
 
