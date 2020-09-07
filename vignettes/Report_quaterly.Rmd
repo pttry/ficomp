@@ -514,11 +514,12 @@ dat_eff <-
 data_quartely_est %>% 
   left_join(dat_eff, by = c("geo", "time")) %>% 
   # left_join(data_quartely_manu_est, by = c("geo", "time"), suffix = c("", "_manu")) %>% 
-  # group_by(time, nace0) %>% 
-  # mutate(nulc_va_eur_long_rel_ecfin14_extra = weight_index2(nulc_va_eur_long, geo, time, 
-  #                                                           geos = setdiff(eurostat_geos, "NL"), weight_df = weights_ecfin37)) %>% 
-  # ungroup() %>% 
-  select(geo, time, nulc_aper_eur_long_rel_ecfin20, REER_IC37_ULCT) %>% 
+  group_by(time) %>%
+  mutate(nulc_aper_eur_long_rel_ecfin14_extra = 
+           weight_index2(nulc_aper_eur_long, geo, time,
+                         geos = setdiff(eurostat_geos, c("NL", "EL", "IE")), weight_df = weights_ecfin37)) %>%
+  ungroup() %>%
+  select(geo, time, nulc_aper_eur_long_rel_ecfin14_extra, nulc_aper_eur_long_rel_ecfin20, REER_IC37_ULCT) %>% 
   filter(geo == "FI",
          time >= start_time) %>% 
   gather(ind, values, -geo, -time) %>% 
@@ -532,7 +533,7 @@ data_quartely_est %>%
 
 
 data_quartely_est %>%
-  select(geo, time, nulc_aper_eur_long) %>% 
+  select(geo, time, nulc_aper_eur_long) %>%
   spread(geo, nulc_aper_eur_long) %>%
   View()
 
