@@ -39,6 +39,7 @@ all_geos <- c(eurostat_geos, oecd_geos)
 
 all_extra_geos <- c(eu_geo, other_eurostat_geo, c("AU", "CA", "US", "JP", "NO", "NZ", "MX", "CH", "TR", "IL", "KR"))
 
+geo14 <- setdiff(eurostat_geos, c("NL", "EL", "IE"))
 geo21 <- c(eurostat_geos, ameco_extra_geos)
 geo20 <- c(eurostat_geos, c("AU", "CA", "US", "JP", "CH"))
 
@@ -60,7 +61,7 @@ main_nace10_sna <- c(TOTAL = "TOTAL", C = "C", F = "F", G = "G-I", H = "G-I",
                      I = "G-I", J = "J", M = "M_N", N = "M_N")
 
 usethis::use_data(eurostat_geos, oecd_geos_ulcq, oecd_geos, all_geos,
-                  tuku16, geo20,
+                  tuku16, geo20, geo21, geo14,
                   all_extra_geos, ameco_extra_geos,
                   main_nace_sna,
                   main_nace10_sna,
