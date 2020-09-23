@@ -530,20 +530,84 @@ data_quartely_est %>%
   mutate(time = halfq_shift(time)) %>% 
   ggplot(aes(time, values, colour = ind)) +
   geom_line() +
-  the_title_blank() +
+  the_title_blank(c("x", "l")) +
   the_legend_bot() +
-  guides(colour = guide_legend())
+  guides(colour = guide_legend()) + 
+  labs(title = "Suomen suhteelliset yksikkötyökustannukset samassa valuutassa",
+       subtitle = "eli efektiivinen valuuttakurssi yksikkötyökustannuksilla. 
+       Vertailussa komission indikaattori ja aidosta neljännesvuositiededosta
+       lasketut 20 ja 14 maan tietoihin perustuvat indikaattorit",
+       y = "indeksi, 2010 = 100", 
+       caption = "Lähde: ECFIN, AMECO, Eurostat, OECD, PTT")
 
 
+# data_quartely_est %>%
+#   select(geo, time, nulc_aper_eur_long) %>%
+#   spread(geo, nulc_aper_eur_long) %>%
+#   View()
 
-data_quartely_est %>%
-  select(geo, time, nulc_aper_eur_long) %>%
-  spread(geo, nulc_aper_eur_long) %>%
-  View()
+
+ggsave_twitter("nulc.png")
+
+data_quartely_est_fi <- 
+  data_quartely_est %>% 
+  filter(geo == "FI")
+
+library(MacrobondAPI)
+mb_nulc_aper_eur_long_rel_ecfin14 <- MacrobondAPI::CreateTimeSeriesObject(name = "ih:mb:com:nulcecfin14",
+                                     description = "Suomen suhteelliset yksikkötyökustannukset samassa valuutassa, 14 maata", 
+                                     region = "fi", 
+                                     category = "National accounts", 
+                                     frequency = "Quarterly", 
+                                     startDateOrDates = as.Date(data_quartely_est_fi$time),
+                                     values = data_quartely_est_fi$nulc_aper_eur_long_rel_ecfin14
+                                     )
+
+mb_nulc_aper_eur_long_rel_ecfin20 <- MacrobondAPI::CreateTimeSeriesObject(name = "ih:mb:com:nulcecfin20",
+                                     description = "Suomen suhteelliset yksikkötyökustannukset samassa valuutassa, 20 maata", 
+                                     region = "fi", 
+                                     category = "National accounts", 
+                                     frequency = "Quarterly", 
+                                     startDateOrDates = data_quartely_est_fi$time[!is.na(data_quartely_est_fi$nulc_aper_eur_long_rel_ecfin20)],
+                                     values = data_quartely_est_fi$nulc_aper_eur_long_rel_ecfin20[!is.na(data_quartely_est_fi$nulc_aper_eur_long_rel_ecfin20)]
+                                     )
+
+UploadOneOrMoreTimeSeries(list(mb_nulc_aper_eur_long_rel_ecfin14, mb_nulc_aper_eur_long_rel_ecfin20))
+
 
 ```
 
 
+```{r}
+
+q_dat %>% 
+  select(time, geo, d1_hw_ind, nulc_hw_va_eur, lp_hw_ind) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, 2015)) %>% 
+  ungroup() %>% 
+  filter(geo %in% c(geos, "NO", "DK", "NL", "IT", "ES"), time >= "2015-01-01") %>% 
+  ggplot(aes(time, values, color = geo)) +
+  facet_wrap(~ vars) +
+  geom_line()
+  
+
+```
+```{r}
+
+q_dat %>% 
+  select(time, geo, d1_hw_ind) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, 2015)) %>% 
+  ungroup() %>% 
+  filter(geo %in% c(geos, "NO", "DK", "NL", "IT", "ES"), time >= "2015-01-01") %>% 
+  ggplot(aes(time, values, color = geo)) +
+  facet_wrap(~ vars) +
+  geom_line()
+  
+
+```
 
 
 ### Omassa ja samassa valuutassa

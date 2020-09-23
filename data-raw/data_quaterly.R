@@ -92,6 +92,8 @@ q_dat <-
     emp_ind = rebase(EMP_DC__THS_PER, time = time, baseyear = base_year),
     lp_ind = rebase(B1GQ__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
     d1_per_ind = rebase(D1__CP_MNAC / SAL_DC__THS_PER, time = time, baseyear = base_year),
+    lp_hw_ind = rebase(B1GQ__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = base_year),
+    d1_hw_ind = rebase(D1__CP_MNAC / SAL_DC__THS_HW, time = time, baseyear = base_year),
     gdp_ind = rebase(B1GQ__CLV15_MNAC, time = time, baseyear = base_year),
     exp_ind = rebase(P6__CLV15_MNAC, time = time, baseyear = base_year),
     exp_goods_ind = rebase(P61__CLV15_MNAC, time = time, baseyear = base_year),
@@ -177,7 +179,7 @@ calculate_ind_nace <- function(.data, ..., .keep = "all"){
 }
 
 
-# not used yet TODO
+# OECD ulc data
 dat_ulc_oecd_est <- ulc_oecd_dat %>%
   filter(geo %in% c(ameco_extra_geos)) %>%
   spread(na_item, values) %>%
@@ -258,6 +260,9 @@ data_quartely_est <-
   mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE), contains("_rel_")),
                 ~weight_index2(.x, geo, time, geos = geo20, weight_df = weights_ecfin37),
                 .names = paste0("{col}_rel_ecfin20"))) %>%
+  mutate(across(nulc_aper_eur_long,
+                ~weight_index2(.x, geo, time, geos = geo14, weight_df = weights_ecfin37),
+                .names = paste0("{col}_rel_ecfin14"))) %>%
   ungroup() %>%
   # Extra data from Economic Outlook
   left_join(select(filter(eo_q_dat),

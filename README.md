@@ -14,6 +14,20 @@ Final data is parsed togerther in files:
 ### data_meta.R  - Country groups, dates, labels and other metadata
 
 ### data-raw/data_annual.R  - Final annual data 
+
+data.frames:
+
+data_main_groups_a
+- Value added based data with industry groups
+
+data_main_total_a
+
+- Total economy indicators like gdp, export, import and EO indicators of export markets
+
+data_main_annual
+
+- Main annual data for total economy, based on eurostat and ameco data.
+
  
 ### data-raw/data_quartely.R  - Final quartely data 
   
@@ -62,7 +76,7 @@ data_quartely_manu_est
     + data.frames:
       + data_eurostat_nama_nace_a,
       + data_eurostat_nama_nace10_a,
-      + data_eurostat_nama_a      + 
+      + data_eurostat_nama_a       
     + Source tables: nama_10_gdp, nama_10_a10, nama_10_a10_e, nama_10_a64, nama_10_a64_e
 
 
