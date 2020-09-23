@@ -33,3 +33,26 @@ save_fig <- function(filename,
   ggplot2::ggsave(filename = file.path("~/../Pellervon Taloustutkimus PTT ry/KT172 Kilpailukyvyn arviointi - General/Raportointi/Kuviot",
                                        paste0(filename, ".png")), plot = plot, width = width, height = height)
 }
+
+
+#'Save plots for twitter
+#'
+#' @param filename File name to create on disk without extension
+#' @param plot Plot to save, defaults to last plot displayed.
+#'
+#'
+#' @export
+#'
+ggsave_twitter <- function(filename, plot = last_plot()){
+  plot2 = plot +
+    ggplot2::theme(text = element_text(size = 14)) +
+    ggplot2::theme(
+      plot.subtitle = ggplot2::element_text(colour = "grey40"),
+      plot.caption = ggplot2::element_text(size = 10, face = "plain", colour = "grey40"),
+      text = ggplot2::element_text(face = "plain"),
+      plot.margin = ggplot2::margin(1, 1, 2, 1))
+  ggplot2::ggsave(file.path(Sys.getenv("USERPROFILE"),"Downloads", paste0(filename, ".png")),
+                  plot = plot2,
+                  width = 16/2,
+                  height = 9/2)
+}
