@@ -104,7 +104,9 @@ data_main_annual <-
   data_eurostat_nama_a %>%
   # Ameco is missing following
   select(- nace_r2, - B11__CP_MEUR, -B1G__PYP_MNAC, -EMP_DC__THS_HW, -SAL_DC__THS_HW) %>%
-  bind_rows(select(filter(data_ameco, geo %in% ameco_extra_geos), all_of(names(.)))) %>%
+  # Add ameco for extra geos for eurostat times
+  bind_rows(select(filter(data_ameco, geo %in% ameco_extra_geos,
+                          time %in% unique(.$time)), all_of(names(.)))) %>%
   group_by(geo) %>%
   mutate(
     # Term of trade adujusted GDP
@@ -126,7 +128,8 @@ data_main_annual <-
     exp_ind = rebase(P6__CLV15_MNAC, time = time, baseyear = base_year),
     exp_goods_ind = rebase(P61__CLV15_MNAC, time = time, baseyear = base_year),
     exp_serv_ind = rebase(P62__CLV15_MNAC, time = time, baseyear = base_year),
-    tbalance_gdp = B11__CP_MNAC / B1GQ__CP_MNAC) %>%
+    tbalance_gdp = B11__CP_MNAC / B1GQ__CP_MNAC,
+    exch_eur = D1__CP_MNAC / D1__CP_MEUR) %>%
   # Weight all
   group_by(time) %>%
   mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE)),

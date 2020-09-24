@@ -1,0 +1,153 @@
+---
+title: "Hintakilpailukyky"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", 
+  fig.height = 6,
+  fig.width = 8,
+  fig.path = "Comp_board/", 
+  echo = FALSE, message = FALSE, warning = FALSE
+)
+
+
+# library(ficomp)
+
+devtools::load_all()
+
+library(dplyr)
+library(forcats)
+library(ggplot2)
+library(eurostat)
+library(tidyr)
+library(ggptt)
+library(glue)
+
+set_proj_theme()
+
+data("data_main_annual")
+
+
+
+geos <- c(Suomi = "FI", Ruotsi = "SE", Saksa = "DE", Ranska = "FR", 
+          euroalue = "EA19", "Itävalta" = "AT", Espanja = "ES")
+
+```
+
+
+## Koko talouden nimelliset shteelliset yksikkötyökustannukset
+
+```{r}
+
+mean_range <- 1995:max(data_main_annual$time)
+
+data_main_annual %>% 
+  filter(geo == "FI") %>% 
+  select(geo, time, 
+         "Omassa valuutassa" = nulc_aper_rel_ecfin20, 
+         "Samassa valuutassa" = nulc_aper_eur_rel_ecfin20) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, mean_range)) %>% 
+  ungroup() %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  geom_hline(yintercept = 100) +
+  labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
+  the_legend_bot()
+
+```
+
+## Nimellisen suhteellisen yksikkötyökustannuksen osatekijät
+
+```{r}
+
+data_main_annual %>% 
+  filter(geo == "FI") %>% 
+  mutate(exch_eur_rel_ecfin20 = 1/ exch_eur_rel_ecfin20) %>% 
+  select(geo, time, 
+         "Tuottavuus" = lp_ind_rel_ecfin20, 
+         "Palkansaajakorvaukset" =  d1_per_ind_rel_ecfin20, 
+         "Valuuttakurssi" = exch_eur_rel_ecfin20) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, mean_range)) %>% 
+  ungroup() %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  geom_hline(yintercept = 100) +
+  labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
+  the_legend_bot()
+
+```
+
+## Vaihtosuhdekorjattu
+
+
+```{r}
+
+data_main_annual %>% 
+  filter(geo == "FI") %>% 
+  select(geo, time, 
+         "Vaihtosuhdekorjattu" = nulc_aper_eur_atot_rel_ecfin20, 
+        "Normaali" =  nulc_aper_eur_rel_ecfin20) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, mean_range)) %>% 
+  ungroup() %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  geom_hline(yintercept = 100) +
+  labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
+  the_legend_bot()
+
+```
+
+
+```{r}
+
+data_main_annual %>% 
+  filter(geo == "FI") %>% 
+  select(geo, time, 
+         "Vaihtosuhdekorjattu" = nulc_aper_eur_atot_rel_ecfin20, 
+        "Normaali" =  nulc_aper_eur_rel_ecfin20) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, 2010)) %>% 
+  ungroup() %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  geom_hline(yintercept = 100) +
+  labs(y = glue("Indeksi, 2010 = 100")) +
+  the_legend_bot()
+
+```
+
+
+```{r}
+
+data_main_annual %>% 
+  filter(geo == "FI") %>% 
+  select(geo, time, 
+         "Vaihtosuhdekorjattu" = nulc_aper_atot_rel_ecfin20, 
+        "Normaali" =  nulc_aper_rel_ecfin20,
+        rulc_aper_rel_ecfin20) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, mean_range)) %>% 
+  ungroup() %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  geom_hline(yintercept = 100) +
+  labs(y = glue("Indeksi, 2010 = 100")) +
+  the_legend_bot()
+
+```
