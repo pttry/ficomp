@@ -196,7 +196,8 @@ data_ameco_raw <-
 data_ameco <-
   data_ameco_raw %>%
   select(geo, time, vars, values) %>%
-  spread(vars, values)
+  spread(vars, values) %>%
+  mutate(across(contains(c("MNAC", "MEUR", "PPS")),  ~1000 * .x))
 
 ameco_long_geos <- data_ameco %>%
   group_by(geo) %>%
@@ -214,6 +215,5 @@ usethis::use_data(data_ameco, data_ameco_long, ameco_long_geos, overwrite = TRUE
 
 write.csv2(data_ameco_long, file = "data-out/data_ameco_long.csv")
 saveRDS(data_ameco_long, file = "data-out/data_ameco_long.rds")
-
 
 

@@ -7,8 +7,8 @@ output: html_document
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>", 
-  fig.height = 6,
-  fig.width = 8,
+  fig.height = 4.1,
+  fig.width = 6.3,
   fig.path = "Comp_board/", 
   echo = FALSE, message = FALSE, warning = FALSE
 )
@@ -116,19 +116,24 @@ pdat_annual %>%
 
 ```{r}
 
-pdat_annual %>% 
+data_main_annual %>% 
   filter(geo == "FI") %>% 
   select(geo, time, 
          "Vaihtosuhdekorjattu" = nulc_aper_eur_atot_rel_ecfin20, 
         "Normaali" =  nulc_aper_eur_rel_ecfin20) %>% 
   gather(vars, values, -geo, -time) %>% 
   group_by(geo, vars) %>% 
-  mutate(values = rebase(values, time, 2010)) %>% 
+  mutate(values = rebase(values, time, 2010),
+         change = 100 * (values / lag(values) -1)) %>% 
   ungroup() %>% 
+  gather(type, values, values, change) %>% 
   ggplot(aes(time, values, color = vars)) +
-  geom_line() +
-  the_title_blank(c("x", "l")) +
-  geom_hline(yintercept = 100) +
+  facet_wrap(~type, scales = "free_y",
+             labeller = labeller(type = c(change = "muutos, %", values = "indeksi, 2010 = 100"))) +
+  geom_line()+
+  the_title_blank(c("x", "l", "y")) +
+  geom_hline(aes(yintercept = yint), 
+             data = data.frame(yint = 0, type = "change")) +
   labs(y = glue("Indeksi, 2010 = 100")) +
   the_legend_bot()
 
@@ -141,8 +146,9 @@ pdat_annual %>%
   filter(geo == "FI") %>% 
   select(geo, time, 
          "Nimellinen, vaihtosuhdekorjattu" = nulc_aper_eur_atot_rel_ecfin20, 
-        "Nimellinen" =  nulc_aper_eur_rel_ecfin20,
-        "Reaalinen" =  rulc_aper_rel_ecfin20) %>% 
+        "Nimellinen, samassa valuutassa" =  nulc_aper_eur_rel_ecfin20,
+        "Reaalinen" =  rulc_aper_rel_ecfin20, 
+        "Nimellinen, omassa valuutassa" = nulc_aper_rel_ecfin20) %>% 
   gather(vars, values, -geo, -time) %>% 
   group_by(geo, vars) %>% 
   mutate(values = rebase(values, time, mean_range)) %>% 
@@ -151,7 +157,45 @@ pdat_annual %>%
   geom_line() +
   the_title_blank(c("x", "l")) +
   geom_hline(yintercept = 100) +
-  labs(y = glue("Indeksi, 2010 = 100")) +
+   labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
+  the_legend_bot() +
+  guides(color = guide_legend(nrow = 2))
+  
+
+```
+
+```{r weighting}
+
+data_main_annual %>% 
+  select(geo, time, nulc_aper_eur, nulc_aper) %>% 
+  group_by(time) %>% 
+  mutate(eur__bis_15 = weight_index2(nulc_aper_eur, geo, time, geos = eurostat_geos, weight_df = weights_bis_broad),
+         eur__ecfin_15 = weight_index2(nulc_aper_eur, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),
+         eur__imf_15 = weight_index2(nulc_aper_eur, geo, geos = eurostat_geos, time, weight_df = weights_imf),
+
+         eur__ecfin_20 = weight_index2(nulc_aper_eur, geo, geos = geo20, time, weight_df = weights_ecfin37),
+         own__bis_15 = weight_index2(nulc_aper, geo, time, geos = eurostat_geos, weight_df = weights_bis_broad),
+         own__ecfin_15 = weight_index2(nulc_aper, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),
+         own__imf_15 = weight_index2(nulc_aper, geo, geos = eurostat_geos, time, weight_df = weights_imf),
+         own__ecfin_20 = weight_index2(nulc_aper, geo, geos = geo20, time, weight_df = weights_ecfin37)
+         ) %>% 
+  select(-nulc_aper_eur, -nulc_aper) %>%
+  filter(geo == "FI") %>% 
+  gather(vars, values, -geo , -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, mean_range)) %>% 
+  ungroup() %>%
+  separate(vars, into = c("type", "vars"), sep = "__") %>% 
+  translate(type, c(own = "Omassa valuutassa", eur = "Samassa valuutassa")) %>% 
+  mutate(vars = toupper(gsub("_", " ", vars))) %>%
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line() +
+  facet_wrap(~ type) +
+  scale_x_continuous(labels = no_century) +
+  the_title_blank(c("x", "l")) +
+  geom_hline(yintercept = 100) +
+  labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
   the_legend_bot()
 
 ```
+

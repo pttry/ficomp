@@ -148,3 +148,70 @@ data_main_annual %>%
 
 ```
 
+```{r nulc_eur_impact}
+
+list_weight_funs <- function(...){
+  y <- purrr::map(list(...), ~substitute(weight_index(gdp_ind, geo, time, weight_df = .), parent.frame(2)) )
+  y}
+
+list_weight_funs(weights_bis_broad)
+  
+
+data_main_annual %>% 
+  select(geo, time, nulc_aper_eur, nulc_aper) %>% 
+  group_by(time) %>% 
+  mutate(eur__bis_15 = weight_index2(nulc_aper_eur, geo, time, geos = eurostat_geos, weight_df = weights_bis_broad),
+         eur__ecfin_15 = weight_index2(nulc_aper_eur, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),
+         eur__imf_15 = weight_index2(nulc_aper_eur, geo, geos = eurostat_geos, time, weight_df = weights_imf),
+
+         eur__ecfin_20 = weight_index2(nulc_aper_eur, geo, geos = geo20, time, weight_df = weights_ecfin37),
+         own__bis_15 = weight_index2(nulc_aper, geo, time, geos = eurostat_geos, weight_df = weights_bis_broad),
+         own__ecfin_15 = weight_index2(nulc_aper, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),
+         own__imf_15 = weight_index2(nulc_aper, geo, geos = eurostat_geos, time, weight_df = weights_imf),
+         own__ecfin_20 = weight_index2(nulc_aper, geo, geos = geo20, time, weight_df = weights_ecfin37)
+         ) %>% 
+  select(-nulc_aper_eur, -nulc_aper) %>%
+  filter(geo == "FI") %>% 
+  gather(vars, values, -geo , -time) %>% 
+  separate(vars, into = c("type", "vars"), sep = "__") %>% 
+  translate(type, c(own = "Omassa valuutassa", eur = "Euroissa")) %>% 
+  mutate(vars = toupper(gsub("_", " ", vars))) %>% 
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line() +
+  facet_wrap(~ type) +
+  the_title_blank()
+
+  
+
+```
+```{r}
+
+data_ameco %>% 
+  filter(time >= 1995) %>%
+  group_by(time) %>% 
+  mutate(nulc_aper_eur_rel_ecfin_15 = weight_index2(nulc_aper_eur, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),
+         nulc_aper_eur_rel_ecfin_15_ex = weight_index2(nulc_aper_eur, geo, time, geos = (eurostat_geos), weight_df = weights_ecfin37),
+         nulc_aper_eur_rel_ecfin_20 = weight_index2(nulc_aper_eur, geo, geos = geo20, time, weight_df = weights_ecfin37),
+         ) %>% 
+  select(geo, time, nulc_aper_usd_rel_ameco15, nulc_aper_usd_rel_ameco24, nulc_aper_usd_rel_ameco37, nulc_aper_eur_rel_ecfin_15, nulc_aper_eur_rel_ecfin_20) %>% 
+  filter(geo == "FI") %>% 
+  gather(vars, values, -geo, -time) %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line()
+
+
+```
+
+```{r}
+
+data_long_annual %>% 
+  select(geo, time, nulc_aper_eur_rel_ecfin15, nulc_aper_eur_rel_ecfin20, rulc_aper_rel_ecfin20) %>%
+  # select(geo, time, B1GQ__CLV15_MNAC) %>%
+  filter(geo == "FI") %>%
+  gather(vars, values, -geo, -time) %>% #spread(geo, values) %>%  View()
+  ggplot(aes(time, values, color = vars)) +
+  facet_wrap(~ geo) +
+  geom_line()
+
+```
+

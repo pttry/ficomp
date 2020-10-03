@@ -26,7 +26,11 @@ data_main_total_a
 
 data_main_annual
 
-- Main annual data for total economy, based on eurostat and ameco data.
+- Main annual data for total economy, based on eurostat and ameco data (non-eurostat countries).
+
+data_long_annual
+
+- Longer annual data for total economy, based on eurostat and ameco data (non-eurostat countries and for missing eurostat data).
 
  
 ### data-raw/data_quartely.R  - Final quartely data 

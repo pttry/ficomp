@@ -219,6 +219,14 @@ dat_eurostat_nace10 <-
   droplevels() %>%
   complete(geo, time, nace_r2)
 
+dat_eurostat_nace10_long <-
+  dat_nama_10_a10 %>%
+  left_join(dat_nama_10_a10_e, by = c("nace_r2", "geo", "time")) %>%
+  mutate_at(c("geo", "nace_r2"), as_factor) %>%
+  filter(nace_r2 %in% main_nace10_sna, geo %in% c(eurostat_geos), time >= 1991) %>%
+  droplevels() %>%
+  complete(geo, time, nace_r2)
+
 # visdat::vis_dat(dat_eurostat_nace10)
 
 ## Eurostat datasets
@@ -238,6 +246,13 @@ data_eurostat_nama_a <-
   filter(geo %in% eurostat_geos, time >= a_start_time) %>%
   mutate_if(is.character, as_factor)
 
+data_eurostat_nama_a_long <-
+  dat_nama_10_gdp %>%
+  left_join(dat_eurostat_nace10_long, by = c("geo", "time", "nace_r2")) %>%
+  filter(geo %in% eurostat_geos, time >= 1991) %>%
+  complete(geo, time) %>%
+  mutate_if(is.character, as_factor)
+
 #
 # setdiff(names(data_eurostat_nama_a, ), names(data_oecd_sna_a))
 # setdiff(names(data_oecd_sna_a), names(data_eurostat_nama_a))
@@ -246,4 +261,5 @@ usethis::use_data(
   data_eurostat_nama_nace_a,
   data_eurostat_nama_nace10_a,
   data_eurostat_nama_a,
+  data_eurostat_nama_a_long,
   overwrite = TRUE)
