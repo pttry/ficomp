@@ -27,7 +27,8 @@ Imports:
     OECD,
     countrycode,
     purrr,
-    here
+    here,
+    ggthemes
 VignetteBuilder: knitr
 Depends: 
     R (>= 2.10)
