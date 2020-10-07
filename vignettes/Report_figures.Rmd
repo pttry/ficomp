@@ -1,0 +1,190 @@
+---
+title: "Raportin kuviot"
+output: rmarkdown::html_document
+vignette: >
+  %\VignetteIndexEntry{Labour_cost}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", 
+  fig.height = 6,
+  fig.width = 8,
+  fig.path = "Report/", 
+  echo = FALSE, message = FALSE, warning = FALSE
+)
+
+
+# library(ficomp)
+
+devtools::load_all()
+
+library(dplyr)
+library(forcats)
+library(ggplot2)
+library(eurostat)
+library(tidyr)
+library(ggptt)
+library(glue)
+
+set_proj_theme()
+
+data("data_main_total_a", "data_main_groups_a", "data_ameco")
+
+base_year <- 2010
+base_years <- 2000:2018
+geos <- c(Finland = "FI", Sweden = "SE", Germany = "DE", France = "FR")
+start_time <- "1995-01-01"
+geo_trans <- geo_fi
+nace0_trans <- nace0_fi
+h_geos <- c("FI", "SE", "DE", "US")
+
+
+```
+
+
+
+```{r a_nulc_aper_levels}
+
+data_main_annual %>% 
+  select(geo, time, nulc_aper) %>% 
+  gather(vars, values, nulc_aper) %>% 
+  mutate(h_geo = fct_other(geo, keep = tuku_geos,other_level = "muut"),
+         h_geo = fct_relevel(h_geo, h_geos),
+         geo = fct_relevel(geo, rev(h_geos), after = Inf),
+         size = !(geo %in% h_geo)) %>% 
+  translate(h_geo, geo_trans) %>% 
+  translate(vars, c(nulc_aper = "Indeksi", 
+                    nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  ggplot(aes(time, values, group = geo, colour = h_geo, size = size)) +
+  geom_line() +
+  scale_size_manual(values = c(2,1), guide = "none") +
+  scale_colour_manual(values = c(geo_col(length(tuku_geos)), "grey75")) +
+  the_title_blank(c("x", "l")) +
+  scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
+  labs(y = "indeksi, 2010 = 100")
+
+save_fig("A_nulc_levels")
+
+```
+
+```{r a_nulc_aper_rel}
+
+vars_rel <- c(nulc_aper_rel_ecfin20 = "omassa valuutassa", nulc_aper_eur_rel_ecfin20 = "samassa valuutassa")
+
+data_main_annual %>% 
+  filter(geo == "FI") %>%
+  select(geo, time, names(vars_rel)) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, base_year)) %>% 
+  ungroup() %>% 
+  translate(vars, vars_rel) %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  labs(y = glue("Indeksi, {base_year} = 100")) +
+  the_legend_bot()
+
+save_fig("a_nulc_aper_rel")
+
+```
+
+### Vaihtosuhdekorjattu
+
+```{r}
+
+data_main_annual %>% 
+  filter(geo == "FI") %>% 
+  select(geo, time, 
+         "Vaihtosuhdekorjattu" = nulc_aper_eur_atot_rel_ecfin20, 
+        "Normaali" =  nulc_aper_eur_rel_ecfin20) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, 2010),
+         change = 100 * (values / lag(values) -1)) %>% 
+  ungroup() %>% 
+  gather(type, values, values, change) %>% 
+  ggplot(aes(time, values, color = vars)) +
+  facet_wrap(~type, scales = "free_y",
+             labeller = labeller(type = c(change = "muutos, %", values = "indeksi, 2010 = 100"))) +
+  geom_line()+
+  the_title_blank(c("x", "l", "y")) +
+  geom_hline(aes(yintercept = yint), 
+             data = data.frame(yint = 0, type = "change")) +
+  labs(y = glue("Indeksi, 2010 = 100")) +
+  the_legend_bot() 
+
+ save_fig("A_nulc_a_tot")
+
+```
+
+## Reaalinen
+
+```{r a_rulc_aper_levels}
+
+data_main_annual %>% 
+  filter(geo != "IE") %>% 
+  select(geo, time, rulc_aper) %>% 
+  gather(vars, values, rulc_aper) %>% 
+  mutate(h_geo = fct_other(geo, keep = h_geos, other_level = "muut"),
+         h_geo = fct_relevel(h_geo, h_geos),
+         geo = fct_relevel(geo, rev(h_geos), after = Inf),
+         size = !(geo %in% h_geo)) %>% 
+  translate(h_geo, geo_trans) %>% 
+  translate(vars, c(nulc_aper = "Indeksi", 
+                    nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  ggplot(aes(time, values, group = geo, colour = h_geo, size = size)) +
+  geom_line() +
+  scale_size_manual(values = c(2,1), guide = "none") +
+  scale_colour_manual(values = geo_col(length(h_geos)+1)) +
+  the_title_blank(c("x", "l")) +
+  # scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
+  labs(y = "indeksi, 2010 = 100")
+
+save_fig("A_rulc_levels")
+
+```
+
+```{r}
+
+vars_rel <- c(rulc_aper_rel_ecfin20 = "omassa valuutassa", nulc_aper_rel_ecfin20 = "samassa valuutassa")
+
+data_main_annual %>% 
+  filter(geo == "FI") %>%
+  select(geo, time, names(vars_rel)) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, base_year)) %>% 
+  ungroup() %>% 
+  translate(vars, vars_rel) %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  labs(y = glue("Indeksi, {base_year} = 100")) +
+  the_legend_bot()
+
+save_fig("a_rulc")
+
+```
+
+```{r}
+
+data_main_annual %>%
+  filter(geo == "FI") %>% 
+  select(geo, time, nulc_aper, nulc_aper_rel_ecfin20, rulc_aper, rulc_aper_rel_ecfin20) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  separate(vars, into = c("vars", "rel"), sep = "_rel_") %>% 
+  mutate(rel = if_else(is.na(rel), "indeksi", "suhteessa")) %>% 
+  translate(vars, var_labels_fi, simple = TRUE, parts = 2) %>%
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line() +
+  facet_wrap(~ rel) +
+  the_title_blank(c("x", "l")) +
+  labs(y = "indeksi, 2010 = 100") +
+  the_legend_bot()
+
+save_fig("rulc_comp_total")
