@@ -8,7 +8,7 @@
 #'
 geo_col <- function(n){
   n <- n - 1
-  cols <- c("#3b5998", "#FFCD00", "#000000", "#B22234")
+  cols <- c("#3b5998", "#FFCD00", "#000000", "#B22234", "#6E8B3D", "#6495ED", "#EE7600", "#8B3E2F", "#8968CD", "#7F7F7F")
   col_seg <- rep(1:length(cols), times = ceiling(n/length(cols)))[1:n]
   c(cols[col_seg], "grey75")
 }

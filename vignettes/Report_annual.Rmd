@@ -28,6 +28,7 @@ library(ggplot2)
 library(eurostat)
 library(tidyr)
 library(ggptt)
+library(glue)
 
 set_proj_theme()
 
@@ -36,7 +37,7 @@ data("data_main_total_a", "data_main_groups_a", "data_ameco")
 base_year <- 2010
 base_years <- 2000:2018
 geos <- c(Finland = "FI", Sweden = "SE", Germany = "DE", France = "FR")
-start_time <- "1996-01-01"
+start_time <- "1995-01-01"
 geo_trans <- geo_fi
 nace0_trans <- nace0_fi
 h_geos <- c("FI", "SE", "DE", "US")
@@ -123,6 +124,77 @@ data_main_groups_a %>%
 save_fig("A2_nulc")
 
 ```
+```{r a_nulc_aper_levels}
+
+data_main_annual %>% 
+  select(geo, time, nulc_aper) %>% 
+  gather(vars, values, nulc_aper) %>% 
+  mutate(h_geo = fct_other(geo, keep = tuku_geos,other_level = "muut"),
+         h_geo = fct_relevel(h_geo, h_geos),
+         geo = fct_relevel(geo, rev(h_geos), after = Inf),
+         size = !(geo %in% h_geo)) %>% 
+  translate(h_geo, geo_trans) %>% 
+  translate(vars, c(nulc_aper = "Indeksi", 
+                    nulc_aper_rel_imf = "Suhteellinen indeksi")) %>% 
+  ggplot(aes(time, values, group = geo, colour = h_geo, size = size)) +
+  geom_line() +
+  scale_size_manual(values = c(2,1), guide = "none") +
+  scale_colour_manual(values = c(geo_col(length(tuku_geos)), "grey75")) +
+  the_title_blank(c("x", "l")) +
+  scale_y_continuous(limits = c(70,130), expand = expansion(mult = 0, add = 0)) +
+  labs(y = "indeksi, 2010 = 100")
+
+save_fig("A_nulc_levels")
+
+```
+
+```{r a_nulc_aper_rel}
+
+vars_rel <- c(nulc_aper_rel_ecfin20 = "omassa valuutassa", nulc_aper_eur_rel_ecfin20 = "samassa valuutassa")
+
+data_main_annual %>% 
+  filter(geo == "FI") %>%
+  select(geo, time, names(vars_rel)) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, base_year)) %>% 
+  ungroup() %>% 
+  translate(vars, vars_rel) %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  labs(y = glue("Indeksi, {base_year} = 100")) +
+  the_legend_bot()
+
+save_fig("a_nulc_aper_rel")
+
+```
+
+```{r}
+
+data_long_annual %>% 
+  filter(geo == "FI") %>% 
+  filter(time >= "1995-01-01") %>% 
+  select(geo, time, nulc_var = nulc_aper_rel_ecfin15, 
+         # rulc_var = rulc_aper_rel_ameco15, 
+         out_var = gdp_ind_rel_ecfin15) %>% 
+  mutate(nulc_var = rebase(1/nulc_var, time, base_year)) %>%
+  # mutate(rulc_var = rebase(1/rulc_var, time, base_year)) %>%
+  # mutate(out_var = 100* (out_var / lag(out_var) -1) + 100) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  # mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+  #        geo = fct_relevel(geo, h_geos, after = Inf)) %>% 
+  translate(geo, geo_fi) %>% 
+  # translate(vars, c(nulc_aper_rel_imf = "ULCy, käänteinen", gdp_ind_rel_imf = "BKT", 
+                    # exp_ind_rel_imf = "Vienti", XPERF = "Vientimenestys")) %>% 
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line() +
+  facet_wrap(~ geo, scales = "free") +
+  scale_size_manual(values = c(2,1)) +
+  the_title_blank()
+  
+  
+```
 
 ```{r a_dat_nulc_ameco}
 
@@ -148,6 +220,36 @@ data_ameco_long %>%
  save_fig("A2_nulc_ameco")
 
 ```
+
+### Vaihtosuhdekorjattu
+
+```{r}
+
+data_main_annual %>% 
+  filter(geo == "FI") %>% 
+  select(geo, time, 
+         "Vaihtosuhdekorjattu" = nulc_aper_eur_atot_rel_ecfin20, 
+        "Normaali" =  nulc_aper_eur_rel_ecfin20) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, 2010),
+         change = 100 * (values / lag(values) -1)) %>% 
+  ungroup() %>% 
+  gather(type, values, values, change) %>% 
+  ggplot(aes(time, values, color = vars)) +
+  facet_wrap(~type, scales = "free_y",
+             labeller = labeller(type = c(change = "muutos, %", values = "indeksi, 2010 = 100"))) +
+  geom_line()+
+  the_title_blank(c("x", "l", "y")) +
+  geom_hline(aes(yintercept = yint), 
+             data = data.frame(yint = 0, type = "change")) +
+  labs(y = glue("Indeksi, 2010 = 100")) +
+  the_legend_bot() 
+
+ save_fig("A_nulc_a_tot")
+
+```
+
 
 
 ### Nimellinen yksikkötyökustannus toimialaryhmittäin
