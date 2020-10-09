@@ -27,7 +27,7 @@ library(ggptt)
 library(glue)
 library(ggthemes)
 
-set_board_theme()
+set_board_theme(base_size = 8)
 
 data("data_main_annual")
 
@@ -38,6 +38,32 @@ mean_range <- 2000:max(data_main_annual$time)
 
 geos <- c(Suomi = "FI", Ruotsi = "SE", Saksa = "DE", Ranska = "FR", 
           euroalue = "EA19", "Itävalta" = "AT", Espanja = "ES")
+
+```
+
+```{r}
+
+q_dat %>% 
+  filter(geo == "FI",
+         time >= start_time) %>% 
+  select(geo, time, nulc, nulc_va, nulc_hw, nulc_hw_va, nulc_aper, nulc_aper_va) %>% 
+  gather(ind, values, -geo, -time) %>% 
+  group_by(geo, ind) %>% 
+  mutate(change = 100 * (values / lag(values, 4, order_by = time) - 1)) %>% 
+  ungroup() %>% 
+  gather(vars, values, values, change) %>% 
+  translate(vars, c(change = "Muutos, %", values = "Taso, indeksi 2010 = 100")) %>% 
+  translate(ind, gsub("yrittäjäkorjaus ", "yk ", var_labels_fi), simple = TRUE, parts = c(4,5)) %>%
+  ggplot(aes(time, values, colour = ind)) +
+  facet_wrap(~ vars, scales = "free_y") +
+  geom_line() +
+  geom_hline(aes(yintercept = yint), 
+             data = data.frame(yint = 0, vars = "Muutos, %")) +
+  the_title_blank() +
+  the_legend_bot() +
+  guides(colour = guide_legend(nrow = 3))
+
+save_board_figs("Kuvio_5_1", height = 6.5)
 
 ```
 
@@ -64,6 +90,8 @@ pdat_annual %>%
   labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
   the_legend_bot() 
 
+save_board_figs("Kuvio_5_2", height = 6.5)
+
 ```
 
 ## Nimellisen suhteellisen yksikkötyökustannuksen osatekijät
@@ -88,6 +116,8 @@ pdat_annual %>%
   labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
   the_legend_bot()
 
+save_board_figs("Kuvio_5_6", height = 6.5)
+
 ```
 
 ## Vaihtosuhdekorjattu 
@@ -110,6 +140,8 @@ pdat_annual %>%
   geom_hline(yintercept = 100) +
   labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
   the_legend_bot()
+
+
 
 ```
 
@@ -137,6 +169,8 @@ data_main_annual %>%
   labs(y = glue("Indeksi, 2010 = 100")) +
   the_legend_bot()
 
+save_board_figs("Kuvio_5_4", height = 6.5)
+
 ```
 
 
@@ -161,6 +195,7 @@ pdat_annual %>%
   the_legend_bot() +
   guides(color = guide_legend(nrow = 2))
   
+save_board_figs("Kuvio_5_5", height = 6.5)
 
 ```
 
@@ -196,6 +231,8 @@ data_main_annual %>%
   geom_hline(yintercept = 100) +
   labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
   the_legend_bot()
+
+save_board_figs("Kuvio_5_3", height = 6.5)
 
 ```
 
