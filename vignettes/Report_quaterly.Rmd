@@ -581,7 +581,7 @@ UploadOneOrMoreTimeSeries(list(mb_nulc_aper_eur_long_rel_ecfin14, mb_nulc_aper_e
 ```{r}
 
 q_dat %>% 
-  select(time, geo, d1_hw_ind, nulc_hw_va_eur, lp_hw_ind) %>% 
+  select(time, geo, "Palkasaajakorvaukset" = d1_hw_ind, "Yksikkötyökustannukset" = nulc_hw_va_eur, "Työn tuottavuus" = lp_hw_ind) %>% 
   gather(vars, values, -geo, -time) %>% 
   group_by(geo, vars) %>% 
   mutate(values = rebase(values, time, 2015)) %>% 
@@ -589,7 +589,8 @@ q_dat %>%
   filter(geo %in% c(geos, "NO", "DK", "NL", "IT", "ES"), time >= "2015-01-01") %>% 
   ggplot(aes(time, values, color = geo)) +
   facet_wrap(~ vars) +
-  geom_line()
+  geom_line() +
+  labs(y = "indeksi, 2015, Q1 = 100")
   
 
 ```

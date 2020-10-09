@@ -35,7 +35,7 @@ set_proj_theme()
 data("data_main_total_a", "data_main_groups_a", "data_ameco")
 
 base_year <- 2010
-base_years <- 2000:2018
+mean_range <- base_years <- 2000:2019
 geos <- c(Finland = "FI", Sweden = "SE", Germany = "DE", France = "FR")
 start_time <- "1995-01-01"
 geo_trans <- geo_fi
@@ -44,6 +44,32 @@ h_geos <- c("FI", "SE", "DE", "US")
 
 
 ```
+
+```{r all_ind}
+
+data_main_annual %>% 
+  filter(geo == "FI") %>% 
+  select(geo, time, 
+         "Nimellinen, vaihtosuhdekorjattu, sama valuutta" = nulc_aper_eur_atot_rel_ecfin20, 
+        "Nimellinen, samassa valuutassa" =  nulc_aper_eur_rel_ecfin20,
+        "Reaalinen" =  rulc_aper_rel_ecfin20, 
+        "Nimellinen, oma valuutta" = nulc_aper_rel_ecfin20) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, mean_range)) %>% 
+  ungroup() %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  geom_hline(yintercept = 100) +
+   labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
+  the_legend_bot() +
+  guides(color = guide_legend(nrow = 2))
+
+save_fig("0_all_ind")
+
+```
+
 
 
 
@@ -171,6 +197,31 @@ save_fig("a_rulc")
 
 ```
 
+
+```{r}
+
+data_main_annual %>% 
+  filter(geo == "FI") %>% 
+  select(geo, time, 
+         "Nimellinen, vaihtosuhdekorjattu, oma valuutta" = nulc_aper_atot_rel_ecfin20, 
+        "Reaalinen" =  rulc_aper_rel_ecfin20, 
+        "Nimellinen, oma valuutta" = nulc_aper_rel_ecfin20) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = 100 *(values / lag(values) -1)) %>% 
+  ungroup() %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  geom_hline(yintercept = 0) +
+   labs(y = glue("%, muutos")) +
+  the_legend_bot() +
+  guides(color = guide_legend(nrow = 2))
+
+save_fig("2_d_3ulc")
+
+```
+
 ```{r}
 
 data_main_annual %>%
@@ -188,3 +239,30 @@ data_main_annual %>%
   the_legend_bot()
 
 save_fig("rulc_comp_total")
+
+```
+
+
+## Efektiivinen valuuttakurssi
+
+```{r fi_all37_q}
+
+eer_vars <- c(NEER_IC37 = "Nimelliset", REER_IC37_CPI = "Reaalinen, kuluttajahinnat", REER_IC37_ULCT = "Reaalinen, yksikkötyökustannukset")
+
+ert_eff_ic_q %>% 
+  filter(geo == "FI" ,
+         exch_rt %in% names(eer_vars)) %>% 
+  translate(exch_rt, eer_vars) %>% 
+  ggplot(aes(time, values, colour = exch_rt)) +
+  geom_line() +
+  the_legend_bot() +
+  the_title_blank(c("x", "l")) +
+  guides(colour = guide_legend(nrow = 1)) +
+  labs(y = "indeksi, 2010 = 100")
+
+save_fig("EER")
+
+```
+
+
+

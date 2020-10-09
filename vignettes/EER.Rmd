@@ -7,7 +7,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>", 
@@ -17,9 +17,7 @@ knitr::opts_chunk$set(
   echo = FALSE, message = FALSE, warning = FALSE
 )
 
-```
 
-```{r setup}
 # library(ficomp)
 
 devtools::load_all()
@@ -38,7 +36,7 @@ data("ert_eff_ic_m", "ert_eff_ic_q")
 base_year <- 2008
 base_years <- 2000:2018
 geos <- c(Finland = "FI", Sweden = "SE", Germany = "DE", France = "FR")
-start_time <- "1990-01-01"
+start_time <- "1995-01-01"
 
 ```
 
@@ -159,5 +157,20 @@ ert_eff_ic_q %>%
   geom_line() +
   the_legend_bot() +
   the_title_blank(c("x", "l")) 
+
+```
+
+```{r fi_all37_q}
+
+ert_eff_ic_q %>% 
+  filter(geo == "FI" ,
+         grepl("IC37", exch_rt)) %>% 
+  ggplot(aes(time, values, colour = exch_rt_label)) +
+  facet_wrap(~ geo) +
+  geom_line() +
+  the_legend_bot() +
+  the_title_blank(c("x", "l")) +
+  guides(colour = guide_legend(nrow = 4))
+
 
 ```
