@@ -235,4 +235,51 @@ data_main_annual %>%
 save_board_figs("Kuvio_5_3", height = 6.5)
 
 ```
+```{r, fig.height=5.1}
+
+covid_geo <- c("FI", "SE", "DE", "DK", "IT", "AT", "ES")
+
+q_dat %>% 
+  select(time, geo, "Palkasaajakorvaukset" = d1_hw_ind, "Yksikkötyökustannukset" = nulc_hw_va_eur, "Työn tuottavuus" = lp_hw_ind) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, 2015)) %>% 
+  ungroup() %>% 
+  filter(geo %in% covid_geo, time >= "2015-01-01") %>% 
+  mutate(geo = fct_relevel(geo, covid_geo)) %>%
+  mutate(high_geo = geo == "FI") %>% 
+  translate(geo, geo_fi) %>% 
+  ggplot(aes(time, values, color = geo, size = high_geo)) +
+  facet_wrap(~ vars) +
+  geom_line() +
+  scale_size_manual(values = c(1, 2), guide = "none") +
+  the_title_blank(c("x", "l")) +
+  labs(y = "indeksi, 2015 = 100") +
+  the_legend_bot()
+  
+ 
+save_board_figs("Kuvio_korona_ulc", height = 6.5) 
+
+```
+
+
+```{r}
+q_dat %>% 
+  select(time, geo, "Palkasaajakorvaukset" = d1_hw_ind, "Yksikkötyökustannukset" = nulc_hw_va_eur, "Työn tuottavuus" = lp_hw_ind) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, 2015)) %>% 
+  ungroup() %>% 
+  filter(time >= "2015-01-01") %>% 
+  mutate(geo = fct_relevel(geo, covid_geo)) %>%
+  mutate(high_geo = geo == "FI") %>% 
+  translate(geo, geo_fi) %>% 
+  ggplot(aes(time, values, color = geo, size = high_geo)) +
+  facet_wrap(~ vars) +
+  geom_line() +
+  scale_size_manual(values = c(1, 2), guide = "none") +
+  the_title_blank(c("x", "l")) +
+  labs(y = "indeksi, 2015 = 100") +
+  the_legend_bot()
+```
 
