@@ -56,16 +56,19 @@ nace0_fi <- c(total = "Koko talous",
 
 
 main_nace_sna <- c(VTOT = "TOTAL", VC = "C", V26 = "C26",  VF = "F", VG = "G", VH = "H",
-                   VI = "I", VJ = "J", VM = "M", VN = "N")
+                   VI = "I", VJ = "J", VK = "K", VM = "M", VN = "N")
 
 main_nace10_sna <- c(TOTAL = "TOTAL", C = "C", F = "F", G = "G-I", H = "G-I",
-                     I = "G-I", J = "J", M = "M_N", N = "M_N")
+                     I = "G-I", J = "J", K = "K", M = "M_N", N = "M_N")
+
+main_nace_sna_q <- c("TOTAL", "C", "F", "G-I", "J", "M_N")
 
 usethis::use_data(eurostat_geos, oecd_geos_ulcq, oecd_geos, all_geos,
                   tuku16, geo20, geo21, geo14, geo_nace,
                   all_extra_geos, ameco_extra_geos,
                   main_nace_sna,
                   main_nace10_sna,
+                  main_nace_sna_q,
                   a_start_time, q_start_time, base_year, overwrite = TRUE)
 
 usethis::use_data(nace0_fi, geo_fi, overwrite = TRUE)

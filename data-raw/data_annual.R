@@ -36,13 +36,14 @@ data_main_groups_a <-
   group_by(geo, time, vars) %>%
   summarise(
     total = values[nace_r2 == "TOTAL"],
-            private = sum(values[nace_r2 %in% c("C", "G", "H", "I", "J", "M", "N")]),
-            private_ex26 = private - values[nace_r2 == "C26"],
-            manu = sum(values[nace_r2 == "C"]),
-            manu_ex26 = manu - values[nace_r2 == "C26"],
-            service = sum(values[nace_r2 %in% c("G", "H", "I", "J", "M", "N")])) %>%
+    total_exK = total - values[nace_r2 == "K"],
+    private = sum(values[nace_r2 %in% c("C", "G", "H", "I", "J", "M", "N")]),
+    private_ex26 = private - values[nace_r2 == "C26"],
+    manu = sum(values[nace_r2 == "C"]),
+    manu_ex26 = manu - values[nace_r2 == "C26"],
+    service = sum(values[nace_r2 %in% c("G", "H", "I", "J", "M", "N")])) %>%
   ungroup() %>%
-  gather(nace0, values, total, private, private_ex26, manu, manu_ex26, service) %>%
+  gather(nace0, values, total, total_exK, private, private_ex26, manu, manu_ex26, service) %>%
   mutate(nace0 = as_factor(nace0)) %>%
   spread(vars, values) %>%
   group_by(geo, nace0) %>%

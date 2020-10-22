@@ -7,7 +7,7 @@ library(eurostat)
 
 devtools::load_all()
 
-main_nace_sna_q <- c("TOTAL", "C", "F", "G-I", "J", "M_N")
+
 
 
 
