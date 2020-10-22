@@ -456,3 +456,38 @@ data_main_groups_a %>%
 
 ```
 
+```{r}
+
+# data_main_groups_a %>%
+#   filter(nace0 %in% c("total", "private", "private_ex26"),
+#          geo == "FI") %>% 
+#   select(geo, time, nace0, nulc_aper_va_eur_rel_ecfinnace, rulc_aper_va_rel_ecfinnace, nulc_aper_va_eur, rulc_aper_va) %>%
+#   gather(vars, values, -geo, -time, -nace0) %>% 
+#   ggplot(aes(time, values, colour = nace0)) +
+#   geom_line() +
+#   facet_wrap(~vars, nrow = 2)
+    
+
+data_main_groups_a %>%
+  filter(nace0 %in% c("total", "private", "private_ex26"),
+         geo == "FI") %>% 
+  select(geo, time, nace0, nulc_aper_va_eur_rel_ecfinnace, rulc_aper_va_rel_ecfinnace) %>%
+  gather(vars, values, -geo, -time, -nace0) %>% 
+  ggplot(aes(time, values, colour = nace0)) +
+  geom_line() +
+  facet_wrap(~vars)
+
+ggsave_twitter("nace")
+
+```
+
+```{r}
+
+data_main_groups_a %>% 
+  filter(nace0 == "private_ex26") %>% 
+  select(geo, time, nulc_aper_va) %>% 
+  spread(geo, nulc_aper_va) %>% 
+  View()
+
+```
+

@@ -58,11 +58,21 @@ data_main_groups_a <-
     nulc_va = ind_ulc(D1__CP_MNAC, B1G__CLV15_MNAC, time = time, baseyear = base_year),
     nulc_va_eur = ind_ulc(D1__CP_MEUR, B1G__CLV15_MNAC, time = time, baseyear = base_year),
     nulc_aper_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_PER, B1G__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
+    nulc_aper_va_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_PER, B1G__CLV15_MNAC / EMP_DC__THS_PER, time = time, baseyear = base_year),
     nulc_hw_va = ind_ulc(D1__CP_MNAC / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = base_year),
     nulc_hw_va_eur = ind_ulc(D1__CP_MEUR / SAL_DC__THS_HW, B1G__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = base_year),
+    rulc_aper_va = rebase(nulc_aper_va / (B1G__CP_MNAC/B1G__CLV15_MNAC), time = time, baseyear = base_year),
     rulc_hw_va = rebase(nulc_hw_va / (B1G__CP_MNAC/B1G__CLV15_MNAC), time = time, baseyear = base_year)) %>%
-  group_by(nace0) %>%
-  weight_all(geo, time, except = c("geo", "time"), weight_df = weights_ecfin37) %>%
+  group_by(time, nace0) %>%
+  mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE)),
+                ~weight_index2(.x, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),
+                .names = paste0("{col}_rel_ecfin15"))) %>%
+  mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE), contains("_rel_")),
+                ~weight_index2(.x, geo, time, geos = geo20, weight_df = weights_ecfin37),
+                .names = paste0("{col}_rel_ecfin20"))) %>%
+  mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE), contains("_rel_")),
+                ~weight_index2(.x, geo, time, geos = geo_nace, weight_df = weights_ecfin37),
+                .names = paste0("{col}_rel_ecfinnace"))) %>%
   ungroup()
 
 
@@ -86,15 +96,13 @@ data_main_total_a <-
     exp_goods_ind = rebase(P61__CLV15_MNAC, time = time, baseyear = base_year),
     exp_serv_ind = rebase(P62__CLV15_MNAC, time = time, baseyear = base_year),
     tbalance_gdp = B11__CP_MNAC / B1GQ__CP_MNAC) %>%
-  ungroup() %>%
   group_by(time) %>%
-  mutate(
-    gdp_ind_rel = weight_index(gdp_ind, geo, time, weight_df = weights_bis_broad),
-         exp_ind_rel = weight_index(exp_ind, geo, time, weight_df = weights_bis_broad),
-         gdp_ind_rel_imf = weight_index(gdp_ind, geo, time, weight_df = weights_imf),
-         exp_ind_rel_imf = weight_index(exp_ind, geo, time, weight_df = weights_imf),
-         exp_goods_ind_rel_imf = weight_index(exp_goods_ind, geo, time, weight_df = weights_imf),
-         exp_serv_ind_rel_imf = weight_index(exp_serv_ind, geo, time, weight_df = weights_imf)) %>%
+  mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE)),
+                ~weight_index2(.x, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),
+                .names = paste0("{col}_rel_ecfin15"))) %>%
+  mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE), contains("_rel_")),
+                ~weight_index2(.x, geo, time, geos = geo20, weight_df = weights_ecfin37),
+                .names = paste0("{col}_rel_ecfin20"))) %>%
   ungroup()
 
 # visdat::vis_dat(data_main_total_a)
