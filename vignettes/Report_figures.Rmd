@@ -1,4 +1,4 @@
----
+             ---
 title: "Raportin kuviot"
 output: rmarkdown::html_document
 vignette: >
@@ -25,7 +25,6 @@ devtools::load_all()
 library(dplyr)
 library(forcats)
 library(ggplot2)
-library(eurostat)
 library(tidyr)
 library(ggptt)
 library(glue)
@@ -265,4 +264,30 @@ save_fig("EER")
 ```
 
 
+```{r}
 
+data_quartely_est %>% 
+  filter(geo == "FI", time >= "1995-01-01") %>% 
+  select(geo, time, nulc_var = nulc_aper_long_rel_ecfin20, gdp_ind_long_rel_ecfin20, exp_ind_long_rel_ecfin20, XPERF) %>% 
+  mutate(nulc_var = rebase(1/(nulc_var), time, base_year),
+         XPERF = rebase(XPERF, time, base_year)) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  # mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
+  #        geo = fct_relevel(geo, h_geos, after = Inf)) %>% 
+  # translate(geo, geo_fi) %>% 
+  translate(vars, c(nulc_var = "Nimellinen suhteellinen yksikkötyökustannus", 
+                    gdp_ind_long_rel_ecfin20 = "Suhteellinen BKT",
+                    exp_ind_long_rel_ecfin20 = "Suhteellinen vienti", 
+                    XPERF = "Vientimenestys, OECD")) %>%
+  ggplot(aes(time, values, colour = vars)) +
+  geom_line() +
+  # facet_wrap(~ geo, scales = "free") +
+  scale_size_manual(values = c(2,1)) +
+  scale_y_continuous(sec.axis = sec_axis(~ . * -1)) +
+  the_title_blank() +
+  the_legend_bot() +
+  guides(colour = guide_legend(nrow = 2))
+
+save_fig("rel")
+
+```

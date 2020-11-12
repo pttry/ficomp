@@ -189,6 +189,10 @@ Update: data-raw/get_IMF_weights.R
 Note:
 * Missing yearly weights are extraploted from closest data. In earlier weights data treshold for inclusion was higher (1%) than in more resent (0.45%)
 
+#### ECFIN weights
+
+Source: [ECFIN: Price and Cost Competitiveness - Data Section](https://ec.europa.eu/info/business-economy-euro/indicators-statistics/economic-databases/price-and-cost-competitiveness/price-and-cost-competitiveness-data-section_en)
+
 #### Export
 
 * Good and services
