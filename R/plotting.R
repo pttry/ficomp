@@ -54,7 +54,8 @@ save_board_figs <- function(filename,
                       plot = last_plot(),
                       width = 13.5,
                       height = 13.5){
-  plot <- plot
+  plot <- plot +
+    ggptt::the_title_blank(c("x", "t", "l"))
   ggplot2::ggsave(file.path(Sys.getenv("USERPROFILE"),"Downloads", paste0(filename, ".pdf")), width = width, height = height, units = "cm")
   ggplot2::ggsave(file.path(Sys.getenv("USERPROFILE"),"Downloads", paste0(filename, ".png")), width = width, height = height, units = "cm")
 }

@@ -21,13 +21,13 @@ devtools::load_all()
 library(dplyr)
 library(forcats)
 library(ggplot2)
-library(eurostat)
 library(tidyr)
 library(ggptt)
 library(glue)
 library(ggthemes)
 
-set_board_theme(base_size = 8)
+set_board_theme(base_size = 10)
+fig_height <- 10
 
 data("data_main_annual")
 
@@ -45,7 +45,7 @@ geos <- c(Suomi = "FI", Ruotsi = "SE", Saksa = "DE", Ranska = "FR",
 
 q_dat %>% 
   filter(geo == "FI",
-         time >= start_time) %>% 
+         time >= "1995-01-01") %>% 
   select(geo, time, nulc, nulc_va, nulc_hw, nulc_hw_va, nulc_aper, nulc_aper_va) %>% 
   gather(ind, values, -geo, -time) %>% 
   group_by(geo, ind) %>% 
@@ -63,7 +63,7 @@ q_dat %>%
   the_legend_bot() +
   guides(colour = guide_legend(nrow = 3))
 
-save_board_figs("Kuvio_5_1", height = 6.5)
+save_board_figs("Kuvio_5_1", height = fig_height)
 
 ```
 
@@ -90,7 +90,7 @@ pdat_annual %>%
   labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
   the_legend_bot() 
 
-save_board_figs("Kuvio_5_2", height = 6.5)
+save_board_figs("Kuvio_5_2", height = fig_height)
 
 ```
 
@@ -116,7 +116,7 @@ pdat_annual %>%
   labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
   the_legend_bot()
 
-save_board_figs("Kuvio_5_6", height = 6.5)
+save_board_figs("Kuvio_5_6", height = fig_height)
 
 ```
 
@@ -169,7 +169,7 @@ data_main_annual %>%
   labs(y = glue("Indeksi, 2010 = 100")) +
   the_legend_bot()
 
-save_board_figs("Kuvio_5_4", height = 6.5)
+save_board_figs("Kuvio_5_4", height = fig_height)
 
 ```
 
@@ -195,7 +195,7 @@ pdat_annual %>%
   the_legend_bot() +
   guides(color = guide_legend(nrow = 2))
   
-save_board_figs("Kuvio_5_5", height = 6.5)
+save_board_figs("Kuvio_5_5", height = fig_height)
 
 ```
 
@@ -232,7 +232,7 @@ data_main_annual %>%
   labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
   the_legend_bot()
 
-save_board_figs("Kuvio_5_3", height = 6.5)
+save_board_figs("Kuvio_5_3", height = fig_height)
 
 ```
 ```{r, fig.height=5.1}
@@ -258,7 +258,7 @@ q_dat %>%
   the_legend_bot()
   
  
-save_board_figs("Kuvio_korona_ulc", height = 6.5) 
+save_board_figs("Kuvio_korona_ulc", height = fig_height) 
 
 ```
 
