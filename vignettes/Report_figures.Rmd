@@ -1,4 +1,4 @@
-             ---
+---
 title: "Raportin kuviot"
 output: rmarkdown::html_document
 vignette: >
@@ -275,7 +275,8 @@ data_quartely_est %>%
   # mutate(h_geo = fct_other(geo, keep = h_geos,other_level = "muut"),
   #        geo = fct_relevel(geo, h_geos, after = Inf)) %>% 
   # translate(geo, geo_fi) %>% 
-  translate(vars, c(nulc_var = "Nimellinen suhteellinen yksikkötyökustannus", 
+  mutate(vars = fct_rev(fct_relevel(vars, "nulc_var"))) %>% 
+  translate(vars, c(nulc_var = "Nimellinen suhteellinen yksikkötyökustannus, (oik.)", 
                     gdp_ind_long_rel_ecfin20 = "Suhteellinen BKT",
                     exp_ind_long_rel_ecfin20 = "Suhteellinen vienti", 
                     XPERF = "Vientimenestys, OECD")) %>%
@@ -288,6 +289,6 @@ data_quartely_est %>%
   the_legend_bot() +
   guides(colour = guide_legend(nrow = 2))
 
-save_fig("rel")
+save_fig("4_1_nulc_and_outcome")
 
 ```
