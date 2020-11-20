@@ -63,7 +63,7 @@ q_dat %>%
   the_legend_bot() +
   guides(colour = guide_legend(nrow = 3))
 
-save_board_figs("Kuvio_5_1", height = fig_height)
+save_board_figs("Kuvio_5_1", height = fig_height, save_data = TRUE)
 
 ```
 
@@ -90,7 +90,7 @@ pdat_annual %>%
   labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
   the_legend_bot() 
 
-save_board_figs("Kuvio_5_2", height = fig_height)
+save_board_figs("Kuvio_5_2", height = fig_height, save_data = TRUE)
 
 ```
 
@@ -116,7 +116,7 @@ pdat_annual %>%
   labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
   the_legend_bot()
 
-save_board_figs("Kuvio_5_6", height = fig_height)
+save_board_figs("Kuvio_5_6", height = fig_height, save_data = TRUE)
 
 ```
 
@@ -169,7 +169,7 @@ data_main_annual %>%
   labs(y = glue("Indeksi, 2010 = 100")) +
   the_legend_bot()
 
-save_board_figs("Kuvio_5_4", height = fig_height)
+save_board_figs("Kuvio_5_4", height = fig_height, save_data = TRUE)
 
 ```
 
@@ -195,7 +195,7 @@ pdat_annual %>%
   the_legend_bot() +
   guides(color = guide_legend(nrow = 2))
   
-save_board_figs("Kuvio_5_5", height = fig_height)
+save_board_figs("Kuvio_5_5", height = fig_height, save_data = TRUE)
 
 ```
 
@@ -232,7 +232,7 @@ data_main_annual %>%
   labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
   the_legend_bot()
 
-save_board_figs("Kuvio_5_3", height = fig_height)
+save_board_figs("Kuvio_5_3", height = fig_height, save_data = TRUE)
 
 ```
 ```{r, fig.height=5.1}
@@ -258,7 +258,7 @@ q_dat %>%
   the_legend_bot()
   
  
-save_board_figs("Kuvio_korona_ulc", height = fig_height) 
+save_board_figs("Kuvio_6_1", height = fig_height, save_data = TRUE) 
 
 ```
 

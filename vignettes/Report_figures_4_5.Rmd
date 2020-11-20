@@ -1,0 +1,239 @@
+---
+title: "Raportin kuviot luvut 4 ja 5"
+output: rmarkdown::html_document
+vignette: >
+  %\VignetteIndexEntry{Labour_cost}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", 
+  fig.height = 6,
+  fig.width = 8,
+  fig.path = "Report/", 
+  echo = FALSE, message = FALSE, warning = FALSE
+)
+
+
+# library(ficomp)
+
+devtools::load_all()
+
+library(dplyr)
+library(forcats)
+library(ggplot2)
+library(tidyr)
+library(ggptt)
+library(glue)
+
+set_proj_theme()
+
+file_kuviot <- here::here("data-raw/Luku 5 kuvat.xlsx")
+
+dat_kuviot <- 
+  purrr::set_names(readxl::excel_sheets(file_kuviot)) %>% 
+  purrr::map(~readxl::read_xlsx(file_kuviot, sheet = .x))  
+
+base_year <- 2010
+mean_range <- base_years <- 2000:2019
+geos <- c(Finland = "FI", Sweden = "SE", Germany = "DE", France = "FR")
+start_time <- "1995-01-01"
+geo_trans <- geo_fi
+nace0_trans <- nace0_fi
+h_geos <- c("FI", "SE", "DE", "US")
+
+
+```
+
+```{r}
+
+dat_kuviot[["Kuvio 5.1"]] %>% 
+  mutate(time = lubridate::yq(time)) %>% 
+  gather(vars, values, -time) %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  # scale_x_date(date_breaks = "2 years") +
+  the_title_blank(c("x", "l")) +
+  labs(y = "") +
+  the_legend_bot()
+
+save_fig("Fig_5_1")
+
+```
+```{r}
+
+dat_kuviot[["Kuvio 5.2"]] %>% 
+  mutate(time = lubridate::yq(time)) %>% 
+  gather(vars, values, -time) %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  # scale_x_date(date_breaks = "2 years") +
+  the_title_blank(c("x", "l")) +
+  labs(y = "indeksi, 2008 = 100") +
+  the_legend_bot()
+
+save_fig("Fig_5_2")
+
+```
+
+```{r}
+
+dat_kuviot[["Kuvio 5.3"]] %>% 
+  mutate(time = lubridate::yq(time)) %>% 
+  gather(vars, values, -time) %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  geom_hline(yintercept = 0) +
+  # scale_x_date(date_breaks = "2 years") +
+  the_title_blank(c("x", "l")) +
+  labs(y = "%") +
+  the_legend_bot()
+
+save_fig("Fig_5_3")
+
+```
+
+```{r}
+
+dat_kuviot[["Kuvio 5.4(a)"]] %>% 
+  gather(vars, values, -period) %>% 
+  mutate(linetyp = fct_recode(vars, longdash = "Low", solid = "base", longdash = "High")) %>% 
+  mutate(values = 100 * values) %>% 
+  ggplot(aes(period, values, group = vars, linetype = linetyp)) +
+  geom_line(colour = vnk_pal(1)) +
+  geom_hline(yintercept = 0) +
+  # scale_linetype_discrete() +
+  the_title_blank(c("x", "l")) +
+  labs(y = "%") +
+  the_legend_bot() +
+  guides(linetype = "none")
+
+save_fig("Fig_5_4a")
+```
+
+
+```{r}
+
+dat_kuviot[["Kuvio 5.4(b)"]] %>% 
+  gather(vars, values, -period) %>% 
+  mutate(linetyp = fct_recode(vars, longdash = "Low", solid = "base", longdash = "High")) %>% 
+  mutate(values = 100 * values) %>% 
+  ggplot(aes(period, values, group = vars, linetype = linetyp)) +
+  geom_line(colour = vnk_pal(1)) +
+  geom_hline(yintercept = 0) +
+  # scale_linetype_discrete() +
+  the_title_blank(c("x", "l")) +
+  labs(y = "%") +
+  the_legend_bot() +
+  guides(linetype = "none")
+
+save_fig("Fig_5_4b")
+
+```
+```{r}
+
+dat_kuviot[["Kuvio 5.4(c) "]] %>% 
+  gather(vars, values, -period) %>% 
+  mutate(linetyp = fct_recode(vars, longdash = "Low", solid = "base", longdash = "High")) %>% 
+  mutate(values = 100 * values) %>% 
+  ggplot(aes(period, values, group = vars, linetype = linetyp)) +
+  geom_line(colour = vnk_pal(1)) +
+  geom_hline(yintercept = 0) +
+  # scale_linetype_discrete() +
+  the_title_blank(c("x", "l")) +
+  labs(y = "%") +
+  the_legend_bot() +
+  guides(linetype = "none")
+
+save_fig("Fig_5_4c")
+
+```
+
+
+```{r}
+
+dat_kuviot[["Kuvio 5.5 (a)"]] %>% 
+  gather(vars, values, -period) %>% 
+  separate(vars, into = c("vars2", "col"), remove = FALSE) %>% 
+  mutate(linetyp = fct_recode(vars2, longdash = "Low", solid = "base", longdash = "High")) %>% 
+  mutate(values = 100 * values) %>% 
+  ggplot(aes(period, values, group = vars, colour = col, linetype = linetyp)) +
+  geom_line() +
+  geom_hline(yintercept = 0) +
+  scale_colour_manual(values = c("red4", vnk_pal(1))) +
+  # scale_linetype_discrete() +
+  the_title_blank(c("x", "l")) +
+  labs(y = "%") +
+  the_legend_bot() +
+  guides(linetype = "none", colour = "none")
+
+save_fig("Fig_5_5a")
+
+```
+
+
+```{r}
+
+dat_kuviot[["Kuvio 5.5 (b)"]] %>% 
+  gather(vars, values, -period) %>% 
+  separate(vars, into = c("vars2", "col"), remove = FALSE) %>% 
+  mutate(linetyp = fct_recode(vars2, longdash = "Low", solid = "base", longdash = "High")) %>% 
+  mutate(values = 100 * values) %>% 
+  ggplot(aes(period, values, group = vars, colour = col, linetype = linetyp)) +
+  geom_line() +
+  geom_hline(yintercept = 0) +
+  scale_colour_manual(values = c("red4", vnk_pal(1))) +
+  # scale_linetype_discrete() +
+  the_title_blank(c("x", "l")) +
+  labs(y = "%") +
+  the_legend_bot() +
+  guides(linetype = "none", colour = "none")
+
+save_fig("Fig_5_5b")
+
+```
+
+```{r}
+
+dat_kuviot[["Kuvio 5.6 (a)"]] %>% 
+  gather(vars, values, -period) %>% 
+  separate(vars, into = c("vars2", "col"), remove = FALSE) %>% 
+  mutate(linetyp = fct_recode(vars2, longdash = "Low", solid = "base", longdash = "High")) %>% 
+  mutate(values = 100 * values) %>% 
+  ggplot(aes(period, values, group = vars, colour = col, linetype = linetyp)) +
+  geom_line() +
+  geom_hline(yintercept = 0) +
+  scale_colour_manual(values = c("red4", vnk_pal(1))) +
+  # scale_linetype_discrete() +
+  the_title_blank(c("x", "l")) +
+  labs(y = "%") +
+  the_legend_bot() +
+  guides(linetype = "none", colour = "none")
+
+save_fig("Fig_5_6a")
+
+```
+
+```{r}
+
+dat_kuviot[["Kuvio 5.6 (b)"]] %>% 
+  gather(vars, values, -period) %>% 
+  separate(vars, into = c("vars2", "col"), remove = FALSE) %>% 
+  mutate(linetyp = fct_recode(vars2, longdash = "Low", solid = "base", longdash = "High")) %>% 
+  mutate(values = 100 * values) %>% 
+  ggplot(aes(period, values, group = vars, colour = col, linetype = linetyp)) +
+  geom_line() +
+  geom_hline(yintercept = 0) +
+  scale_colour_manual(values = c("red4", vnk_pal(1))) +
+  # scale_linetype_discrete() +
+  the_title_blank(c("x", "l")) +
+  labs(y = "%") +
+  the_legend_bot() +
+  guides(linetype = "none", colour = "none")
+
+save_fig("Fig_5_6b")
+
+```

@@ -47,15 +47,21 @@ save_fig <- function(filename,
 #' @param plot Plot to save, defaults to last plot displayed.
 #' @param width Plot size
 #' @param height Plot size
+#' @param save_data A logical to save plot data.
 #'
 #' @export
 
 save_board_figs <- function(filename,
                       plot = last_plot(),
                       width = 13.5,
-                      height = 13.5){
+                      height = 13.5,
+                      save_data = FALSE){
   plot <- plot +
     ggptt::the_title_blank(c("x", "t", "l"))
   ggplot2::ggsave(file.path(Sys.getenv("USERPROFILE"),"Downloads", paste0(filename, ".pdf")), width = width, height = height, units = "cm")
   ggplot2::ggsave(file.path(Sys.getenv("USERPROFILE"),"Downloads", paste0(filename, ".png")), width = width, height = height, units = "cm")
+  if (save_data){
+    pdat <- ggplot_build(plot)$plot$data
+    write.csv2(pdat, file.path(Sys.getenv("USERPROFILE"),"Downloads", paste0(filename, "_data.csv")), row.names = FALSE)
+  }
 }
