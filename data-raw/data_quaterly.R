@@ -236,7 +236,6 @@ data_quartely_est <-
   q_dat_eurostat %>%
   filter(geo %in% eurostat_geos) %>%
   filter(nace_r2 == "TOTAL") %>%
-  select(-nace_r2) %>%
   # # join nulc_aper from OECD ulc and replace nulc if missing (in mutate)
   # left_join(select(q_dat_oecd_ulc, geo, time, nulc_aper_oecd = nulc_aper),
   #           by = c("geo", "time")) %>%
@@ -245,6 +244,7 @@ data_quartely_est <-
   calculate_ind(geo) %>%
   # Add OECD for more countries with some data
   bind_rows(dat_ulc_oecd_est) %>%
+  select(-nace_r2) %>%
   filter(time >= "1991-01-01") %>%
   complete(geo, time) %>%
   # Replace NAs with quarterlylized annual data from ameco
