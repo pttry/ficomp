@@ -94,6 +94,7 @@ q_dat <-
     d1_per_ind = rebase(D1__CP_MNAC / SAL_DC__THS_PER, time = time, baseyear = base_year),
     lp_hw_ind = rebase(B1GQ__CLV15_MNAC / EMP_DC__THS_HW, time = time, baseyear = base_year),
     d1_hw_ind = rebase(D1__CP_MNAC / SAL_DC__THS_HW, time = time, baseyear = base_year),
+    d1net_hw_ind = rebase(D1_D4_MD5__I16, time = time, baseyear = base_year),
     gdp_ind = rebase(B1GQ__CLV15_MNAC, time = time, baseyear = base_year),
     exp_ind = rebase(P6__CLV15_MNAC, time = time, baseyear = base_year),
     exp_goods_ind = rebase(P61__CLV15_MNAC, time = time, baseyear = base_year),

@@ -22,6 +22,8 @@ naq10_eurostat <- get_eurostat("namq_10_a10", cache = FALSE)
 naq10e_eurostat<- get_eurostat("namq_10_a10_e", cache = FALSE)
 # Unit labour cost
 namq_10_lp_ulc <- get_eurostat("namq_10_lp_ulc", cache = FALSE)
+# Labour cost index
+lc_lci_r2_q <- get_eurostat("lc_lci_r2_q", cache = FALSE)
 
 
 ## Preprosessing tables
@@ -60,6 +62,19 @@ ulc_eurostat_dat <- namq_10_lp_ulc %>%
   filter(unit == "I15") %>%
   droplevels()
 
+lci_eurostat_dat <- lc_lci_r2_q %>%
+  #   Index, 2016=100
+  #  	 Seasonally and calendar adjusted data
+  #   Industry, construction and services (except activities of households as employers and extra-territorial organisations and bodies)
+  #   Labour cost for LCI (compensation of employees plus taxes minus subsidies)
+  filter(unit %in% c("I16"),
+         s_adj %in% c("SCA", "SA"),
+         nace_r2 %in% c("B-S"),
+         lcstruct %in% c("D1_D4_MD5")
+  ) %>%
+  mutate(nace_r2 = "TOTAL") %>%
+  rename(na_item = lcstruct) %>%
+  droplevels()
 
 
 ## compine data
@@ -67,6 +82,7 @@ naq_eurostat_dat_raw <-
   naq0_eurostat_dat %>%
   bind_rows(naq10_eurostat_dat) %>%
   bind_rows(naq10e_eurostat_dat) %>%
+  bind_rows(lci_eurostat_dat) %>%
   mutate(unit = as_factor(unit),
          na_item = as_factor(na_item),
          geo = as_factor(geo),
@@ -120,11 +136,11 @@ currencies <- c(AU = "AUD", CA = "CAD", US = "USD", JP = "JPY", NZ = "NZD", CH =
 
 exh_eur_a <- get_eurostat("ert_bil_eur_a", filters = list(statinfo = "AVG", currency = currencies), time_format = "num") %>%
   select(time, currency, values) %>%
-  mutate(geo = recode(currency, !!!set_names(names(currencies), currencies)))
+  mutate(geo = recode(currency, !!!purrr::set_names(names(currencies), currencies)))
 
 exh_eur_q <- get_eurostat("ert_bil_eur_q", filters = list(statinfo = "AVG", currency = currencies)) %>%
   select(time, currency, values) %>%
-  mutate(geo = recode(currency, !!!set_names(names(currencies), currencies)))
+  mutate(geo = recode(currency, !!!purrr::set_names(names(currencies), currencies)))
 
 usethis::use_data(exh_eur_a, exh_eur_q, overwrite = TRUE)
 

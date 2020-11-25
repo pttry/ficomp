@@ -283,3 +283,27 @@ q_dat %>%
   the_legend_bot()
 ```
 
+```{r}
+
+covid_geo <- c("FI", "SE", "DE", "DK", "IT", "AT", "ES")
+
+q_dat %>% 
+  select(time, geo, "Palkasaajakorvaukset" = d1_hw_ind, d1net_hw_ind) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, 2015)) %>% 
+  ungroup() %>% 
+  filter(geo %in% covid_geo, time >= "2015-01-01") %>% 
+  mutate(geo = fct_relevel(geo, covid_geo)) %>%
+  mutate(high_geo = geo == "FI") %>% 
+  translate(geo, geo_fi) %>% 
+  ggplot(aes(time, values, color = vars)) +
+  facet_wrap(~ geo) +
+  geom_line() +
+  scale_size_manual(values = c(1, 2), guide = "none") +
+  the_title_blank(c("x", "l")) +
+  labs(y = "indeksi, 2015 = 100") +
+  the_legend_bot()
+
+```
+
