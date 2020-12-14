@@ -52,7 +52,7 @@ q_dat_oecd <- q_dat_oecd_large %>%
 
 # Eurostat QNA
 # Data from eurostat
-#  source("data-raw/eurostat.R")
+#  source("data-raw/get_eurostat.R")
 #  in addition to EU countries also "NO", "CH", "IS"
 data("naq_eurostat_dat")
 

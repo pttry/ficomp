@@ -58,8 +58,16 @@ save_board_figs <- function(filename,
                       save_data = FALSE){
   plot <- plot +
     ggptt::the_title_blank(c("x", "t", "l"))
-  ggplot2::ggsave(file.path(Sys.getenv("USERPROFILE"),"Downloads", paste0(filename, ".pdf")), width = width, height = height, units = "cm")
-  ggplot2::ggsave(file.path(Sys.getenv("USERPROFILE"),"Downloads", paste0(filename, ".png")), width = width, height = height, units = "cm")
+
+  plot_slide <- plot +
+    theme(text = element_text(size=16))
+
+  ggplot2::ggsave(file.path(Sys.getenv("USERPROFILE"),"Downloads", paste0(filename, ".pdf")),
+                  plot = plot, width = width, height = height, units = "cm")
+  ggplot2::ggsave(file.path(Sys.getenv("USERPROFILE"),"Downloads", paste0(filename, ".png")),
+                  plot = plot, width = width, height = height, units = "cm")
+  ggplot2::ggsave(file.path(Sys.getenv("USERPROFILE"),"Downloads", paste0(filename, "_esitys.png")),
+                  plot = plot_slide, width = 26, height = 12, units = "cm")
   if (save_data){
     pdat <- ggplot_build(plot)$plot$data
     write.csv2(pdat, file.path(Sys.getenv("USERPROFILE"),"Downloads", paste0(filename, "_data.csv")), row.names = FALSE)

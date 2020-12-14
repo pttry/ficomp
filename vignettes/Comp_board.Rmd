@@ -193,7 +193,7 @@ pdat_annual %>%
   geom_hline(yintercept = 100) +
    labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
   the_legend_bot() +
-  guides(color = guide_legend(nrow = 2))
+  guides(color = guide_legend(nrow = 2)) 
   
 save_board_figs("Kuvio_5_5", height = fig_height, save_data = TRUE)
 

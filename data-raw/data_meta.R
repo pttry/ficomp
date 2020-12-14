@@ -39,7 +39,7 @@ all_geos <- c(eurostat_geos, oecd_geos)
 
 all_extra_geos <- c(eu_geo, other_eurostat_geo, c("AU", "CA", "US", "JP", "NO", "NZ", "MX", "CH", "TR", "IL", "KR"))
 
-geo14 <- setdiff(eurostat_geos, c("NL", "EL", "IE"))
+geo14 <- eurostat_geos  # setdiff(eurostat_geos, c("NL", "EL", "IE"))
 geo21 <- c(eurostat_geos, ameco_extra_geos)
 geo20 <- c(eurostat_geos, c("AU", "CA", "US", "JP", "CH"))
 geo_nace <- setdiff(eurostat_geos, c("IE", "UK"))

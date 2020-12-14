@@ -67,6 +67,9 @@ data_main_annual %>%
 
 save_fig("0_all_ind")
 
+# ggptt::ggsave_twitter("nulc.png", plot = last_plot() + theme(legend.text = element_text(size = 10)) + 
+                        # labs(title = "Suomen kustannuskilpailukykyindikaattorit", caption = "Lähde: Eurostat, OECD, ECFIN, PTT"))
+
 ```
 
 
