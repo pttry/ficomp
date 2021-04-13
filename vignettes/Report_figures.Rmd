@@ -31,10 +31,10 @@ library(glue)
 
 set_proj_theme()
 
-data("data_main_total_a", "data_main_groups_a", "data_ameco")
+data("data_main_total_a", "data_main_groups_a", "data_ameco", "data_main_annual")
 
 base_year <- 2010
-mean_range <- base_years <- 2000:2019
+mean_range <- base_years <- 2000:2018
 geos <- c(Finland = "FI", Sweden = "SE", Germany = "DE", France = "FR")
 start_time <- "1995-01-01"
 geo_trans <- geo_fi

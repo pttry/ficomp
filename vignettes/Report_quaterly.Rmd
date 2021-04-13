@@ -503,24 +503,40 @@ save_fig("9_nulc_ind_comparison")
 
 ```
 
+
+
+
 ```{r nulc_fi_est}
+
+
+fast_geos <- 
+  data_quartely_est %>%
+  filter(time == max(time) & !is.na(nulc_aper_eur_long)) %>% 
+  pull(geo)
+
 
 dat_eff <- 
   ert_eff_ic_q %>% 
   select(geo, time, exch_rt, values) %>% 
   spread(exch_rt, values)
 
-data_quartely_est %>% 
+data_quartely_est_extra <- data_quartely_est %>% 
   left_join(dat_eff, by = c("geo", "time")) %>% 
   # left_join(data_quartely_manu_est, by = c("geo", "time"), suffix = c("", "_manu")) %>% 
   group_by(time) %>%
-  mutate(nulc_aper_eur_long_rel_ecfin14_extra = 
+  mutate(nulc_aper_eur_long_rel_ecfin14_extra =
            weight_index2(nulc_aper_eur_long, geo, time,
                          geos = setdiff(eurostat_geos, c("NL", "EL", "IE")), weight_df = weights_ecfin37)) %>%
-  ungroup() %>%
+  mutate(nulc_aper_eur_long_rel_fast =
+           weight_index2(nulc_aper_eur_long, geo, time,
+                         geos = fast_geos, weight_df = weights_ecfin37)) %>%
+  ungroup()
+
+data_quartely_est_extra %>%
   select(geo, time, 
-         "14 maata" = nulc_aper_eur_long_rel_ecfin14_extra, 
-         "20 maata" = nulc_aper_eur_long_rel_ecfin20, 
+         # "14 maata" = nulc_aper_eur_long_rel_ecfin14_extra, 
+         "20 maata" = nulc_aper_eur_long_rel_ecfin20,
+         "10 maata" = nulc_aper_eur_long_rel_fast,
          "EU komission" = REER_IC37_ULCT) %>% 
   filter(geo == "FI",
          time >= start_time) %>% 
@@ -529,13 +545,14 @@ data_quartely_est %>%
   mutate(time = halfq_shift(time)) %>% 
   ggplot(aes(time, values, colour = ind)) +
   geom_line() +
+  geom_hline(yintercept = 100) +
   the_title_blank(c("x", "l")) +
   the_legend_bot() +
   guides(colour = guide_legend()) + 
   labs(title = "Suomen suhteelliset yksikkötyökustannukset samassa valuutassa",
        subtitle = "eli efektiivinen valuuttakurssi yksikkötyökustannuksilla. 
        Vertailussa komission indikaattori ja aidosta neljännesvuositiededosta
-       lasketut 20 ja 14 maan tietoihin perustuvat indikaattorit",
+       lasketut 20 ja 10 maan tietoihin perustuvat indikaattorit",
        y = "indeksi, 2010 = 100", 
        caption = "Lähde: ECFIN, AMECO, Eurostat, OECD, PTT")
 
@@ -552,7 +569,21 @@ data_quartely_est_fi <-
   data_quartely_est %>% 
   filter(geo == "FI")
 
+data_quartely_est_extra_fi <- 
+  data_quartely_est_extra %>% 
+  filter(geo == "FI")
+
 library(MacrobondAPI)
+
+mb_nulc_aper_eur_long_rel_fast <- MacrobondAPI::CreateTimeSeriesObject(name = "ih:mb:com:nulcefast",
+                                     description = "Suomen suhteelliset yksikkötyökustannukset samassa valuutassa, 10 maata", 
+                                     region = "fi", 
+                                     category = "National accounts", 
+                                     frequency = "Quarterly", 
+                                     startDateOrDates = as.Date(data_quartely_est_extra_fi$time),
+                                     values = data_quartely_est_extra_fi$nulc_aper_eur_long_rel_fast
+                                     )
+
 mb_nulc_aper_eur_long_rel_ecfin14 <- MacrobondAPI::CreateTimeSeriesObject(name = "ih:mb:com:nulcecfin14",
                                      description = "Suomen suhteelliset yksikkötyökustannukset samassa valuutassa, 14 maata", 
                                      region = "fi", 
@@ -571,7 +602,7 @@ mb_nulc_aper_eur_long_rel_ecfin20 <- MacrobondAPI::CreateTimeSeriesObject(name =
                                      values = data_quartely_est_fi$nulc_aper_eur_long_rel_ecfin20[!is.na(data_quartely_est_fi$nulc_aper_eur_long_rel_ecfin20)]
                                      )
 
-UploadOneOrMoreTimeSeries(list(mb_nulc_aper_eur_long_rel_ecfin14, mb_nulc_aper_eur_long_rel_ecfin20))
+UploadOneOrMoreTimeSeries(list(mb_nulc_aper_eur_long_rel_fast, mb_nulc_aper_eur_long_rel_ecfin20))
 
 
 ```

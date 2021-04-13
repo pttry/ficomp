@@ -36,6 +36,7 @@ tukuseto_data <- read.csv2(here::here("data-raw/tukuseto_data.csv")) %>%
 
 tuku_geos <- c(Suomi = "FI", Ruotsi = "SE", Saksa = "DE", Ranska = "FR", 
           euroalue = "EA19", "Itävalta" = "AT", Espanja = "ES")
+geos <- tuku_geos
 
 ```
 

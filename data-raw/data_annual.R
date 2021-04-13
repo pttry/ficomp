@@ -152,6 +152,7 @@ data_main_annual <-
                    geo, time, XPERF, XSHA, XGSVD, XMKT, eci), by = c("geo", "time")) %>%
   mutate(geo = as_factor(geo))
 
+# visdat::vis_dat(data_main_annual)
 
 # Longer annual data eurostat data added with Ameco
 
