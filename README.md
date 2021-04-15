@@ -3,7 +3,14 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of ficomp is to ...
+The ficomp package collects and calculates data for short term price competitiveness indicators. 
+Data was used for VN-TEAS-project [Lyhyen aikavälin kilpailukyvyn eteenpäin katsova arviointi](https://julkaisut.valtioneuvosto.fi/handle/10024/162585).
+
+Data have been updatet since.
+
+Documentation is very much uncomplete. 
+
+
 
 ## Data collection
 
