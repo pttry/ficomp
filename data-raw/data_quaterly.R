@@ -271,7 +271,7 @@ data_quartely_est <-
   mutate(geo = as_factor(geo))
 
 
-usethis::use_data(data_quartely_est, data_quartely_est, overwrite = TRUE)
+usethis::use_data(data_quartely_est, overwrite = TRUE)
 write.csv2(data_quartely_est, file = "data-out/data_quartely_est.csv")
 saveRDS(data_quartely_est, file = "data-out/data_quartely_est.rds")
 

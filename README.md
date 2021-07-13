@@ -16,6 +16,8 @@ Documentation is very much uncomplete.
 
 Data files are in data-raw -folder:
 
+Data operations can be run from: data_main.R
+
 Final data is parsed togerther in files:
 
 ### data_meta.R  - Country groups, dates, labels and other metadata

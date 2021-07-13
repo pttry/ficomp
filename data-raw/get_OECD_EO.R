@@ -72,7 +72,7 @@ eo_q_dat <-
   dat_eo_0 %>%
   filter(FREQUENCY == "Q") %>%
   transmute(geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat")),
-            vars = fct_recode(VARIABLE, !!!var_list_eo),
+            vars = fct_recode(VARIABLE, !!!var_list_eo[!(var_list_eo %in% "XSHA")]),
             unit = as_factor(UNIT),
             time = lubridate::yq(obsTime),
             values = obsValue) %>%
@@ -103,7 +103,7 @@ eo_q_dat_large <-
   dat_eo_0_large %>%
   filter(FREQUENCY == "Q") %>%
   transmute(geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat")),
-            vars = fct_recode(VARIABLE, !!!var_list_eo),
+            vars = fct_recode(VARIABLE, !!!var_list_eo[!(var_list_eo %in% "XSHA")]),
             unit = as_factor(UNIT),
             time = lubridate::yq(obsTime),
             values = obsValue) %>%
