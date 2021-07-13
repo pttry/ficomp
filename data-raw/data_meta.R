@@ -24,6 +24,8 @@ agg_eurostat <- c("EA19", "EU28")
 eurostat_geos <- c("BE", "DK", "DE", "IE", "ES", "FR", "IT", "NL", "AT", "FI", "SE", "UK", "NO", "PT", "EL")
 
 tuku16 <- c("BE", "DK", "DE", "ES", "FR", "IT", "NL", "AT", "FI", "SE", "UK", "NO", "US", "JP", "KR", "CA")
+tuku_geos <- c(Suomi = "FI", Ruotsi = "SE", Saksa = "DE", Ranska = "FR",
+               euroalue = "EA19", "Itävalta" = "AT", Espanja = "ES")
 
 #9 other industrial countries (Australia, Canada, United States, Japan, Norway, New Zealand, Mexico, Switzerland and Turkey)
 # IC37_other <- c("AU", "CA", "US", "JP", "NO", "NZ", "MX", "CH", "TR")
@@ -64,7 +66,9 @@ main_nace10_sna <- c(TOTAL = "TOTAL", C = "C", F = "F", G = "G-I", H = "G-I",
 main_nace_sna_q <- c("TOTAL", "C", "F", "G-I", "J", "M_N")
 
 usethis::use_data(eurostat_geos, oecd_geos_ulcq, oecd_geos, all_geos,
-                  tuku16, geo20, geo21, geo14, geo_nace,
+                  tuku16,
+                  tuku_geos,
+                  geo20, geo21, geo14, geo_nace,
                   all_extra_geos, ameco_extra_geos,
                   main_nace_sna,
                   main_nace10_sna,
