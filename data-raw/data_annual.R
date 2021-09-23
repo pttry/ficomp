@@ -69,8 +69,8 @@ data_main_groups_a <-
                 ~weight_index2(.x, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),
                 .names = paste0("{col}_rel_ecfin15"))) %>%
   mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE), contains("_rel_")),
-                ~weight_index2(.x, geo, time, geos = geo20, weight_df = weights_ecfin37),
-                .names = paste0("{col}_rel_ecfin20"))) %>%
+                ~weight_index2(.x, geo, time, geos = geo17, weight_df = weights_ecfin37),
+                .names = paste0("{col}_rel_ecfin17"))) %>%
   mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE), contains("_rel_")),
                 ~weight_index2(.x, geo, time, geos = geo_nace, weight_df = weights_ecfin37),
                 .names = paste0("{col}_rel_ecfinnace"))) %>%
@@ -102,8 +102,8 @@ data_main_total_a <-
                 ~weight_index2(.x, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),
                 .names = paste0("{col}_rel_ecfin15"))) %>%
   mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE), contains("_rel_")),
-                ~weight_index2(.x, geo, time, geos = geo20, weight_df = weights_ecfin37),
-                .names = paste0("{col}_rel_ecfin20"))) %>%
+                ~weight_index2(.x, geo, time, geos = geo17, weight_df = weights_ecfin37),
+                .names = paste0("{col}_rel_ecfin17"))) %>%
   ungroup()
 
 # visdat::vis_dat(data_main_total_a)
@@ -145,8 +145,8 @@ data_main_annual <-
                 ~weight_index2(.x, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),
                 .names = paste0("{col}_rel_ecfin15"))) %>%
   mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE), contains("_rel_")),
-                ~weight_index2(.x, geo, time, geos = geo20, weight_df = weights_ecfin37),
-                .names = paste0("{col}_rel_ecfin20"))) %>%
+                ~weight_index2(.x, geo, time, geos = geo17, weight_df = weights_ecfin37),
+                .names = paste0("{col}_rel_ecfin17"))) %>%
   ungroup() %>%
   left_join(select(filter(eo_a_dat, time >= a_start_time),
                    geo, time, XPERF, XSHA, XGSVD, XMKT, eci), by = c("geo", "time")) %>%
@@ -197,8 +197,8 @@ data_long_annual <-
                 ~weight_index2(.x, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),
                 .names = paste0("{col}_rel_ecfin15"))) %>%
   mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE), contains("_rel_")),
-                ~weight_index2(.x, geo, time, geos = geo20, weight_df = weights_ecfin37),
-                .names = paste0("{col}_rel_ecfin20"))) %>%
+                ~weight_index2(.x, geo, time, geos = geo17, weight_df = weights_ecfin37),
+                .names = paste0("{col}_rel_ecfin17"))) %>%
   ungroup() %>%
   left_join(select(filter(eo_a_dat, time >= a_start_time),
                    geo, time, XPERF, XSHA, XGSVD, XMKT, eci), by = c("geo", "time")) %>%

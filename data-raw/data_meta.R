@@ -44,10 +44,13 @@ all_extra_geos <- c(eu_geo, other_eurostat_geo, c("AU", "CA", "US", "JP", "NO", 
 geo14 <- eurostat_geos  # setdiff(eurostat_geos, c("NL", "EL", "IE"))
 geo21 <- c(eurostat_geos, ameco_extra_geos)
 geo20 <- c(eurostat_geos, c("AU", "CA", "US", "JP", "CH"))
+geo17 <- c(setdiff(eurostat_geos, "UK"), c("US", "JP", "CH"))
 geo_nace <- setdiff(eurostat_geos, c("IE", "UK"))
 
 geo_fi <- setNames(countrycode::countrycode(all_extra_geos, "eurostat", "cldr.name.fi",
                                             custom_match = c(EA12 = "Euroalue-12")), all_extra_geos)
+
+geo_digi <- c("")
 
 nace0_fi <- c(total = "Koko talous",
               manu = "Teollisuus",
@@ -65,10 +68,12 @@ main_nace10_sna <- c(TOTAL = "TOTAL", C = "C", F = "F", G = "G-I", H = "G-I",
 
 main_nace_sna_q <- c("TOTAL", "C", "F", "G-I", "J", "M_N")
 
+
+
 usethis::use_data(eurostat_geos, oecd_geos_ulcq, oecd_geos, all_geos,
                   tuku16,
                   tuku_geos,
-                  geo20, geo21, geo14, geo_nace,
+                  geo17, geo20, geo21, geo14, geo_nace,
                   all_extra_geos, ameco_extra_geos,
                   main_nace_sna,
                   main_nace10_sna,

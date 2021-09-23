@@ -3,7 +3,7 @@
 theme_board <- function (base_size = 11, base_family = ""){
   ggptt::theme_ptt(base_size = base_size, base_family = base_family) +
     theme(
-      legend.text = ggplot2::element_text(size = ggplot2::rel(1.1)),
+      legend.text = ggplot2::element_text(size = ggplot2::rel(1)),
           axis.title = ggplot2::element_text(colour = "grey20", size = ggplot2::rel(0.8)),
           plot.subtitle = ggplot2::element_text(colour = "grey40"),
           plot.caption = ggplot2::element_text(size = ggplot2::rel(0.7), face = "plain", colour = "grey40"),

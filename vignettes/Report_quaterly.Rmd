@@ -520,7 +520,8 @@ dat_eff <-
   select(geo, time, exch_rt, values) %>% 
   spread(exch_rt, values)
 
-data_quartely_est_extra <- data_quartely_est %>% 
+data_quartely_est_extra <- 
+  data_quartely_est %>% 
   left_join(dat_eff, by = c("geo", "time")) %>% 
   # left_join(data_quartely_manu_est, by = c("geo", "time"), suffix = c("", "_manu")) %>% 
   group_by(time) %>%
@@ -529,7 +530,10 @@ data_quartely_est_extra <- data_quartely_est %>%
                          geos = setdiff(eurostat_geos, c("NL", "EL", "IE")), weight_df = weights_ecfin37)) %>%
   mutate(nulc_aper_eur_long_rel_fast =
            weight_index2(nulc_aper_eur_long, geo, time,
-                         geos = fast_geos, weight_df = weights_ecfin37)) %>%
+                         geos = fast_geos, weight_df = weights_ecfin37)) %>% 
+  mutate(rulc_aper_long_rel_fast =
+           weight_index2(rulc_aper_long, geo, time,
+                         geos = fast_geos, weight_df = weights_ecfin37)) %>% 
   ungroup()
 
 data_quartely_est_extra %>%
@@ -537,7 +541,9 @@ data_quartely_est_extra %>%
          # "14 maata" = nulc_aper_eur_long_rel_ecfin14_extra, 
          "20 maata" = nulc_aper_eur_long_rel_ecfin20,
          "10 maata" = nulc_aper_eur_long_rel_fast,
-         "EU komission" = REER_IC37_ULCT) %>% 
+         # "EU komission" = REER_IC37_ULCT,
+         "reaalinen, 10 maata" = rulc_aper_long_rel_fast,
+         "reaalinen, 20 maata" = rulc_aper_long_rel_ecfin20,) %>% 
   filter(geo == "FI",
          time >= start_time) %>% 
   gather(ind, values, -geo, -time) %>% 
@@ -576,7 +582,7 @@ data_quartely_est_extra_fi <-
 library(MacrobondAPI)
 
 mb_nulc_aper_eur_long_rel_fast <- MacrobondAPI::CreateTimeSeriesObject(name = "ih:mb:com:nulcefast",
-                                     description = "Suomen suhteelliset yksikkötyökustannukset samassa valuutassa, 10 maata", 
+                                     description = "Suomen nimelliset suhteelliset yksikkötyökustannukset samassa valuutassa, 10 maata", 
                                      region = "fi", 
                                      category = "National accounts", 
                                      frequency = "Quarterly", 
@@ -585,7 +591,7 @@ mb_nulc_aper_eur_long_rel_fast <- MacrobondAPI::CreateTimeSeriesObject(name = "i
                                      )
 
 mb_nulc_aper_eur_long_rel_ecfin14 <- MacrobondAPI::CreateTimeSeriesObject(name = "ih:mb:com:nulcecfin14",
-                                     description = "Suomen suhteelliset yksikkötyökustannukset samassa valuutassa, 14 maata", 
+                                     description = "Suomen nimelliset suhteelliset yksikkötyökustannukset samassa valuutassa, 14 maata", 
                                      region = "fi", 
                                      category = "National accounts", 
                                      frequency = "Quarterly", 
@@ -594,7 +600,7 @@ mb_nulc_aper_eur_long_rel_ecfin14 <- MacrobondAPI::CreateTimeSeriesObject(name =
                                      )
 
 mb_nulc_aper_eur_long_rel_ecfin20 <- MacrobondAPI::CreateTimeSeriesObject(name = "ih:mb:com:nulcecfin20",
-                                     description = "Suomen suhteelliset yksikkötyökustannukset samassa valuutassa, 20 maata", 
+                                     description = "Suomen nimelliset suhteelliset yksikkötyökustannukset samassa valuutassa, 20 maata", 
                                      region = "fi", 
                                      category = "National accounts", 
                                      frequency = "Quarterly", 
@@ -602,7 +608,16 @@ mb_nulc_aper_eur_long_rel_ecfin20 <- MacrobondAPI::CreateTimeSeriesObject(name =
                                      values = data_quartely_est_fi$nulc_aper_eur_long_rel_ecfin20[!is.na(data_quartely_est_fi$nulc_aper_eur_long_rel_ecfin20)]
                                      )
 
-UploadOneOrMoreTimeSeries(list(mb_nulc_aper_eur_long_rel_fast, mb_nulc_aper_eur_long_rel_ecfin20))
+mb_rulc_aper_long_rel_fast <- MacrobondAPI::CreateTimeSeriesObject(name = "ih:mb:com:rulcfast",
+                                     description = "Suomen reaaliset suhteelliset yksikkötyökustannukset, 10 maata", 
+                                     region = "fi", 
+                                     category = "National accounts", 
+                                     frequency = "Quarterly", 
+                                     startDateOrDates = data_quartely_est_extra_fi$time[!is.na(data_quartely_est_extra_fi$rulc_aper_long_rel_fast)],
+                                     values = data_quartely_est_extra_fi$rulc_aper_long_rel_fast[!is.na(data_quartely_est_extra_fi$rulc_aper_long_rel_fast)]
+                                     )
+
+UploadOneOrMoreTimeSeries(list(mb_nulc_aper_eur_long_rel_fast, mb_nulc_aper_eur_long_rel_ecfin20, mb_rulc_aper_long_rel_fast))
 
 
 ```

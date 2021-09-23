@@ -34,7 +34,7 @@ data("data_main_annual")
 pdat_annual <- data_main_annual %>% 
   filter(time >= 2000)
 
-mean_range <- 2000:max(data_main_annual$time)
+mean_range <- 2000:(max(data_main_annual$time))
 
 geos <- c(Suomi = "FI", Ruotsi = "SE", Saksa = "DE", Ranska = "FR", 
           euroalue = "EA19", "Itävalta" = "AT", Espanja = "ES")
@@ -68,17 +68,17 @@ save_board_figs("Kuvio_5_1", height = fig_height, save_data = TRUE)
 ```
 
 
-## Koko talouden nimelliset shteelliset yksikkötyökustannukset
+## Koko talouden nimelliset suhteelliset yksikkötyökustannukset
 
 ```{r}
 
 
 
-pdat_annual %>% 
+pdat_annual %>%  # select(time, geo, nulc_aper) |> spread(geo, nulc_aper) |> tail()
   filter(geo == "FI") %>% 
   select(geo, time, 
-         "Omassa valuutassa" = nulc_aper_rel_ecfin20, 
-         "Samassa valuutassa" = nulc_aper_eur_rel_ecfin20) %>% 
+         "Omassa valuutassa" = nulc_aper_rel_ecfin17, 
+         "Samassa valuutassa" = nulc_aper_eur_rel_ecfin17) %>% 
   gather(vars, values, -geo, -time) %>% 
   group_by(geo, vars) %>% 
   mutate(values = rebase(values, time, mean_range)) %>% 
@@ -100,11 +100,11 @@ save_board_figs("Kuvio_5_2", height = fig_height, save_data = TRUE)
 
 pdat_annual %>% 
   filter(geo == "FI") %>% 
-  mutate(exch_eur_rel_ecfin20 = 1/ exch_eur_rel_ecfin20) %>% 
+  mutate(exch_eur_rel_ecfin17 = 1/ exch_eur_rel_ecfin17) %>% 
   select(geo, time, 
-         "Tuottavuus" = lp_ind_rel_ecfin20, 
-         "Palkansaajakorvaukset" =  d1_per_ind_rel_ecfin20, 
-         "Valuuttakurssi" = exch_eur_rel_ecfin20) %>% 
+         "Tuottavuus" = lp_ind_rel_ecfin17, 
+         "Palkansaajakorvaukset" =  d1_per_ind_rel_ecfin17, 
+         "Valuuttakurssi" = exch_eur_rel_ecfin17) %>% 
   gather(vars, values, -geo, -time) %>% 
   group_by(geo, vars) %>% 
   mutate(values = rebase(values, time, mean_range)) %>% 
@@ -116,7 +116,7 @@ pdat_annual %>%
   labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
   the_legend_bot()
 
-save_board_figs("Kuvio_5_6", height = fig_height, save_data = TRUE)
+save_board_figs("Kuvio_5_2", height = fig_height, save_data = TRUE)
 
 ```
 
@@ -128,8 +128,8 @@ save_board_figs("Kuvio_5_6", height = fig_height, save_data = TRUE)
 pdat_annual %>% 
   filter(geo == "FI") %>% 
   select(geo, time, 
-         "Vaihtosuhdekorjattu" = nulc_aper_eur_atot_rel_ecfin20, 
-        "Normaali" =  nulc_aper_eur_rel_ecfin20) %>% 
+         "Vaihtosuhdekorjattu" = nulc_aper_eur_atot_rel_ecfin17, 
+        "Normaali" =  nulc_aper_eur_rel_ecfin17) %>% 
   gather(vars, values, -geo, -time) %>% 
   group_by(geo, vars) %>% 
   mutate(values = rebase(values, time, mean_range)) %>% 
@@ -151,8 +151,8 @@ pdat_annual %>%
 data_main_annual %>% 
   filter(geo == "FI") %>% 
   select(geo, time, 
-         "Vaihtosuhdekorjattu" = nulc_aper_eur_atot_rel_ecfin20, 
-        "Normaali" =  nulc_aper_eur_rel_ecfin20) %>% 
+         "Vaihtosuhdekorjattu" = nulc_aper_eur_atot_rel_ecfin17, 
+        "Normaali" =  nulc_aper_eur_rel_ecfin17) %>% 
   gather(vars, values, -geo, -time) %>% 
   group_by(geo, vars) %>% 
   mutate(values = rebase(values, time, 2010),
@@ -179,10 +179,10 @@ save_board_figs("Kuvio_5_4", height = fig_height, save_data = TRUE)
 pdat_annual %>% 
   filter(geo == "FI") %>% 
   select(geo, time, 
-         "Nimellinen, vaihtosuhdekorjattu" = nulc_aper_eur_atot_rel_ecfin20, 
-        "Nimellinen, samassa valuutassa" =  nulc_aper_eur_rel_ecfin20,
-        "Reaalinen" =  rulc_aper_rel_ecfin20, 
-        "Nimellinen, omassa valuutassa" = nulc_aper_rel_ecfin20) %>% 
+         "Nimellinen, vaihtosuhdekorjattu" = nulc_aper_eur_atot_rel_ecfin17, 
+        "Nimellinen, samassa valuutassa" =  nulc_aper_eur_rel_ecfin17,
+        "Reaalinen" =  rulc_aper_rel_ecfin17, 
+        "Nimellinen, omassa valuutassa" = nulc_aper_rel_ecfin17) %>% 
   gather(vars, values, -geo, -time) %>% 
   group_by(geo, vars) %>% 
   mutate(values = rebase(values, time, mean_range)) %>% 
@@ -195,7 +195,7 @@ pdat_annual %>%
   the_legend_bot() +
   guides(color = guide_legend(nrow = 2)) 
   
-save_board_figs("Kuvio_5_5", height = fig_height, save_data = TRUE)
+save_board_figs("Kuvio_5_1", height = fig_height, save_data = TRUE)
 
 ```
 
@@ -208,11 +208,11 @@ data_main_annual %>%
          eur__ecfin_15 = weight_index2(nulc_aper_eur, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),
          eur__imf_15 = weight_index2(nulc_aper_eur, geo, geos = eurostat_geos, time, weight_df = weights_imf),
 
-         eur__ecfin_20 = weight_index2(nulc_aper_eur, geo, geos = geo20, time, weight_df = weights_ecfin37),
+         eur__ecfin_17 = weight_index2(nulc_aper_eur, geo, geos = geo17, time, weight_df = weights_ecfin37),
          own__bis_15 = weight_index2(nulc_aper, geo, time, geos = eurostat_geos, weight_df = weights_bis_broad),
          own__ecfin_15 = weight_index2(nulc_aper, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),
          own__imf_15 = weight_index2(nulc_aper, geo, geos = eurostat_geos, time, weight_df = weights_imf),
-         own__ecfin_20 = weight_index2(nulc_aper, geo, geos = geo20, time, weight_df = weights_ecfin37)
+         own__ecfin_17 = weight_index2(nulc_aper, geo, geos = geo17, time, weight_df = weights_ecfin37)
          ) %>% 
   select(-nulc_aper_eur, -nulc_aper) %>%
   filter(geo == "FI") %>% 
@@ -243,9 +243,36 @@ q_dat %>%
   select(time, geo, "Palkasaajakorvaukset" = d1_hw_ind, "Yksikkötyökustannukset" = nulc_hw_va_eur, "Työn tuottavuus" = lp_hw_ind) %>% 
   gather(vars, values, -geo, -time) %>% 
   group_by(geo, vars) %>% 
-  mutate(values = rebase(values, time, 2015)) %>% 
+  mutate(values = rebase(values, time, 2019)) %>% 
   ungroup() %>% 
-  filter(geo %in% covid_geo, time >= "2015-01-01") %>% 
+  filter(geo %in% covid_geo, time >= "2019-01-01") %>% 
+  mutate(geo = fct_relevel(geo, covid_geo)) %>%
+  mutate(high_geo = geo == "FI") %>% 
+  translate(geo, geo_fi) %>% 
+  ggplot(aes(time, values, color = geo, size = high_geo)) +
+  facet_wrap(~ vars) +
+  geom_line() +
+  scale_size_manual(values = c(1, 2), guide = "none") +
+  scale_x_date(date_labels = "%Y", date_breaks = "1 year") +
+  the_title_blank(c("x", "l")) +
+  labs(y = "indeksi, 2015 = 100") +
+  the_legend_bot()
+  
+ 
+save_board_figs("Kuvio_5_3", height = fig_height, save_data = TRUE) 
+
+```
+```{r, fig.height=5.1}
+
+covid_geo <- c("FI", "SE", "DE", "DK", "IT", "AT", "ES")
+
+q_dat %>% 
+  select(time, geo, "Palkasaajakorvaukset" = d1_hw_ind, "Yksikkötyökustannukset" = nulc_hw_va_eur, "Työn tuottavuus" = lp_hw_ind, gdp_ind, emp_ind, EMP_DC__THS_HW) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, 2019)) %>% 
+  ungroup() %>% 
+  filter(geo %in% covid_geo, time >= "2019-01-01") %>% 
   mutate(geo = fct_relevel(geo, covid_geo)) %>%
   mutate(high_geo = geo == "FI") %>% 
   translate(geo, geo_fi) %>% 
@@ -254,14 +281,29 @@ q_dat %>%
   geom_line() +
   scale_size_manual(values = c(1, 2), guide = "none") +
   the_title_blank(c("x", "l")) +
-  labs(y = "indeksi, 2015 = 100") +
+  labs(y = "indeksi, 2019 = 100") +
   the_legend_bot()
   
+q_dat %>% 
+  select(time, geo, EMP_DC__THS_HW) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, 2019)) %>% 
+  ungroup() %>% 
+  filter(geo %in% covid_geo, time >= "2019-01-01") %>% 
+  mutate(geo = fct_relevel(geo, covid_geo)) %>%
+  mutate(high_geo = geo == "FI") %>% 
+  translate(geo, geo_fi) %>% 
+  ggplot(aes(time, values, color = geo, size = high_geo)) +
+  facet_wrap(~ vars) +
+  geom_line() +
+  scale_size_manual(values = c(1, 2), guide = "none") +
+  the_title_blank(c("x", "l")) +
+  labs(y = "indeksi, 2019 = 100") +
+  the_legend_bot()
  
-save_board_figs("Kuvio_6_1", height = fig_height, save_data = TRUE) 
 
 ```
-
 
 ```{r}
 q_dat %>% 
