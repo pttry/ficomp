@@ -63,7 +63,7 @@ q_dat %>%
   the_legend_bot() +
   guides(colour = guide_legend(nrow = 3))
 
-save_board_figs("Kuvio_5_1", height = fig_height, save_data = TRUE)
+# save_board_figs("Kuvio_5_1", height = fig_height, save_data = TRUE)
 
 ```
 
@@ -113,10 +113,12 @@ pdat_annual %>%
   geom_line() +
   the_title_blank(c("x", "l")) +
   geom_hline(yintercept = 100) +
-  labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
+  labs(y = glue("Indeksi, keskiarvo {min(mean_range)}–{max(mean_range)} = 100")) +
   the_legend_bot()
 
 save_board_figs("Kuvio_5_2", height = fig_height, save_data = TRUE)
+
+save_board_figs("Kuvio_5_2_en", plot = ggptt::translate_plot(last_plot(), fig_translation), height = fig_height, save_data = TRUE)
 
 ```
 
@@ -191,11 +193,15 @@ pdat_annual %>%
   geom_line() +
   the_title_blank(c("x", "l")) +
   geom_hline(yintercept = 100) +
-   labs(y = glue("Indeksi, keskiarvo {min(mean_range)} - {max(mean_range)} = 100")) +
+   labs(y = glue("Indeksi, keskiarvo {min(mean_range)}–{max(mean_range)} = 100")) +
   the_legend_bot() +
   guides(color = guide_legend(nrow = 2)) 
   
 save_board_figs("Kuvio_5_1", height = fig_height, save_data = TRUE)
+
+
+
+save_board_figs("Kuvio_5_1_en", plot = ggptt::translate_plot(last_plot(), fig_translation), height = fig_height, save_data = TRUE)
 
 ```
 
@@ -240,7 +246,7 @@ save_board_figs("Kuvio_5_3", height = fig_height, save_data = TRUE)
 covid_geo <- c("FI", "SE", "DE", "DK", "IT", "AT", "ES")
 
 q_dat %>% 
-  select(time, geo, "Palkasaajakorvaukset" = d1_hw_ind, "Yksikkötyökustannukset" = nulc_hw_va_eur, "Työn tuottavuus" = lp_hw_ind) %>% 
+  select(time, geo, "Palkansaajakorvaukset" = d1_hw_ind, "Yksikkötyökustannukset" = nulc_hw_va_eur, "Työn tuottavuus" = lp_hw_ind) %>% 
   gather(vars, values, -geo, -time) %>% 
   group_by(geo, vars) %>% 
   mutate(values = rebase(values, time, 2019)) %>% 
@@ -261,7 +267,10 @@ q_dat %>%
  
 save_board_figs("Kuvio_5_3", height = fig_height, save_data = TRUE) 
 
+save_board_figs("Kuvio_5_3_en", plot = ggptt::translate_plot(last_plot(), fig_translation), height = fig_height, save_data = TRUE)
+
 ```
+
 ```{r, fig.height=5.1}
 
 covid_geo <- c("FI", "SE", "DE", "DK", "IT", "AT", "ES")
