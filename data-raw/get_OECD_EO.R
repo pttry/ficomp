@@ -74,8 +74,8 @@ eo_q_dat <-
   transmute(geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat")),
             vars = fct_recode(VARIABLE, !!!var_list_eo[!(var_list_eo %in% "XSHA")]),
             unit = as_factor(UNIT),
-            time = lubridate::yq(obsTime),
-            values = obsValue) %>%
+            time = lubridate::yq(Time),
+            values = as.numeric(ObsValue)) %>%
   filter(time >= start_eo,
          !(geo %in% c("NO", "DK", "NZ", "ES"))) %>%
   droplevels() %>%
@@ -105,8 +105,8 @@ eo_q_dat_large <-
   transmute(geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat")),
             vars = fct_recode(VARIABLE, !!!var_list_eo[!(var_list_eo %in% "XSHA")]),
             unit = as_factor(UNIT),
-            time = lubridate::yq(obsTime),
-            values = obsValue) %>%
+            time = lubridate::yq(Time),
+            values = as.numeric(ObsValue)) %>%
   # filter(year > 1990, year < 2019,
   #        !(geo %in% c("DK", "CH", "ES"))) %>%
   droplevels() %>%
@@ -129,8 +129,8 @@ eo_a_dat <-
   transmute(geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat")),
             vars = fct_recode(VARIABLE, !!!var_list_eo),
             unit = as_factor(UNIT),
-            time = as.numeric(obsTime),
-            values = obsValue) %>%
+            time = as.numeric(Time),
+            values = as.numeric(ObsValue)) %>%
   filter(time >= lubridate::year(start_eo)) %>%
   select(-unit) %>%
   complete(geo, time, vars) %>%

@@ -48,11 +48,11 @@ ulc_oecd_dat0 <-
 
 ulc_oecd_dat <- ulc_oecd_dat0 %>%
   transmute(
-    time = yq(obsTime),
+    time = yq(Time),
     geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat", nomatch = NULL)),
     na_item = fct_recode(SUBJECT, !!!ulc_subjects),
     unit = as_factor("I15"),
-    values = obsValue)
+    values = as.numeric(ObsValue))
 
 
 usethis::use_data(ulc_oecd_dat, overwrite = TRUE)
@@ -104,12 +104,12 @@ oecd_dat_Q_0 <- get_dataset(dataset = qna_id,
 
 oecd_dat_Q <- oecd_dat_Q_0 %>%
   transmute(
-    time = yq(obsTime),
+    time = yq(Time),
     geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat", nomatch = NULL)),
     na_item = fct_recode(SUBJECT, !!!qna_subjects),
     unit = fct_recode(MEASURE, !!!qna_measures),
     currency = as_factor(UNIT),
-    values = obsValue) %>%
+    values = as.numeric(ObsValue)) %>%
   filter(!(na_item == "B11" & unit == "CLV_MNAC")) # constant p balance not needed
 
 
@@ -191,12 +191,12 @@ dat_oecd_sna7a_0 <- get_dataset(dataset = "SNA_TABLE7A",
 
 dat_oecd_sna <- dat_oecd_sna1_0 %>%
   transmute(
-    time = as.numeric(obsTime),
+    time = as.numeric(Time),
     geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat", nomatch = NULL)),
     na_item = fct_recode(TRANSACT, !!!sna1_transact),
     unit = fct_recode(MEASURE, !!!sna_measures),
     currency = as_factor(UNIT),
-    values = obsValue) %>%
+    values = as.numeric(ObsValue)) %>%
   mutate(nace_r2 = "TOTAL")  %>%
   unite(vars, na_item, unit, sep = "__") %>%
   mutate(vars = as_factor(vars)) %>%
@@ -204,25 +204,28 @@ dat_oecd_sna <- dat_oecd_sna1_0 %>%
 
 dat_oecd_sna6a <- dat_oecd_sna6a_0 %>%
   transmute(
-    time = as.numeric(obsTime),
+    time = as.numeric(Time),
     geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat", nomatch = NULL)),
     nace_r2 = fct_recode(ACTIVITY, !!!sna_activity),
     na_item = fct_recode(TRANSACT, !!!sna6a_transact),
     unit = fct_recode(MEASURE, !!!sna_measures),
     currency = as_factor(UNIT),
-    values = obsValue)  %>%
+    values = as.numeric(ObsValue))  %>%
+  # Korjaa Japanin puuttuva currency osassa tiedoista
+  mutate(currency = if_else(is.na(currency) & geo == "JP", factor("JPY", levels = c("JPY", "USD")), currency)) |>
+  #
   unite(vars, na_item, unit, sep = "__") %>%
   mutate(vars = as_factor(vars)) %>%
   spread(vars, values)
 
 dat_oecd_sna7a <- dat_oecd_sna7a_0 %>%
   transmute(
-    time = as.numeric(obsTime),
+    time = as.numeric(Time),
     geo = as_factor(countrycode(LOCATION, "iso3c", "eurostat", nomatch = NULL)),
     nace_r2 = fct_recode(ACTIVITY, !!!sna_activity),
     na_item = fct_recode(TRANSACT, !!!sna7a_transact),
     unit = fct_recode(MEASURE, !!!sna7a_measures),
-    values = obsValue) %>%
+    values = as.numeric(ObsValue)) %>%
   unite(vars, na_item, unit, sep = "__") %>%
   mutate(vars = as_factor(vars)) %>%
   spread(vars, values)

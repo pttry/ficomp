@@ -31,6 +31,8 @@ Imports:
     ggthemes
 Suggests:
     visdat
+Remotes:
+    github::jhuovari/uljas
 VignetteBuilder: knitr
 Depends: 
     R (>= 2.10)
