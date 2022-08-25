@@ -1,0 +1,219 @@
+---
+title: "Palkat ja niiden ennusteet"
+output: rmarkdown::html_document
+vignette: >
+  %\VignetteIndexEntry{Palkat ja niiden ennusteet}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(tidyverse)
+library(ggptt)
+# library(ficomp)
+library(pttdatahaku)
+
+devtools::load_all()
+
+start_year <- 2000
+set_ptt()
+
+geo_wage <- c("BE", "DK", "DE", "ES", "FR", "IT", "NL", "AT", "FI", "SE", "UK", "NO", "US")
+
+ameco7_0 <- ficomp::read_ameco(table_num = 7)
+
+ameco7_I <- 
+  ameco7_0 |> 
+  separate(code, into = c("geo", NA, "desc", "unit_code", "rel", "vars"), sep = "\\.", remove = FALSE) |> 
+  mutate(geo = as_factor(countrycode::countrycode(geo, "iso3c", "eurostat",
+                                                  nomatch = NULL,
+                                                  custom_match = c(ROM = "RO")))) |> 
+  mutate_if(is.character, as_factor) |> 
+  filter(desc %in% c(0,1))  # Only current values weights, 2 is PPS weights (it seems)
+
+# ameco7_I |> 
+#   filter(geo == "US",
+#          rel == "0") |> 
+#   unite("title_unit", title, unit) |> 
+#   filter(time >= 2021) |> 
+#   droplevels() |> #str()
+#   select(title_unit, unit_code ,time, values) |> 
+#   spread(time, values) |> 
+#   knitr::kable()
+
+
+```
+
+## Komission ennusteet
+
+Ameco tietokanta sisältää komission ennusteet.
+
+EU ja EA aggregaatit eivät vastaa ennustejulkaisun Statistics annexin lukuja, vaikka maiden luvut vastaavat.
+
+Sain selitykseksi tämän:
+Please note that table 26 in the Statistical Annex is based on full-time equivalents when available. See note 6 in the Annex:
+“Employment data used in tables 24 and 26-30 are based on full-time equivalents (FTEs), where available. Currently, Spain, France, Italy, and the Netherlands report FTE data. In the absence of FTE data, employment is based on numbers of persons. In the calculation of EU and euro-area aggregates, priority is given to FTE data, as this is regarded as more representative of diverse patterns of working time”
+
+By contrast the AMECO variable is based on numbers of persons.
+
+
+### Nominal compensation per employee: total economy 
+
+```{r}
+
+ameco7_I |> 
+  filter(
+    rel == "0",
+    # Standard aggregation
+    desc == "0",
+    title == "Nominal compensation per employee: total economy ",
+    # national currency
+    unit_code == "0"
+    ) |> 
+  filter(time >= max(time)-4) |> 
+  select(country, time, values) |> 
+  complete(country, time) |> 
+  group_by(country) |> 
+  mutate(values = pc(values, 1, order_by = time)) |> 
+  ungroup() |> 
+  filter(time >= max(time)-3) |> 
+  spread(time, values) |> 
+  drop_na() |>
+  arrange(across(last_col())) |> 
+  knitr::kable(digits = 1)
+
+
+ 
+```
+
+```{r}
+
+ameco7_I |> 
+  filter(
+    geo %in% geo_wage,
+    rel == "0",
+    # Standard aggregation
+    desc == "0",
+    title == "Nominal compensation per employee: total economy ",
+    # national currency
+    unit_code == "0"
+    ) |> 
+  filter(time >= start_year) |> 
+  # select(country, time, values) |> 
+  group_by(country) |> 
+  mutate(values = pc(values, 1, order_by = time)) |> 
+  ungroup() |> 
+  ggplot(aes(time, values, colour = country, size = geo == "FI")) +
+  geom_line()+
+  scale_size_manual(values = c(1,3)) +
+  labs(
+    title = "Nominal compensation per employee"
+  )
+
+```
+
+### Suhteelliset
+
+Ameco sisältää myös suhteellisia 
+
+```{r}
+
+ameco7_I |> 
+  filter_recode(
+    geo = "FI",
+    # rel == "0",
+    # Standard aggregation
+    desc = "0",
+    title = c(
+      "EU-15" = "Nominal compensation per employee: total economy: Relative performance: double export weights :- Performance relative to the rest of the former EU-15: double export weights ",
+      "Teollisuusmaat_24" = "Nominal compensation per employee: total economy: Relative performance: double export weights :- Performance relative to the rest of 24 industrial countries: double export weights : EU-15, TR CH NR US CA JP AU MX and NZ",
+      "Teollisuusmaat_12" = "Nominal compensation per employee: total economy: Relative performance: double export weights :- Performance relative to  12 industrial countries (DK SE UK TR CH NO US CA MX JP AU NZ)",
+      "Teollisuusmaat_9" = "Nominal compensation per employee: total economy: Relative performance: double export weights :- Performance relative to  9 industrial countries (TR CH NO US CA MX JP AU NZ)", 
+       "Teollisuusmaat_37" = "Nominal compensation per employee: total economy: Relative performance: double export weights :- Performance relative to the rest of 37 industrial countries: double export weights "),
+    # national currency
+    unit_code = "0"
+    ) |> 
+  filter(time >= start_year) |> 
+  # select(country, time, values) |> 
+  # group_by(title) |> 
+  # mutate(values = pc(values, 1, order_by = time)) |> 
+  # ungroup() |> 
+  ggplot(aes(time, values, colour = title, size = geo == "FI")) +
+  geom_line()+
+  scale_size_manual(values = c(1,3)) +
+  labs(
+    title = "Nominal compensation per employee"
+  )
+
+```
+
+Suhteelliset eivät kuitenkaan sisällä ennusteita, joten oma suhteellinen ennusteiden kanssa:
+
+```{r}
+
+ameco7_rel <- 
+  ameco7_I |> 
+  filter_recode(
+    geo = c(geo17),
+    rel = "0",
+    # Standard aggregation
+    desc = "0",
+    title = "Nominal compensation per employee: total economy ",
+    # national currency
+    unit_code = "0"
+    ) |> 
+  filter(time >= start_year) |> 
+  group_by(geo) |> 
+  mutate(values = rebase(values, time, 2015)) |> 
+  group_by(time) |> 
+  mutate(rel = weight_index2(values, geo, time, geos = geo17, weight_df = weights_ecfin37)) |> 
+  ungroup()
+  
+  
+ameco7_rel |> 
+  filter(geo == "FI") |> 
+  ggplot(aes(time, rel)) +
+  geom_line()+
+  # scale_size_manual(values = c(1,3)) +
+  labs(
+    title = "Nimelliset palkansaajakorvaukset suhteessa kauppakumppaneihin\nEU komission ennuste"
+  )
+
+
+```
+
+## OECD Economic outlook
+
+Compensation rate, total economy
+per palkansaajat (EE)
+
+```{r}
+
+eo_a_dat |> 
+  filter(geo %in% geo_wage) |> 
+  select(geo, time, values = D1_aper__CP_MNAC) |> 
+  filter(time >= start_year) |> 
+  # select(country, time, values) |> 
+  group_by(geo) |> 
+  mutate(values = pc(values, 1, order_by = time)) |> 
+  ungroup() |> 
+  ggplot(aes(time, values, colour = geo, size = geo == "FI")) +
+  geom_line() +
+  scale_size_manual(values = c(1,3)) +
+  labs(
+    title = "Compensation rate, total economy"
+  )
+
+
+```
+
