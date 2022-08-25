@@ -47,7 +47,10 @@ var_list_eo <- c(nulc = "ULC",
                  XPERF = "XPERF",
                  XSHA = "XSHA",
                  XGSVD = "XGSVD",
-                 XMKT = "XMKT"
+                 XMKT = "XMKT",
+                 WRT = "WRT",
+                 D1_aper__CP_MNAC  = "WSST",
+                 EE = "EE"
                  )
 
 

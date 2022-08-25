@@ -22,6 +22,8 @@ ameco7_0 <- read_ameco(table_num = 7)
 ameco9_0 <- read_ameco(table_num = 9)
 #  BALANCES WITH THE REST OF THE WORLD
 ameco10_0 <- read_ameco(table_num = 10)
+# National Accounts by Branch Of Activity
+ameco12_0 <- read_ameco(table_num = 12)
 
 
 # Table 1
@@ -79,10 +81,11 @@ ameco6 <- ameco6_0 %>%
 # Table 7
 
 ameco7_vars <- c(
-  "UWCD", "PLCD", "PLCDQ", "QLCD", "QLCDQ"
+  "UWCD", "PLCD", "PLCDQ", "QLCD", "QLCDQ", "HWCDW"
 )
 
 ameco7_vars_trans <- c(
+  D1_aper__CP_MNAC = "HWCDW_0_0_0",
   D1__CP_MNAC = "UWCD_0_0_0",
   D1__CP_MEUR = "UWCD_99_0_0",
   D1__CP_PPS = "UWCD_212_0_0",
