@@ -1,0 +1,109 @@
+---
+title: "Hintakilpailukyky"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", 
+  fig.height = 4.1,
+  fig.width = 6.3,
+  fig.path = "Comp_board/", 
+  echo = FALSE, message = FALSE, warning = FALSE
+)
+
+
+# library(ficomp)
+
+devtools::load_all()
+
+library(dplyr)
+library(forcats)
+library(ggplot2)
+library(tidyr)
+library(ggptt)
+library(glue)
+library(ggthemes)
+
+set_board_theme(base_size = 10)
+fig_height <- 10
+
+data("data_main_annual")
+
+pdat_annual <- data_main_annual %>% 
+  filter(time >= 2000)
+
+mean_range <- 2000:(max(data_main_annual$time))
+
+geos <- c(Suomi = "FI", Ruotsi = "SE", Saksa = "DE", Ranska = "FR", 
+          euroalue = "EA19", "Itävalta" = "AT", Espanja = "ES")
+
+```
+
+
+
+
+
+
+## Nimellisen suhteellisen yksikkötyökustannuksen osatekijät
+
+```{r}
+
+pdat_annual %>% 
+  filter(geo == "FI") %>% 
+  mutate(exch_eur_rel_ecfin17 = 1/ exch_eur_rel_ecfin17) %>% 
+  select(geo, time, 
+         "Tuottavuus" = lp_ind_rel_ecfin17, 
+         "Palkansaajakorvaukset" =  d1_per_ind_rel_ecfin17, 
+         "Valuuttakurssi" = exch_eur_rel_ecfin17) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, mean_range)) %>% 
+  ungroup() %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  geom_hline(yintercept = 100) +
+  labs(y = glue("Indeksi, keskiarvo {min(mean_range)}–{max(mean_range)} = 100")) +
+  the_legend_bot()
+
+save_board_figs("Kuvio_2_2", height = fig_height, save_data = TRUE)
+
+save_board_figs("Kuvio_2_2_en", plot = ggptt::translate_plot(last_plot(), fig_translation), height = fig_height, save_data = TRUE)
+
+```
+
+
+
+
+
+
+```{r}
+
+pdat_annual %>% 
+  filter(geo == "FI") %>% 
+  select(geo, time, 
+         "Nimellinen, vaihtosuhdekorjattu" = nulc_aper_eur_atot_rel_ecfin17, 
+        "Nimellinen, samassa valuutassa" =  nulc_aper_eur_rel_ecfin17,
+        "Reaalinen" =  rulc_aper_rel_ecfin17, 
+        "Nimellinen, omassa valuutassa" = nulc_aper_rel_ecfin17) %>% 
+  gather(vars, values, -geo, -time) %>% 
+  group_by(geo, vars) %>% 
+  mutate(values = rebase(values, time, mean_range)) %>% 
+  ungroup() %>% 
+  ggplot(aes(time, values, color = vars)) +
+  geom_line() +
+  the_title_blank(c("x", "l")) +
+  geom_hline(yintercept = 100) +
+   labs(y = glue("Indeksi, keskiarvo {min(mean_range)}–{max(mean_range)} = 100")) +
+  the_legend_bot() +
+  guides(color = guide_legend(nrow = 2)) 
+  
+save_board_figs("Kuvio_2_1", height = fig_height, save_data = TRUE)
+
+
+
+save_board_figs("Kuvio_2_1_en", plot = ggptt::translate_plot(last_plot(), fig_translation), height = fig_height, save_data = TRUE)
+
+```
