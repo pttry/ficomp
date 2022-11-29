@@ -31,6 +31,8 @@ fig_height <- 10
 
 data("data_main_annual")
 
+fig_translation <- pRoductivity::fig_translation
+
 pdat_annual <- data_main_annual %>% 
   filter(time >= 2000)
 
@@ -50,7 +52,7 @@ geos <- c(Suomi = "FI", Ruotsi = "SE", Saksa = "DE", Ranska = "FR",
 
 ```{r}
 
-pdat_annual %>% 
+p <- pdat_annual %>% 
   filter(geo == "FI") %>% 
   mutate(exch_eur_rel_ecfin17 = 1/ exch_eur_rel_ecfin17) %>% 
   select(geo, time, 
@@ -65,23 +67,23 @@ pdat_annual %>%
   geom_line() +
   the_title_blank(c("x", "l")) +
   geom_hline(yintercept = 100) +
-  labs(y = glue("Indeksi, keskiarvo {min(mean_range)}–{max(mean_range)} = 100")) +
+  labs(y = glue("Indeksi, keskiarvo {min(mean_range)}-{max(mean_range)} = 100")) +
   the_legend_bot()
 
-save_board_figs("Kuvio_2_2", height = fig_height, save_data = TRUE)
+save_board_figs("Kuvio_2_2", plot = p, height = fig_height, save_data = TRUE)
 
-save_board_figs("Kuvio_2_2_en", plot = ggptt::translate_plot(last_plot(), fig_translation), height = fig_height, save_data = TRUE)
+save_board_figs("Kuvio_2_2_en", plot = ggptt::translate_plot(p, fig_translation), height = fig_height, save_data = TRUE)
 
 ```
 
 
 
 
-
+Indeksi, keskiarvo 2000-2021 = 100
 
 ```{r}
 
-pdat_annual %>% 
+p <- pdat_annual %>% 
   filter(geo == "FI") %>% 
   select(geo, time, 
          "Nimellinen, vaihtosuhdekorjattu" = nulc_aper_eur_atot_rel_ecfin17, 
@@ -96,14 +98,16 @@ pdat_annual %>%
   geom_line() +
   the_title_blank(c("x", "l")) +
   geom_hline(yintercept = 100) +
-   labs(y = glue("Indeksi, keskiarvo {min(mean_range)}–{max(mean_range)} = 100")) +
+   labs(y = glue("Indeksi, keskiarvo {min(mean_range)}-{max(mean_range)} = 100")) +
   the_legend_bot() +
   guides(color = guide_legend(nrow = 2)) 
+
+p
   
-save_board_figs("Kuvio_2_1", height = fig_height, save_data = TRUE)
+save_board_figs("Kuvio_2_1", plot = p, height = fig_height, save_data = TRUE)
 
 
 
-save_board_figs("Kuvio_2_1_en", plot = ggptt::translate_plot(last_plot(), fig_translation), height = fig_height, save_data = TRUE)
+save_board_figs("Kuvio_2_1_en", plot = ggptt::translate_plot(p, fig_translation), height = fig_height, save_data = TRUE)
 
 ```
