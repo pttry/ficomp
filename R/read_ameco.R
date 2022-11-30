@@ -6,19 +6,27 @@
 #'
 #' @export
 #'
-#' @import dplyr
+#' @import dplyr readr
 #'
-read_ameco <- function(table_num){
+read_ameco <- function(table_num, ameco_file = NULL){
+
+  if (is.null(ameco_file)){
+
   link <- paste0("http://ec.europa.eu/economy_finance/db_indicators/ameco/documents/ameco", table_num, ".zip")
   tempf <- tempfile(fileext = ".zip")
+  on.exit(unlink(tempf))
 
   download.file(link, tempf)
-  ameco_file <- unzip(tempf, paste0("AMECO", table_num,".TXT"), junkpaths = TRUE, exdir = tempdir())
+  file <- tempf
+  ameco_file <- unzip(file, paste0("AMECO", table_num,".TXT"), junkpaths = TRUE, exdir = tempdir())
+
+  }
+
 
 
   ameco_0 <- readr::read_delim(
     ameco_file, delim = ";",
-  col_types = cols(
+  col_types = readr::cols(
     CODE = col_character(),
     COUNTRY = col_factor(),
     "SUB-CHAPTER" = col_factor(),
@@ -30,7 +38,7 @@ read_ameco <- function(table_num){
   tidyr::gather(time, values, starts_with("x")) %>%
   mutate(time = as.numeric(gsub("x", " ", time)))
 
-  unlink(tempf)
+
 
   ameco_0
 }

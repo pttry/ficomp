@@ -28,9 +28,11 @@ devtools::load_all()
 start_year <- 2000
 set_board_theme(base_size = 10)
 
+fig_translation <- pRoductivity::fig_translation
+
 geo_wage <- c("BE", "DK", "DE", "ES", "FR", "IT", "NL", "AT", "FI", "SE", "UK", "NO", "US")
 
-ameco7_0 <- ficomp::read_ameco(table_num = 7)
+ameco7_0 <- ficomp::read_ameco(table_num = 7, ameco_file = here::here("data-raw/AMECO7_2022spring.TXT"))
 
 ameco7_I <- 
   ameco7_0 |> 
@@ -205,7 +207,7 @@ eo_rel <-
                              weight_df = weights_ecfin37)) |> 
   ungroup()
 
-bind_rows(
+p <- bind_rows(
   EU = select(ameco7_rel, geo, time, values, rel),
   OECD = eo_rel,
   .id = "source"
@@ -236,7 +238,11 @@ bind_rows(
   the_legend_bot() +
   guides(colour = guide_legend(nrow = 2), size = guide_legend(nrow = 2))
 
-save_board_figs("Kuvio_2_6", height = fig_height, save_data = TRUE)
+p
+
+save_board_figs("Kuvio_2_6", plot = p, height = fig_height, save_data = TRUE)
+
+save_board_figs("Kuvio_2_6_en", plot = ggptt::translate_plot(p + labs(caption = NULL), fig_translation), height = fig_height)
 
 ```
 
@@ -312,7 +318,7 @@ eo_rel_ulc <-
                              weight_df = weights_ecfin37)) |> 
   ungroup()
 
-bind_rows(
+p <- bind_rows(
   EU = select(ameco7_rel_ulc, geo, time, values, rel),
   OECD = eo_rel_ulc,
   .id = "source"
@@ -345,7 +351,11 @@ bind_rows(
 #     guides(size = guide_legend(override.aes = list(colour = "grey50"),   title = ""),
 #          colour = guide_legend(title = "Lähde:"))
 
-save_board_figs("Kuvio_2_7", height = fig_height, save_data = TRUE)
+p
+
+save_board_figs("Kuvio_2_7", plot = p, height = fig_height, save_data = TRUE)
+
+save_board_figs("Kuvio_2_7_en", plot = ggptt::translate_plot(p + labs(caption = NULL), fig_translation), height = fig_height)
 
 ```
 
