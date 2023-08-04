@@ -4,7 +4,7 @@
 \alias{read_ameco}
 \title{Read Ameco files}
 \usage{
-read_ameco(table_num, file = NULL)
+read_ameco(table_num, ameco_file = NULL)
 }
 \arguments{
 \item{table_num}{A link to a zip file.}

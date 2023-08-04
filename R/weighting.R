@@ -82,7 +82,9 @@ weighted_gmean <- function(x, w, na.rm = FALSE) {
 
 #' Calculate weighted index
 #'
-#' Uses weights from data frame.
+#' Uses weights from a data frame.
+#'
+#' weight_index2 allowes spesifing subset of observatios (geos) for weighting.
 #'
 #' @param x A vector to weight.
 #' @param geo A vector to indicate countries.
@@ -107,8 +109,10 @@ weighted_gmean <- function(x, w, na.rm = FALSE) {
 #'                geo =      c("FI", "DE", "SE", "FI", "DE", "SE", "FI", "DE", "SE"),
 #'                time = 2015,
 #'                weight =   c(NA, 0.5, 0.25, 1, NA, 1, 1, 1, NA))
-#' weight_index(x, geo, 2015, w_df,na.rm = TRUE)
+#' weight_index(x, geo, 2015, weight_df = w_df, na.rm = TRUE, mean_type = "arit")
+#' weight_index2(x, geo, 2015, geos = geo, weight_df = w_df, na.rm = TRUE)
 #' weight_index(x, geo, 2015, weight_df = weights_ecb, na.rm = TRUE)
+#' weight_index2(x, geo, 2015, geos = geo, weight_df = weights_ecb, na.rm = TRUE)
 weight_index <- function(x, geo, time, weight_df,
                          nearest = TRUE, na_zero = TRUE, na.rm = FALSE,
                          check_geos = TRUE,
@@ -145,6 +149,8 @@ weight_index <- function(x, geo, time, weight_df,
                                                           check_geos = check_geos,
                                                           mean_type = mean_type))
   y <- 100 * x / weighted_other
+
+  y
 }
 
 #' @describeIn weight_index

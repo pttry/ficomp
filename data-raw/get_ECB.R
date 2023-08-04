@@ -9,7 +9,7 @@ library(countrycode)
 
 
 ecb_custom_match <- c(B4 = "EU27", B5 = "EU28", B6 = "EU27b",
-                      I6 = "EA17", I7 = "EA18", I8 = "EA19")
+                      I6 = "EA17", I7 = "EA18", I8 = "EA19", I9 = "EA20")
 
 # ecb_stats <- get_dataflows()
 # ecb_stats %>%
@@ -54,24 +54,27 @@ ecb_weight_codes <- c(T = "Double export weight",
 # ecb_stats %>%
 #   filter(grepl("weight", title, ignore.case = "TRUE"))
 
-wts0 <- httr::GET("https://sdw-wsrest.ecb.europa.eu/service/data/WTS", accept("text/csv"))
+wts0 <- httr::GET("https://sdw-wsrest.ecb.europa.eu/service/data/WTS", httr::accept("text/csv"))
 wts_res <- httr::content(wts0, "parsed") %>%
-  mutate_if(is.character, as_factor)
+  mutate_if(is.character, forcats::as_factor)
 
 
 weights_ecb <- wts_res %>%
   transmute(time = TIME_PERIOD,
-            geo_base = as_factor(countrycode(REF_AREA,
+            geo_base = forcats::as_factor(countrycode::countrycode(REF_AREA,
                                         origin = "ecb",
                                         destination = "eurostat",
                                         custom_match = ecb_custom_match)),
-            geo = as_factor(countrycode(COUNT_AREA,
+            geo = forcats::as_factor(countrycode::countrycode(COUNT_AREA,
                                              origin = "ecb",
                                              destination = "eurostat",
                                              custom_match = ecb_custom_match)),
-            ind = as_factor(stringr::str_c(TRADE_WEIGHT, CURRENCY_TRANS, sep = "__")),
+            ind = forcats::as_factor(stringr::str_c(TRADE_WEIGHT, CURRENCY_TRANS, TRD_PRODUCT, sep = "__")),
             weight = OBS_VALUE) %>%
-  complete(geo_base, geo, time, ind)
+  tidyr::complete(geo_base, geo, time, ind) |>
+  # Only Double weighted and total manufactured products and services
+  filter(ind == "T__Z0Z__TMS") |>
+  droplevels()
 
 usethis::use_data(weights_ecb, overwrite = TRUE)
 
