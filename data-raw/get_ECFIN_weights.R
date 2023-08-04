@@ -2,7 +2,7 @@
 library(dplyr)
 library(tidyr)
 
-ecfin_w_link <- "https://ec.europa.eu/economy_finance/db_indicators/competitiveness/documents/stat_csv.zip"
+ecfin_w_link <- "https://ec.europa.eu/economy_finance/db_indicators/competitiveness/documents/csv.zip"
 tempf <- tempfile()
 download.file(ecfin_w_link, tempf)
 
