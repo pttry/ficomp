@@ -41,7 +41,10 @@ not have all countries of \code{geo}.}
 A weighted vector or vector of NA if any value in x is NA.
 }
 \description{
-Uses weights from data frame.
+Uses weights from a data frame.
+}
+\details{
+weight_index2 allowes spesifing subset of observatios (geos) for weighting.
 }
 \examples{
 
@@ -51,6 +54,8 @@ w_df <- tibble(geo_base = c("FI", "FI", "FI", "DE", "DE", "DE", "SE", "SE", "SE"
                geo =      c("FI", "DE", "SE", "FI", "DE", "SE", "FI", "DE", "SE"),
                time = 2015,
                weight =   c(NA, 0.5, 0.25, 1, NA, 1, 1, 1, NA))
-weight_index(x, geo, 2015, w_df,na.rm = TRUE)
+weight_index(x, geo, 2015, weight_df = w_df, na.rm = TRUE, mean_type = "arit")
+weight_index2(x, geo, 2015, geos = geo, weight_df = w_df, na.rm = TRUE)
 weight_index(x, geo, 2015, weight_df = weights_ecb, na.rm = TRUE)
+weight_index2(x, geo, 2015, geos = geo, weight_df = weights_ecb, na.rm = TRUE)
 }

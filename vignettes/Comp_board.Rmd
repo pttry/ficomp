@@ -25,6 +25,7 @@ library(tidyr)
 library(ggptt)
 library(glue)
 library(ggthemes)
+library(purrr)
 
 set_board_theme(base_size = 10)
 fig_height <- 10
@@ -40,6 +41,10 @@ geos <- c(Suomi = "FI", Ruotsi = "SE", Saksa = "DE", Ranska = "FR",
           euroalue = "EA19", "Itävalta" = "AT", Espanja = "ES")
 
 ```
+
+## Suomen nimelliset yksikkötyökustannusindeksit
+
+Eri määritelmillä laskettuna
 
 ```{r}
 
@@ -96,6 +101,9 @@ save_board_figs("Kuvio_5_2", height = fig_height, save_data = TRUE)
 
 ## Nimellisen suhteellisen yksikkötyökustannuksen osatekijät
 
+Suhteessa 16 keskiseen verrokkimaahan:
+`r paste0(geo17, collapse = ", ")`
+
 ```{r}
 
 pdat_annual %>% 
@@ -148,6 +156,7 @@ pdat_annual %>%
 ```
 
 
+
 ```{r}
 
 data_main_annual %>% 
@@ -175,6 +184,9 @@ save_board_figs("Kuvio_5_4", height = fig_height, save_data = TRUE)
 
 ```
 
+## SUomen suhteelliset yksikkötyökustannusindeksit
+
+Eri määritelmillä
 
 ```{r}
 
@@ -205,9 +217,13 @@ save_board_figs("Kuvio_2_1_en", plot = ggptt::translate_plot(last_plot(), fig_tr
 
 ```
 
+## Suhteelliset nimelliset eri painoin
+
+Nimelliset yksikkötykustannukset 
+
 ```{r weighting}
 
-data_main_annual %>% 
+k <- data_main_annual %>% 
   select(geo, time, nulc_aper_eur, nulc_aper) %>% 
   group_by(time) %>% 
   mutate(eur__bis_15 = weight_index2(nulc_aper_eur, geo, time, geos = eurostat_geos, weight_df = weights_bis_broad),
@@ -222,13 +238,16 @@ data_main_annual %>%
          ) %>% 
   select(-nulc_aper_eur, -nulc_aper) %>%
   filter(geo == "FI") %>% 
-  gather(vars, values, -geo , -time) %>% 
+  gather(vars, values, -geo , -time)
+
+k %>% 
   group_by(geo, vars) %>% 
   mutate(values = rebase(values, time, mean_range)) %>% 
   ungroup() %>%
   separate(vars, into = c("type", "vars"), sep = "__") %>% 
-  translate(type, c(own = "Omassa valuutassa", eur = "Samassa valuutassa")) %>% 
-  mutate(vars = toupper(gsub("_", " ", vars))) %>%
+  mutate(
+    type = fct_recode(type, !!!c("Omassa valuutassa" = "own", "Samassa valuutassa" ="eur")),
+    vars = toupper(gsub("_", " ", vars))) %>%
   ggplot(aes(time, values, colour = vars)) +
   geom_line() +
   facet_wrap(~ type) +
@@ -241,6 +260,9 @@ data_main_annual %>%
 save_board_figs("Kuvio_5_3", height = fig_height, save_data = TRUE)
 
 ```
+
+## Neljännesvuosi-indikaattorit
+
 ```{r, fig.height=5.1}
 
 covid_geo <- c("FI", "SE", "DE", "DK", "IT", "AT", "ES")
@@ -272,11 +294,19 @@ save_board_figs("Kuvio_5_3_en", plot = ggptt::translate_plot(last_plot(), fig_tr
 ```
 
 ```{r, fig.height=5.1}
-
 covid_geo <- c("FI", "SE", "DE", "DK", "IT", "AT", "ES")
 
 q_dat %>% 
-  select(time, geo, "Palkasaajakorvaukset" = d1_hw_ind, "Yksikkötyökustannukset" = nulc_hw_va_eur, "Työn tuottavuus" = lp_hw_ind, gdp_ind, emp_ind, EMP_DC__THS_HW) %>% 
+  select(
+    time,
+    geo,
+    "Palkasaajakorvaukset" = d1_hw_ind,
+    "Yksikkötyökustannukset" = nulc_hw_va_eur,
+    "Työn tuottavuus" = lp_hw_ind,
+    "BKT" = gdp_ind,
+    "Työllisyys" = emp_ind,
+    "Työtunnit" = EMP_DC__THS_HW
+  ) %>% 
   gather(vars, values, -geo, -time) %>% 
   group_by(geo, vars) %>% 
   mutate(values = rebase(values, time, 2019)) %>% 
@@ -292,7 +322,10 @@ q_dat %>%
   the_title_blank(c("x", "l")) +
   labs(y = "indeksi, 2019 = 100") +
   the_legend_bot()
-  
+```
+
+
+```{r, fig.height=5.1}
 q_dat %>% 
   select(time, geo, EMP_DC__THS_HW) %>% 
   gather(vars, values, -geo, -time) %>% 
@@ -334,12 +367,18 @@ q_dat %>%
   the_legend_bot()
 ```
 
+## Palkansaajakorvaukset
+
+Kansantalouden tilinpidossa ja Työvoimakustannusindeksissä (lc_lci_r2_q)
+
 ```{r}
 
 covid_geo <- c("FI", "SE", "DE", "DK", "IT", "AT", "ES")
 
 q_dat %>% 
-  select(time, geo, "Palkasaajakorvaukset" = d1_hw_ind, d1net_hw_ind) %>% 
+  select(time, geo, 
+         "Kansantalouden tilinpito" = d1_hw_ind, 
+        "Työvoimakustannusindeksi" =  d1net_hw_ind) %>% 
   gather(vars, values, -geo, -time) %>% 
   group_by(geo, vars) %>% 
   mutate(values = rebase(values, time, 2015)) %>% 

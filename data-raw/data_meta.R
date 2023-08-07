@@ -21,7 +21,7 @@ eu_geo <- eurostat::eu_countries$code
 other_eurostat_geo <- c("NO", "CH", "IS")
 agg_eurostat <- c("EA19", "EU28")
 
-eurostat_geos <- c("BE", "DK", "DE", "IE", "ES", "FR", "IT", "NL", "AT", "FI", "SE", "UK", "NO", "PT", "EL")
+eurostat_geos <- c("BE", "DK", "DE", "IE", "ES", "FR", "IT", "NL", "AT", "FI", "SE", "NO", "PT", "EL")
 
 tuku16 <- c("BE", "DK", "DE", "ES", "FR", "IT", "NL", "AT", "FI", "SE", "UK", "NO", "US", "JP", "KR", "CA")
 tuku_geos <- c(Suomi = "FI", Ruotsi = "SE", Saksa = "DE", Ranska = "FR",
@@ -33,7 +33,7 @@ tuku_geos <- c(Suomi = "FI", Ruotsi = "SE", Saksa = "DE", Ranska = "FR",
 # other_oecd <- c("AU", "CA", "US", "JP", "NO", "NZ", "CH")
 
 oecd_geos_ulcq <- c("AU", "CA", "US", "JP", "NO", "NZ")
-oecd_geos <- c("US", "JP")
+oecd_geos <- c("US", "JP", "UK")
 
 ameco_extra_geos <- c("AU", "CA", "US", "JP", "NZ", "CH")
 
