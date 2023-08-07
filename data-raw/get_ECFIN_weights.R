@@ -8,15 +8,15 @@ download.file(ecfin_w_link, tempf)
 
 # weight files in zip-datafiles
 w_files <- unzip(tempf, list = TRUE)$Name %>%
-  grep("W", ., value = TRUE)
+  grep("w", ., value = TRUE)
 # weight file prefixs
 w_inds <- unique(substr(w_files, 1, 3))
 
 
-weights_ecfin19 <- read_ecfin_weights(tempf, "A19W")
-weights_ecfin27 <- read_ecfin_weights(tempf, "A27W")
-weights_ecfin37 <- read_ecfin_weights(tempf, "A37W")
-weights_ecfin42 <- read_ecfin_weights(tempf, "A42W")
+weights_ecfin19 <- read_ecfin_weights(zipfile = tempf, file_pre = "a19w")
+weights_ecfin27 <- read_ecfin_weights(tempf, file_pre = "a27w")
+weights_ecfin37 <- read_ecfin_weights(tempf, "a37w")
+weights_ecfin42 <- read_ecfin_weights(tempf, file_pre = "a42w")
 
 unlink(tempf)
 

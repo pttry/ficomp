@@ -24,15 +24,21 @@ read_ecfin_weights <- function(zipfile, file_pre){
 #'
 read_ecf_w_file <- function(file, zipfile = zipfile){
   w_file <- unzip(zipfile, file, junkpaths = TRUE, exdir = tempdir())
-  read.csv(w_file, check.names = FALSE) %>%
+  y <- read.csv(w_file, check.names = FALSE) %>%
     # year is on the name of the first column
     mutate(time = as.numeric((names(.)[1]))) %>%
     rename(geo_base = 1) %>%
     gather(geo, weight, -geo_base, -time) %>%
-    mutate_at(c("geo_base", "geo"), ~countrycode::countrycode(., origin = 'imf',
+    mutate(across(c("geo_base", "geo"), ~gsub("_", " ", .x))) |>
+    mutate_at(c("geo_base", "geo"), ~countrycode::countrycode(., origin = "country.name.en",
                                                               destination = "eurostat",
-                                                              custom_match = c("19" = "EA",
-                                                                               "27" = "EU",
-                                                                               "37" = "IC37",
-                                                                               "42" = "gr42")))
+                                                              custom_match = c("EA19" = "EA",
+                                                                               "EA20" = "EA20",
+                                                                               "EU27" = "EU"
+                                                                               # ,
+                                                                               # "37" = "IC37",
+                                                                               # "42" = "gr42"
+                                                                               )
+                                                              ))
+  y
 }

@@ -33,7 +33,7 @@ weights_bis_narrow <-
   ungroup()
 
 weights_bis_broad <-
-  map_dfr(wbis_broad_sheets, ~readxl::read_xlsx(wbis_broad_temp, sheet = ., range = "B6:BJ66"), .id = "time") %>%
+  map_dfr(wbis_broad_sheets, ~readxl::read_xlsx(wbis_broad_temp, sheet = ., range = "B6:BN70"), .id = "time") %>%
   rename(geo_base = ...1) %>%
   gather(geo, weight, -geo_base, - time) %>%
   mutate(geo_base = countrycode::countrycode(geo_base, "iso2c", "eurostat", custom_match = c(XM = "EA")),
@@ -46,6 +46,9 @@ weights_bis_broad <-
   tidyr::fill(weight, weight, .direction = "updown") %>%
   ungroup()
 
+
+if (!("US"%in% weights_bis_broad$geo)) message("Check xlsx range in broad, US is misssing")
+if (!("US"%in% weights_bis_narrow$geo)) message("Check xlsx range in narrow, US is misssing")
 
 usethis::use_data(weights_bis_narrow, overwrite = TRUE)
 usethis::use_data(weights_bis_broad, overwrite = TRUE)

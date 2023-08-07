@@ -62,12 +62,13 @@ ulc_eurostat_dat <- namq_10_lp_ulc %>%
   filter(unit == "I15") %>%
   droplevels()
 
-lci_eurostat_dat <- lc_lci_r2_q %>%
+lci_eurostat_dat <-
+  lc_lci_r2_q %>%
   #   Index, 2016=100
   #  	 Seasonally and calendar adjusted data
   #   Industry, construction and services (except activities of households as employers and extra-territorial organisations and bodies)
   #   Labour cost for LCI (compensation of employees plus taxes minus subsidies)
-  filter(unit %in% c("I16"),
+  filter(unit %in% c("I20"),
          s_adj %in% c("SCA", "SA"),
          nace_r2 %in% c("B-S"),
          lcstruct %in% c("D1_D4_MD5")
@@ -138,7 +139,7 @@ exh_eur_a <- get_eurostat("ert_bil_eur_a", filters = list(statinfo = "AVG", curr
   select(time, currency, values) %>%
   mutate(geo = recode(currency, !!!purrr::set_names(names(currencies), currencies)))
 
-exh_eur_q <- get_eurostat("ert_bil_eur_q", filters = list(statinfo = "AVG", currency = currencies)) %>%
+exh_eur_q <- get_eurostat("ert_bil_eur_q", filters = list(statinfo = "AVG", currency = currencies), time_format = "date", legacy_bulk_download = FALSE) %>%
   select(time, currency, values) %>%
   mutate(geo = recode(currency, !!!purrr::set_names(names(currencies), currencies)))
 
