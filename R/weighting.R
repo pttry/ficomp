@@ -165,8 +165,11 @@ weight_index2 <- function(x, geo, time, geos, weight_df,
   time <- time[1]
 
   # check geos in weight_df and stop if missing
-  geos_in_df <- weight_df %>%
-    summarise(across(c(geo, geo_base), ~(geos %in% .x))) %>%
+  geos_in_df <-
+    weight_df %>%
+    distinct(geo, geo_base) |>
+    map_at(c("geo", "geo_base"), ~(geos %in% .x)) |>
+    as_tibble() %>%
     apply(1, all)
   if (!all(geos_in_df)) stop(paste0(geos[!geos_in_df], collapse = " "), " are not present in weight_df")
 
