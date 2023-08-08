@@ -2,6 +2,7 @@
 % Please edit documentation in R/weighting.R
 \name{weight_index}
 \alias{weight_index}
+\alias{weight_index2}
 \title{Calculate weighted index}
 \usage{
 weight_index(
@@ -13,6 +14,18 @@ weight_index(
   na_zero = TRUE,
   na.rm = FALSE,
   check_geos = TRUE,
+  mean_type = "geom"
+)
+
+weight_index2(
+  x,
+  geo,
+  time,
+  geos,
+  weight_df,
+  nearest = TRUE,
+  na_zero = TRUE,
+  na.rm = FALSE,
   mean_type = "geom"
 )
 }
@@ -46,6 +59,11 @@ Uses weights from a data frame.
 \details{
 weight_index2 allowes spesifing subset of observatios (geos) for weighting.
 }
+\section{Functions}{
+\itemize{
+\item \code{weight_index2()}: A function to use subset of observations (geos).
+
+}}
 \examples{
 
 x <- c(1, 2, 1)

@@ -2,9 +2,12 @@
 % Please edit documentation in R/weighting.R
 \name{weight_all}
 \alias{weight_all}
+\alias{weight_at}
 \title{Mass weighting}
 \usage{
 weight_all(.data, geo, time, except, weight_df)
+
+weight_at(.data, geo, time, at, weight_df)
 }
 \arguments{
 \item{.data}{A tbl.}
@@ -22,3 +25,8 @@ weight_all(.data, geo, time, except, weight_df)
 \description{
 Weight all variables except.
 }
+\section{Functions}{
+\itemize{
+\item \code{weight_at()}: To spesify variables to weight
+
+}}

@@ -3,7 +3,6 @@
 #' Weight all variables except.
 #'
 #' @param .data A tbl.
-#' @param geo,
 #' @param weitht_df A weigthing data.frame in long form. Should have time, geo_base and geo columns.
 #' @param geo A vector to indicate countries.
 #' @param except Variables to exclude, a character vector.
@@ -42,7 +41,7 @@ weight_all2 <- function(.data, .geo, .time, ..., .except, .weight_df){
   y
 }
 
-#' @describeIn weight_all
+#' @describeIn weight_all To spesify variables to weight
 
 weight_at <- function(.data, geo, time, at, weight_df){
   w_name <- deparse1(substitute(weight_df))
@@ -153,7 +152,8 @@ weight_index <- function(x, geo, time, weight_df,
   y
 }
 
-#' @describeIn weight_index
+#' @describeIn weight_index A function to use subset of observations (geos).
+#' @export
 
 weight_index2 <- function(x, geo, time, geos, weight_df,
                          nearest = TRUE, na_zero = TRUE, na.rm = FALSE,

@@ -18,3 +18,6 @@ ind_ulc(cost, output, input1 = 1, input2 = 1, time, baseyear)
 \description{
 Nominal unit labour costs
 }
+\examples{
+ind_ulc(cost = c(1,2,3), output = c(NA,4,6), time = c(1,2,3), baseyear = 2)
+}
