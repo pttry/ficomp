@@ -4,6 +4,7 @@
 library(tidyr)
 library(dplyr)
 library(forcats)
+library(purrr)
 
 devtools::load_all()
 
@@ -138,7 +139,8 @@ data_main_annual <-
     exp_goods_ind = rebase(P61__CLV15_MNAC, time = time, baseyear = base_year),
     exp_serv_ind = rebase(P62__CLV15_MNAC, time = time, baseyear = base_year),
     tbalance_gdp = B11__CP_MNAC / B1GQ__CP_MNAC,
-    exch_eur = D1__CP_MNAC / D1__CP_MEUR) %>%
+    # exch_eur = D1__CP_MNAC / D1__CP_MEUR,
+    exch_eur_ind = rebase(D1__CP_MNAC / D1__CP_MEUR, time = time, baseyear = base_year)) %>%
   # Weight all
   group_by(time) %>%
   mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE)),
@@ -190,7 +192,8 @@ data_long_annual <-
     exp_goods_ind = rebase(P61__CLV15_MNAC, time = time, baseyear = base_year),
     exp_serv_ind = rebase(P62__CLV15_MNAC, time = time, baseyear = base_year),
     tbalance_gdp = B11__CP_MNAC / B1GQ__CP_MNAC,
-    exch_eur = D1__CP_MNAC / D1__CP_MEUR) %>%
+    # exch_eur = D1__CP_MNAC / D1__CP_MEUR,
+    exch_eur_ind = rebase(D1__CP_MNAC / D1__CP_MEUR, time = time, baseyear = base_year)) %>%
   # Weight all
   group_by(time) %>%
   mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE)),
