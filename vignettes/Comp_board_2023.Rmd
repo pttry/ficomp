@@ -67,11 +67,11 @@ p <- pdat_annual %>%
 
 p
   
-save_board_figs("Kuvio_3_1", plot = p, height = fig_height, save_data = TRUE)
+save_board_figs("Kuvio_17", plot = p, height = fig_height, save_data = TRUE)
 
 
 
-save_board_figs("Kuvio_3_1_en", plot = ggptt::translate_plot(p, fig_translation), height = fig_height, save_data = TRUE)
+save_board_figs("Kuvio_17_en", plot = ggptt::translate_plot(p, fig_translation), height = fig_height, save_data = TRUE)
 
 ```
 
@@ -101,9 +101,9 @@ p <- pdat_annual %>%
 
 p
 
-save_board_figs("Kuvio_3_2", plot = p, height = fig_height, save_data = TRUE)
+save_board_figs("Kuvio_18", plot = p, height = fig_height, save_data = TRUE)
 
-save_board_figs("Kuvio_3_2_en", plot = ggptt::translate_plot(p, fig_translation), height = fig_height, save_data = TRUE)
+save_board_figs("Kuvio_18_en", plot = ggptt::translate_plot(p, fig_translation), height = fig_height, save_data = TRUE)
 
 ```
 
