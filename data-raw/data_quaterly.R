@@ -33,7 +33,7 @@ q_dat_oecd_ulc <- ulc_oecd_dat %>%
 
 q_dat_oecd_large <- oecd_dat_Q %>%
   unite(vars, na_item, unit, sep = "__") %>%
-  mutate(nace_r2 = "TOTAL") %>%
+  mutate(nace_r2 = "TOTAL") %>% mutate(vars = as_factor(vars)) |>
   spread(vars, values) %>%
   # To same base year as eurostat
   group_by(geo) %>%
@@ -207,7 +207,7 @@ check_ameco <- function(.data){
     gather(vars, values, -geo) %>%
     filter(values)
 
-  if(nrow(y)>0) print()
+  if(nrow(y)>0) print("Ameco ok")
   .data
 }
 
@@ -223,7 +223,7 @@ dat_ameco_q_est <-
   droplevels() %>%
   complete(time, geo) %>%
   filter(!is.na(geo)) %>%
-  # Delete variables with missing data, check_ameco should print empty tibble
+  # Delete variables with missing data, check_ameco should print "ameco ok"
   select(-nulc_va, -nulc_aper_va) %>%
   check_ameco() %>%
   # Estimate quarterly based on spline
@@ -246,7 +246,7 @@ data_quartely_est <-
   # Add OECD for more countries with some data
   bind_rows(dat_ulc_oecd_est) %>%
   select(-nace_r2) %>%
-  filter(time >= "1991-01-01") %>%
+  filter(time >= "1996-01-01") %>%
   complete(geo, time) %>%
   # Replace NAs with quarterlylized annual data from ameco
   left_join(dat_ameco_q_est, by = c("geo", "time"), suffix = c("", "_long")) %>%
@@ -254,6 +254,8 @@ data_quartely_est <-
   # Exchange rate, from data
   mutate(exch_eur = nulc_long / nulc_eur_long) %>%
   # Weight all
+  filter(geo %in% c(eurostat_geos, ameco_extra_geos)) %>%
+  # filter(geo != "SE") |>
   group_by(time) %>%
   mutate(across(-c("geo", matches("^[A-Z]", ignore.case = FALSE)),
                 ~weight_index2(.x, geo, time, geos = eurostat_geos, weight_df = weights_ecfin37),

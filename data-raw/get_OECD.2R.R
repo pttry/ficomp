@@ -73,26 +73,36 @@ usethis::use_data(ulc_oecd_dat, overwrite = TRUE)
 
 ## Quarterly National Accounts
 
-# Series are taken for two different tables. There is also one API dataset, but it get produces duplicated series.
-# - Quarterly GDP and components - expenditure approach, national currency
-# - Quarterly GDP and components - income approach
+# search_dataset("Quarterly National Accounts", data = dataset_list)
 
-qna_subjects_1 <- c(
+# qna_id <- "QNA"
+#
+# qna_str <- get_data_structure(qna_id)
+
+# qna_str$SUBJECT %>% View()
+
+qna_subjects <- c(
   B1GQ = "B1GQ", #"Gross domestic product",
+  D1 = "D1", #"Compensation of employees",
   P6 = "P6", #"Exports of goods and services",
   P61 = "P61", #"Exports of goods",
   P62 = "P62", #"Export of services"
   B11 = "B11") #"External balance of goods and services"
 
-
-qna_subjects_2 <- c(
-  D1 = "D1" #"Compensation of employees",
-  )
+# industry level data, manufacturing. Not use because not avaible for US and Japan
+# gna_subjects_ind <- c(
+#   # B1GxTOTAL = "B1G",  # Gross value added at basic prices, total activity
+#   # B1GxC = "B1GVC",    # Gross value added at basic prices, manufacturing
+#   # D1xTOTAL = "D1",    #"Compensation of employees, total",
+#   # D1xC = "D1VC",      #"Compensation of employees, manufacturing",
+#   EMP_DC__TH_PERxTOTAL = "ETO",  # Employment, total
+#   EMP_DC__TH_PERxC = "ETOVC"  # Employment, manufacturing
+# )
 
 qna_measures <-
   c(
     CP_MNAC = "V",   # National currency, current prices, quarterly levels, seasonally adjusted
-    CLV_MNAC = "L"  # National currency, chained volume estimates, national reference year, quarterly levels, seasonally adjusted
+    CLV_MNAC = "LR"  # National currency, chained volume estimates, national reference year, quarterly levels, seasonally adjusted
   )
 
 
@@ -102,60 +112,36 @@ gna_cur <- countrycode(oecd_geos, "eurostat", "iso4217c", nomatch = NULL)
 
 # oecd_dat_Q_0 <- get_dataset(dataset = qna_id,
 #                           filter = list(qna_geo, qna_subjects, qna_measures, "Q"))
-qna_filter_1 <- pRoductivity::make_oecd_filter(
+qna_filter <- pRoductivity::make_oecd_filter(
   list(
     "Q",             # Quaterly
     "Y",             # SA
     qna_geo,
     "",
     "",
-    qna_subjects_1,
+    qna_subjects,
     "_Z",
     c("_Z", "_T"),
     "",
     "",
     qna_measures,
     "",
-    ""
+    c("T0103", "T0102")# Table
+
   )
 )
+oecd_dat_Q_0 <- get_dataset("OECD.SDD.NAD,DSD_NAMAIN1@DF_QNA,1.0",
+                            filter = qna_filter)
 
-qna_filter_2 <- pRoductivity::make_oecd_filter(
-  list(
-    "Q",             # Quaterly
-    "Y",             # SA
-    qna_geo,
-    "",
-    "",
-    qna_subjects_2,
-    "_Z",
-    c("_Z", "_T"),
-    "",
-    "",
-    qna_measures,
-    "",
-    ""
-  )
-)
-
-# Quarterly GDP and components - expenditure approach, national currency
-oecd_dat_Q_1_0 <- get_dataset("OECD.SDD.NAD,DSD_NAMAIN1@DF_QNA_EXPENDITURE_NATIO_CURR,1.0",
-                            filter = qna_filter_1)
-# Quarterly GDP and components - income approach
-oecd_dat_Q_2_0 <- get_dataset("OECD.SDD.NAD,DSD_NAMAIN1@DF_QNA_INCOME,1.0",
-                              filter = qna_filter_2)
-
-
-oecd_dat_Q <-
-  oecd_dat_Q_1_0 %>%
-  bind_rows(oecd_dat_Q_2_0) |>
+oecd_dat_Q <- oecd_dat_Q_0 %>%
   transmute(
     time = yq(TIME_PERIOD),
     geo = as_factor(countrycode(REF_AREA, "iso3c", "eurostat", nomatch = NULL)),
-    na_item = fct_recode(TRANSACTION, !!!c(qna_subjects_1, qna_subjects_2)),
+    na_item = fct_recode(TRANSACTION, !!!qna_subjects),
     unit = fct_recode(PRICE_BASE, !!!qna_measures),
     currency = as_factor(CURRENCY),
     values = as.numeric(ObsValue)) %>%
+  distinct() |>
   filter(!(na_item == "B11" & unit == "CLV_MNAC")) |>  # constant p balance not needed
   filter(currency != "_Z") |>     # drop index version
   droplevels()

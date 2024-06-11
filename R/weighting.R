@@ -159,6 +159,12 @@ weight_index2 <- function(x, geo, time, geos, weight_df,
                          nearest = TRUE, na_zero = TRUE, na.rm = FALSE,
                          mean_type = "geom") {
 
+  # xx <<- x
+  # geogeo <<- geo
+  # timetime <<- time
+  # geosgeos <<- geos
+  # weight_df__ <<-weight_df
+
   # Check time
   if (lubridate::is.Date(time)) time <- lubridate::year(time)
   if (!all(time == mean(time))) stop("Time should be unique")

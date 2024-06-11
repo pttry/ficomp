@@ -108,11 +108,11 @@ Suhteessa 16 keskiseen verrokkimaahan:
 
 pdat_annual %>% 
   filter(geo == "FI") %>% 
-  mutate(exch_eur_rel_ecfin17 = 1/ exch_eur_rel_ecfin17) %>% 
+  mutate(exch_eur_ind_rel_ecfin17 = 1/ exch_eur_ind_rel_ecfin17) %>% 
   select(geo, time, 
          "Tuottavuus" = lp_ind_rel_ecfin17, 
          "Palkansaajakorvaukset" =  d1_per_ind_rel_ecfin17, 
-         "Valuuttakurssi" = exch_eur_rel_ecfin17) %>% 
+         "Valuuttakurssi" = exch_eur_ind_rel_ecfin17) %>% 
   gather(vars, values, -geo, -time) %>% 
   group_by(geo, vars) %>% 
   mutate(values = rebase(values, time, mean_range)) %>% 

@@ -35,7 +35,7 @@ tuku_geos <- c(Suomi = "FI", Ruotsi = "SE", Saksa = "DE", Ranska = "FR",
 oecd_geos_ulcq <- c("AU", "CA", "US", "JP", "NO", "NZ")
 oecd_geos <- c("US", "JP", "UK")
 
-ameco_extra_geos <- c("AU", "CA", "US", "JP", "NZ", "CH")
+ameco_extra_geos <- c("US", "JP", "CH")
 
 all_geos <- c(eurostat_geos, oecd_geos)
 
@@ -63,6 +63,9 @@ nace0_fi <- c(total = "Koko talous",
 main_nace_sna <- c(VTOT = "TOTAL", VC = "C", V26 = "C26",  VF = "F", VG = "G", VH = "H",
                    VI = "I", VJ = "J", VK = "K", VM = "M", VN = "N")
 
+main_nace_sna_new <- c("_T" = "TOTAL", C = "C", C26 = "C26",  F = "F", G = "G", H = "H",
+                       I = "I", J = "J", M = "M", N = "N")
+
 main_nace10_sna <- c(TOTAL = "TOTAL", C = "C", F = "F", G = "G-I", H = "G-I",
                      I = "G-I", J = "J", K = "K", M = "M_N", N = "M_N")
 
@@ -76,6 +79,7 @@ usethis::use_data(eurostat_geos, oecd_geos_ulcq, oecd_geos, all_geos,
                   geo17, geo20, geo21, geo14, geo_nace,
                   all_extra_geos, ameco_extra_geos,
                   main_nace_sna,
+                  main_nace_sna_new,
                   main_nace10_sna,
                   main_nace_sna_q,
                   a_start_time, q_start_time, base_year, overwrite = TRUE)
